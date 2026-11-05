@@ -1,0 +1,88 @@
+name: Intraday ticker
+
+# Around the clock again (since 29 Oct 2026): the chain never stops, so it never needs a scheduled start to resume.
+# From 27 to 29 Oct it stopped at 22:00 UTC and relied on the 05:17 UTC schedule to restart; on 29 Oct GitHub ran no
+# scheduled starts in the morning and prices stayed stale until a manual dispatch. Outside the price window the run
+# just sleeps (no price runs are dispatched), so nothing is pushed overnight or at weekends.
+# One chain only: the concurrency group below allows one running ticker plus at most one pending (a newer pending
+# run replaces the older one), and each run queues a successor only if none is already waiting.
+# Second trigger path for intraday prices that needs no outside account or token: one long-running job that
+# dispatches intraday.yml every 15 min during market hours (Mon-Fri 05:30-22:00 UTC) using the built-in
+# GITHUB_TOKEN (workflow_dispatch is one of the events GITHUB_TOKEN may trigger). Each run lasts ~5h40m, around
+# the clock (it just sleeps outside market hours), and on start queues its own successor, which waits in the
+# concurrency group and takes over. So it does not depend on GitHub's scheduled starts (which were dropped on
+# 16 Oct 05:17 UTC); the hourly schedule only revives the chain if it ever breaks. The box trigger stays as is. Double runs are avoided the same way it does:
+# skip while an intraday run is queued/in progress or live-data data/market.json is under 10 min old.
+# Morning catch-up (the box trigger cannot do it while the box sleeps): on weekdays 06:00-15:59 UTC, if today's
+# full build is missing (data/market.json fundamentals_utc before 04:00 UTC today and no successful full run since
+# then), no Update market data run is queued/in progress, and no catch-up was dispatched today (by this job or the
+# box), it dispatches one full build with catchup=true; that run's gate re-checks and skips if a build got there first.
+on:
+  schedule:
+    # revival only: the job chains itself (see below); GitHub often drops or delays scheduled starts
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: intraday-ticker
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Dispatch intraday every 15 min in market hours
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
+        run: |
+          # queue the successor now (pending until this run ends); skip if one is already waiting
+          # (if the check fails, queue anyway: the concurrency group keeps at most one pending run, so this cannot
+          # start a second chain; retry the dispatch so one API hiccup does not end the chain)
+          q=$(gh run list -R "$R" -w ticker.yml -L 10 --json status -q '[.[]|select(.status=="queued" or .status=="pending" or .status=="waiting")]|length' 2>/dev/null || echo 0)
+          if [ "${q:-0}" -gt 0 ]; then echo "successor already queued"
+          else for i in 1 2 3; do gh workflow run ticker.yml -R "$R" --ref main && { echo "successor queued"; break; }; echo "successor dispatch failed (try $i)"; sleep 30; done; fi
+          end=$(( $(date -u +%s) + 340*60 ))
+          while [ "$(date -u +%s)" -lt "$end" ]; do
+            dow=$(date -u +%u); hm=$((10#$(date -u +%H) * 60 + 10#$(date -u +%M)))
+            if [ "$dow" -le 5 ] && [ $hm -ge 330 ] && [ $hm -lt 1320 ]; then
+              busy=$(gh run list -R "$R" -w intraday.yml -L 5 --json status -q '[.[]|select(.status!="completed")]|length' 2>/dev/null || echo 0)
+              ts=$(curl -fsS -m 30 "https://raw.githubusercontent.com/$R/live-data/data/market.json?x=$(date +%s)" | head -c 400 \
+                   | grep -o '"generated_utc": *"[^"]*"' | grep -o '20[0-9-]*T[0-9:]*' | head -1)
+              age=$(( ( $(date -u +%s) - $(date -u -d "${ts:-1970-01-01T00:00:00}Z" +%s) ) / 60 ))
+              if [ "${busy:-0}" -gt 0 ]; then echo "$(date -u +%H:%MZ) skip: intraday run queued/in progress"
+              elif [ $age -lt 10 ]; then echo "$(date -u +%H:%MZ) skip: market.json ${age} min old"
+              elif gh workflow run intraday.yml -R "$R" --ref main; then echo "$(date -u +%H:%MZ) dispatched (market.json ${age} min old)"
+              else echo "$(date -u +%H:%MZ) dispatch failed"; fi
+            fi
+            if [ "$dow" -le 5 ] && [ $hm -ge 360 ] && [ $hm -lt 960 ] && [ "${cu_day:-}" != "$(date -u +%F)" ]; then
+              d4=$(date -u -d "$(date -u +%F) 04:00" +%s)
+              fu=$(curl -fsS -m 60 "https://raw.githubusercontent.com/$R/live-data/data/market.json?x=$(date +%s)" | head -c 400 \
+                   | grep -o '"fundamentals_utc": *"[^"]*"' | grep -o '20[0-9-]*T[0-9:]*' | head -1)
+              if [ -n "$fu" ] && [ "$(date -u -d "${fu}Z" +%s)" -ge "$d4" ]; then cu_day=$(date -u +%F)   # done for today
+              elif ! st=$(gh run list -R "$R" -w update-data.yml -L 30 --json status,conclusion,createdAt,displayTitle,event -q "
+                  def full: ((.displayTitle | capture(\"\\\\((?<m>full|market|power)\\\\)\$\").m) // \"full\") == \"full\";
+                  [ ([.[]|select(.status!=\"completed\")]|length),
+                    ([.[]|select(.conclusion==\"success\" and full and (.createdAt|fromdateiso8601) >= $d4)]|length),
+                    ([.[]|select(full and .event==\"workflow_dispatch\" and (.displayTitle|test(\"catch-up\")) and (.createdAt|fromdateiso8601) >= $d4)]|length) ] | @tsv"); then
+                echo "$(date -u +%H:%MZ) catch-up: could not read update-data runs"
+              else
+                read -r busy ok cu <<<"$st"
+                if [ "${ok:-0}" -gt 0 ]; then cu_day=$(date -u +%F)
+                elif [ "${busy:-0}" -gt 0 ]; then echo "$(date -u +%H:%MZ) catch-up: update-data run queued/in progress"
+                elif [ "${cu:-0}" -gt 0 ]; then echo "$(date -u +%H:%MZ) catch-up: already dispatched today (it failed?); leaving it"; cu_day=$(date -u +%F)
+                elif gh workflow run update-data.yml -R "$R" --ref main -f mode=full -f catchup=true; then
+                  echo "$(date -u +%H:%MZ) catch-up: today's full build missing (last ${fu:-unknown}); full build dispatched"; cu_day=$(date -u +%F)
+                else echo "$(date -u +%H:%MZ) catch-up: dispatch failed"; fi
+              fi
+            fi
+            # next tick at minute 2,17,32,47 (between the box ticks at 12,27,42,57)
+            m=$((10#$(date -u +%M))); s=$((10#$(date -u +%S)))
+            w=$(( ( (2 - m % 15 + 15) % 15 ) * 60 - s )); [ $w -le 0 ] && w=$((w + 900))
+            sleep $w
+          done

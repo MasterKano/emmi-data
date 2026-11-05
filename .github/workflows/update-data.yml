@@ -1,0 +1,296 @@
+name: Update market data
+# Mode shown in the run title (a box-side trigger dispatches with an explicit mode and reads it back to avoid duplicates)
+run-name: "Update market data ${{ inputs.catchup && 'catch-up ' || '' }}(${{ inputs.mode || ((startsWith(github.event.schedule, '30 12') || github.event.schedule == '30 17 * * *') && 'power') || (github.event.schedule == '0 21 * * 1-5' && 'market') || 'full' }})"
+
+on:
+  schedule:
+    # UTC. Weekdays ~05:30 (pre-Europe open), ~12:30 (Nordic Power only: tomorrow's day-ahead prices; EEX settlements
+    # are as of the last scrape, which runs in the evening after EEX publishes) and ~21:00 (after US close; markets + news only).
+    # Weekends ~12:30: Nordic Power only (day-ahead auctions run every day).
+    # Daily ~17:30 UTC (19:30 CEST / 18:30 CET): Nordic Power only, after the ENTSO-E deadline for tomorrow's day-ahead
+    # wind/solar forecast (A69, D-1 18:00 Brussels time = 16:00 UTC summer / 17:00 UTC winter), so SE4 'tomorrow
+    # expected' capture is filled.
+    # Note: GitHub runs scheduled workflows only from the default branch.
+    - cron: "30 5 * * 1-5"
+    - cron: "30 12 * * 1-5"
+    - cron: "0 21 * * 1-5"
+    - cron: "30 12 * * 0,6"
+    - cron: "30 17 * * *"
+    # Catch-up for the weekday full morning build (~09:45 and ~13:45 UTC): runs as "full" but the gate job skips
+    # everything when data/market.json already carries a full build from today (fundamentals_utc; so it is idempotent).
+    - cron: "45 9 * * 1-5"
+    - cron: "45 13 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full = everything (05:30 run) · market = markets/companies/news/symbols, no power (21:00 run) · power = Nordic power only (12:30/17:30 runs)"
+        type: choice
+        options: [full, market, power]
+        default: full
+      catchup:
+        description: "catch-up: skip the build if data/market.json already has a full build from today (used by the ticker and box catch-ups)"
+        type: boolean
+        default: false
+
+env:
+  # data files published to the live-data branch (not committed to main)
+  LIVE_PATHS: "data/mr.json data/nordic_mtd.json data/nordic_drivers.json data/market.json data/news.json data/power.json data/symbols.json data/companies.json data/co data/dealflow.json data/griddc.json data/griddc_state.json data/balancing.json data/mastr_de.json data/griddc_events.json data/hydro_nordic.json data/us_valuation.json data/fi_wind.json data/nordic_monthly.json data/nordic_precip.json data/nordic_dash.json data/gas.json data/gas data/tracker_uk.json data/tracker_de.json data/tracker_de_wind.json"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: update-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    # gated (skipped when today's full build already exists): the catch-up crons, catch-up dispatches (catchup=true,
+    # from ticker.yml or the box trigger) and the 05:30 schedule (GitHub often starts it late, after a catch-up ran).
+    # The concurrency group below queues runs, so a gated run that waited behind a full build sees its result.
+    # Every other trigger always builds.
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      run: ${{ steps.g.outputs.run }}
+    steps:
+      - id: g
+        env:
+          CATCHUP: ${{ github.event.schedule == '45 9 * * 1-5' || github.event.schedule == '45 13 * * 1-5' || github.event.schedule == '30 5 * * 1-5' || (inputs.catchup && (inputs.mode || 'full') == 'full') }}
+        run: |
+          if [ "$CATCHUP" != "true" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          head=$(curl -s -m 120 "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/live-data/data/market.json" | head -c 400)
+          # fundamentals_utc = time of the last full/market build (intraday runs carry it forward)
+          ts=$(echo "$head" | grep -o '"fundamentals_utc": *"[^"]*"' | grep -o '20[0-9-]*T[0-9:]*' | head -1)
+          today4=$(date -u -d "$(date -u +%F) 04:00" +%s)
+          if [ -n "$ts" ] && [ "$(date -u -d "${ts}Z" +%s)" -ge "$today4" ]; then
+            echo "Today's full build exists ($ts UTC); catch-up skipped"; echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "No full build today yet (last: ${ts:-unknown}); catching up"; echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+  build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # same mapping as run-name: schedule -> mode; manual runs pick it via the input
+      MODE: ${{ inputs.mode || ((startsWith(github.event.schedule, '30 12') || github.event.schedule == '30 17 * * *') && 'power') || (github.event.schedule == '0 21 * * 1-5' && 'market') || 'full' }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Load current data from live-data (builds update it in place)
+        run: |
+          if git fetch -q --depth 1 origin live-data; then
+            for p in $LIVE_PATHS; do git checkout FETCH_HEAD -- "$p" 2>/dev/null || true; done
+          fi
+          git add -A data && git -c user.name=ci -c user.email=ci@localhost commit -qm "baseline from live-data" || true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - name: Install
+        run: pip install -r scripts/requirements.txt
+      - name: Market data (Yahoo)
+        if: env.MODE != 'power'
+        run: python scripts/build_data.py
+      - name: Company fundamentals (Yahoo, company panel)
+        id: company_fundamentals
+        # ~1 min (4 threads); index data/companies.json + per-company data/co/*.json; not on power-only runs
+        if: env.MODE != 'power'
+        run: python scripts/build_companies.py
+        timeout-minutes: 8
+        continue-on-error: true
+      - name: News
+        id: news
+        if: env.MODE != 'power'
+        run: python scripts/build_news.py
+        continue-on-error: true
+      - name: Nordic power (ENTSO-E, Nord Pool, UMM, EDS, EEX CSV, hydro)
+        id: nordic_power
+        # ENTSO-E is the primary day-ahead source (~1-2 min); Energy-Charts (~2 req/min) only fills failed zones.
+        # Nord Pool prices/UMM and Energinet EDS are keyless; FI wind uses Fingrid when FINGRID_API_KEY is set, else ENTSO-E.
+        # Skipped at 21:00.
+        if: env.MODE != 'market'
+        run: python scripts/build_power.py
+        env:
+          # ENTSO-E Transparency: day-ahead prices, SE4 wind/load/flows/outages, reservoirs (skipped when unset)
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+          # Fingrid open data (data.fingrid.fi), FI wind actual + forecast; optional (ENTSO-E fallback when unset)
+          FINGRID_API_KEY: ${{ secrets.FINGRID_API_KEY }}
+          FINGRID_API_KEY_SECONDARY: ${{ secrets.FINGRID_API_KEY_SECONDARY }}
+        timeout-minutes: 15
+        continue-on-error: true
+      - name: Symbol search index (Markets autofill)
+        id: symbol_search_index
+        if: env.MODE != 'power'
+        run: python scripts/build_symbols.py
+        continue-on-error: true
+      - name: Deal flow (exchange announcements, FI insider register)
+        id: deal_flow
+        # morning full run + the 12:30/17:30 UTC power runs; ~40 s, keyless public feeds
+        if: env.MODE != 'market'
+        run: python scripts/build_dealflow.py
+        timeout-minutes: 6
+        continue-on-error: true
+      - name: Grid & DC (NESO registers, BNetzA/CRE tenders, TSO notices, data-centre news)
+        id: grid_dc
+        # once a day, morning full run only; ~20-40 s, keyless public sources; after Deal flow (reads data/dealflow.json)
+        if: env.MODE == 'full'
+        run: python scripts/build_griddc.py
+        timeout-minutes: 5
+        continue-on-error: true
+      - name: Germany balancing auctions (regelleistung.net FCR/aFRR capacity)
+        id: germany_balancing_auctions
+        # daily on power and full runs; keyless XLSX (~5 KB/day); keeps 90 days; openpyxl
+        if: env.MODE != 'market'
+        run: python scripts/build_balancing.py
+        timeout-minutes: 8
+        continue-on-error: true
+      - name: Germany MaStR solar & battery pipeline (utility aggregates)
+        id: germany_mastr_solar_battery_pipeline
+        # weekly: script skips when data/mastr_de.json is < 6.5 days old; morning full run only; ~30-60 s
+        if: env.MODE == 'full'
+        run: python scripts/build_mastr.py
+        timeout-minutes: 8
+        continue-on-error: true
+      - name: Grid & DC events calendar (weekly date check, no network)
+        id: grid_dc_events_calendar
+        if: env.MODE == 'full'
+        run: python scripts/check_griddc_events.py
+        continue-on-error: true
+      - name: Project progression tracker (NESO TEC/embedded registers, MaStR units > 1 MW)
+        id: project_tracker
+        # morning full run only; UK ~10 s, DE ~2-4 min (~45k MaStR units). The per-project status-change log lives on the
+        # tracker-history branch (append-only, fast-forward pushes only): live-data is rebuilt as a single commit each run
+        # and committing the log on main would rebuild the site. If that branch cannot be read the step stops, so no log restarts empty.
+        if: env.MODE == 'full'
+        timeout-minutes: 14
+        continue-on-error: true
+        env:
+          TRACKER_HIST: ${{ runner.temp }}/tracker-history
+        run: |
+          if ! git ls-remote --exit-code --heads origin tracker-history >/dev/null; then echo "::warning::tracker-history branch not readable; tracker skipped"; exit 1; fi
+          git fetch -q origin tracker-history
+          git worktree add -q --detach "$TRACKER_HIST" FETCH_HEAD
+          rc=0
+          timeout 300 python scripts/build_tracker.py uk || rc=1
+          timeout 660 python scripts/build_tracker.py de || rc=1
+          cd "$TRACKER_HIST"
+          git add -A .
+          if git -c user.name=ci -c user.email=ci@localhost commit -qm "tracker history $(date -u +%F)"; then
+            ok=0
+            for i in 1 2 3; do
+              if git push -q origin HEAD:refs/heads/tracker-history; then ok=1; break; fi
+              sleep 5; git fetch -q origin tracker-history && git -c user.name=ci -c user.email=ci@localhost rebase -q FETCH_HEAD || break
+            done
+            [ "$ok" = 1 ] || { echo "::warning::tracker-history push failed"; rc=1; }
+          fi
+          exit $rc
+      - name: Nordic hydro reservoirs (NVE + ENTSO-E A72 Sweden), weekly
+        id: nordic_hydro_reservoirs
+        # morning full run; script skips when data/hydro_nordic.json is < 6.5 days old; ~30 s
+        if: env.MODE == 'full'
+        run: python scripts/build_hydro_nordic.py
+        env:
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+        timeout-minutes: 5
+        continue-on-error: true
+      - name: US equity valuations (Shiller, Damodaran, S&P DJI, FRED), monthly
+        id: us_equity_valuations
+        if: env.MODE == 'full'
+        continue-on-error: true
+        run: python scripts/build_valuation.py
+
+      - name: Finland wind (Fingrid open data), every power and full build
+        id: finland_wind
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        env:
+          FINGRID_API_KEY: ${{ secrets.FINGRID_API_KEY }}
+          FINGRID_API_KEY_SECONDARY: ${{ secrets.FINGRID_API_KEY_SECONDARY }}
+        run: python scripts/build_fi_wind.py
+
+      - name: Nordic monthly overview (ENTSO-E A75/A44, NVE), monthly
+        id: nordic_monthly_overview
+        if: env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 25
+        env:
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+        run: python scripts/build_nordic_monthly.py
+
+      - name: Nordic power dashboard, 30 days hourly (ENTSO-E A75/A44/A65/A69, Open-Meteo), every power and full build
+        id: nordic_power_dashboard_30_days_hourly
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 14
+        env:
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+        run: python scripts/build_dashboard.py
+      - name: Nordic hydro-region precipitation (Open-Meteo), forecast daily, monthly part monthly
+        id: nordic_hydro_region_precipitation
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 6
+        run: python scripts/build_precip.py
+      - name: European gas storage (GIE AGSI+), every power and full build
+        id: european_gas_storage
+        # AGSI+ publishes once a day (~18:00 CET) for the previous gas day and revises recent days: each run refetches
+        # the last 60 days (~20 requests, < 1 min); missing years are backfilled (~160 requests). Key never logged.
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          GIE_API_KEY: ${{ secrets.GIE_API_KEY }}
+        run: python scripts/build_gas.py
+
+      - name: Month-to-date panel (ENTSO-E A75/A65 daily by zone, Open-Meteo weather), every power and full build
+        id: build_mtd
+        # Refetches the current and the two previous months each run; a day with under 90% of its hours stays empty.
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+        run: python scripts/build_mtd.py
+
+      - name: MR block and seasonal charts (Nord Pool, ENTSO-E A44, EEX CSV, Ember, ERA5), every power and full build
+        id: mr_block
+        # Refetches the current year of Nord Pool daily prices and the EEX settlement CSV each run; completed years,
+        # ENTSO-E monthly history (2015-2023) come from the previous data/mr.json. Ember is refetched weekly. Key never logged.
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+        run: python scripts/build_mr.py
+
+      - name: Prices and drivers panel (no network; reads mr.json, power.json, nordic_dash.json), every power and full build
+        id: nordic_price_drivers
+        if: env.MODE == 'power' || env.MODE == 'full'
+        continue-on-error: true
+        timeout-minutes: 3
+        run: python scripts/build_drivers.py
+
+      - name: Build health summary (step failures, source gaps, files not updated)
+        id: health
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: python scripts/health_summary.py
+      - name: Publish data to live-data branch (single force-pushed commit, no history growth)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/publish_live.sh data "$GITHUB_WORKSPACE"
+      - name: Open or update today's build-alert issue
+        if: always() && steps.health.outputs.alert == '1'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          t="Build alert $(date -u +%F)"
+          n=$(gh issue list -R "$GITHUB_REPOSITORY" --state open --search "\"$t\" in:title" --json number -q '.[0].number')
+          b="$(cat "$RUNNER_TEMP/health.md")"$'\n\n'"Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ -n "$n" ]; then gh issue comment "$n" -R "$GITHUB_REPOSITORY" --body "$b"; else gh issue create -R "$GITHUB_REPOSITORY" --title "$t" --body "$b"; fi

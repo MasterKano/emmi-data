@@ -1,0 +1,74 @@
+name: TTF weather (NW Europe HDD)
+
+# NW Europe temperature / heating degree days for the Gas tab (scripts/build_ttf_weather.py): latest ECMWF IFS 00z/12z
+# run vs the run before it vs normal, via Open-Meteo. Standalone and keyless: does not touch the other workflows or files.
+# ECMWF open data + Open-Meteo processing put a 00z run online ~07:30 UTC and a 12z run ~19:30 UTC, so:
+#   08:40 and 20:40 UTC = main runs (09:40 / 21:40 CET); 10:40 and 22:40 UTC = catch-ups. A run that finds the same
+#   ECMWF run already on live-data publishes nothing (so data/ttf_weather.json's generated_utc = when that run landed).
+# Publishing is a plain (non-force) push on top of the current live-data tip, retried from a fresh fetch if the tip
+# moved (the other workflows rewrite live-data as a single commit and keep files they don't own).
+on:
+  schedule:
+    - cron: "40 8 * * *"
+    - cron: "40 20 * * *"
+    - cron: "40 10 * * *"
+    - cron: "40 22 * * *"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "publish the result to live-data (untick for a dry test run)"
+        type: boolean
+        default: true
+      force:
+        description: "rebuild even if live-data already has the latest run"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ttf-weather
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q requests
+      - name: Build (skipped when live-data already holds the latest 00z/12z run)
+        id: b
+        env:
+          FORCE: ${{ inputs.force && '1' || '' }}
+        run: |
+          set +e
+          curl -sf -m 60 "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/live-data/data/ttf_weather.json" -o "$RUNNER_TEMP/cur.json" || rm -f "$RUNNER_TEMP/cur.json"
+          skip=(--skip-if-same "$RUNNER_TEMP/cur.json"); [ -n "$FORCE" ] && skip=()
+          python scripts/build_ttf_weather.py --out "$RUNNER_TEMP/ttf_weather.json" "${skip[@]}"; rc=$?
+          if [ $rc = 3 ]; then echo "new=0" >> "$GITHUB_OUTPUT"; exit 0; fi
+          [ $rc = 0 ] && echo "new=1" >> "$GITHUB_OUTPUT"; exit $rc
+      - name: Publish to live-data (data/ttf_weather.json)
+        if: steps.b.outputs.new == '1' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          src="$RUNNER_TEMP/ttf_weather.json"; w="$RUNNER_TEMP/live"
+          for i in 1 2 3 4 5 6; do
+            rm -rf "$w"; mkdir -p "$w"; cd "$w"; git init -q -b live-data
+            git config user.name "github-actions[bot]"; git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+            git fetch -q --depth 1 "$url" live-data; git checkout -q -B live-data FETCH_HEAD
+            mkdir -p data; cp "$src" data/ttf_weather.json
+            git add data/ttf_weather.json
+            git commit -q -m "ttf weather $(date -u +'%Y-%m-%d %H:%M') UTC" || { echo "no change"; exit 0; }
+            if git push -q "$url" HEAD:live-data 2>/dev/null; then echo "published on try $i"; exit 0; fi
+            echo "live-data moved underneath us, retrying ($i)"; sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
