@@ -11,7 +11,7 @@ This repository stays **public** so the price refresh keeps using free GitHub Ac
 | `intraday.yml` | Weekdays, every 15 minutes (`:07/:22/:37/:52`, 05–21 UTC). Yahoo quotes only. Updates `data/market.json` on `live-data`. |
 | `ticker.yml` | One long-running job that dispatches `intraday.yml` during market hours and queues its own successor. On weekday mornings it dispatches one full `update-data.yml` catch-up if today's build is missing. The hourly schedule only restarts the chain. |
 | `update-data.yml` | Weekday 05:30 full, 12:30 and 17:30 power, 21:00 market, weekend 12:30 power, catch-ups 09:45 and 13:45. Publishes `LIVE_PATHS` to `live-data`. |
-| `ho-curve.yml` | Weekdays 21:07 UTC. `data/ho_curve.csv` and `data/ho_curve_history.csv` on `live-data`. |
+| `ho-curve.yml` | Weekdays 20:07 UTC. `data/ho_curve.csv` and `data/ho_curve_history.csv` on `live-data`. |
 | `ttf-weather.yml` | 08:40, 10:40, 20:40, 22:40 UTC. `data/ttf_weather.json` on `live-data`. |
 
 `scripts/publish_live.sh` writes the orphan `live-data` branch as one force-pushed commit (no history growth). Intraday and the full build share `data/market.json`: a copy replaces the published file only when it is not older (`fundamentals_utc`, then `generated_utc`). Files a run does not own are kept. `ho-curve.yml` and `ttf-weather.yml` push on top of the current tip and retry if the tip moved.
