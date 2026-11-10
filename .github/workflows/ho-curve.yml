@@ -2,14 +2,14 @@ name: HO futures curve
 
 # NY Harbor ULSD (NYMEX HO) futures curve, all listed months (scripts/ho_curve.py): TradingView's public delayed
 # scanner, falling back to Yahoo per-contract quotes (one source per run; WSJ answers runners with 401). Standalone: does not touch the other workflows or their files.
-# Weekdays 21:07 UTC: after the NYMEX settle (14:30 ET = 18:30/19:30 UTC) and before the electronic session
+# Weekdays 20:07 UTC: after the NYMEX settle (14:30 ET = 18:30/19:30 UTC) and before the electronic session
 # reopens (18:00 ET = 22:00/23:00 UTC), so the day's bar is still the settled day. Off-quarter minute on purpose.
 # Writes data/ho_curve.csv (latest) and appends data/ho_curve_history.csv on the live-data branch.
 # Publishing is a plain (non-force) push on top of the current live-data tip, retried from a fresh fetch if the tip
 # moved (other workflows rewrite live-data as a single commit and keep files they don't own, so these two survive).
 on:
   schedule:
-    - cron: "7 21 * * 1-5"
+    - cron: "7 20 * * 1-5"
   workflow_dispatch:
     inputs:
       source:
