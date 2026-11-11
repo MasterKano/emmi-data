@@ -1,0 +1,30 @@
+{
+  "curve": "brent",
+  "title": "ICE Brent crude futures",
+  "currency": "USD",
+  "unit": "USD/bbl",
+  "earliest": "2026-11-11",
+  "latest": "2026-11-11",
+  "date_count": 1,
+  "dates": [
+    "2026-11-11"
+  ],
+  "contracts_per_date": {
+    "2026-11-11": 147
+  },
+  "weekday_gaps": [],
+  "sources": [
+    "tradingview_scanner"
+  ],
+  "schema": [
+    "contract",
+    "label",
+    "expiry",
+    "settle",
+    "change",
+    "currency",
+    "unit",
+    "source",
+    "as_of"
+  ]
+}

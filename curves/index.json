@@ -1,0 +1,65 @@
+{
+  "generated": "2026-11-11T14:41:38Z",
+  "curves": {
+    "nordic-sys": {
+      "title": "Nordic system-price futures",
+      "currency": "EUR",
+      "unit": "EUR/MWh",
+      "earliest": "2026-09-01",
+      "latest": "2026-11-10",
+      "date_count": 51,
+      "weekday_gaps": [],
+      "sources": [
+        "eex"
+      ]
+    },
+    "ttf": {
+      "title": "Dutch TTF gas futures",
+      "currency": "EUR",
+      "unit": "EUR/MWh",
+      "earliest": "2026-09-01",
+      "latest": "2026-11-10",
+      "date_count": 51,
+      "weekday_gaps": [],
+      "sources": [
+        "eex"
+      ]
+    },
+    "brent": {
+      "title": "ICE Brent crude futures",
+      "currency": "USD",
+      "unit": "USD/bbl",
+      "earliest": "2026-11-11",
+      "latest": "2026-11-11",
+      "date_count": 1,
+      "weekday_gaps": [],
+      "sources": [
+        "tradingview_scanner"
+      ]
+    },
+    "ho": {
+      "title": "NY Harbor ULSD (heating oil) futures",
+      "currency": "USD",
+      "unit": "USD/gal",
+      "earliest": "2026-10-27",
+      "latest": "2026-11-11",
+      "date_count": 14,
+      "weekday_gaps": [],
+      "sources": [
+        "tradingview_scanner",
+        "tradingview_scanner_history"
+      ]
+    }
+  },
+  "schema": [
+    "contract",
+    "label",
+    "expiry",
+    "settle",
+    "change",
+    "currency",
+    "unit",
+    "source",
+    "as_of"
+  ]
+}

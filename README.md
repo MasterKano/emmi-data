@@ -46,6 +46,10 @@ Until those secrets exist here, prices still refresh. Power sections that need E
 
 Versioned Nordic climate history and 1991–2020 daily normals live in [`nordic-climate/`](nordic-climate/), on `main`. They are not published to the `live-data` branch. The Monthly Nordic climate update routine refreshes that folder.
 
+## Futures curves
+
+Daily futures-curve snapshots (Nordic system-price, TTF, ICE Brent, NY Harbor ULSD) live in [`curves/`](curves/), on `main`, one CSV per curve per settlement date. They are not published to the `live-data` branch: that branch is force-pushed and would erase history. See [`curves/README.md`](curves/README.md) for the schema, sources, gaps and the daily snapshot command.
+
 ## Keep this repo public
 
 A private repo would spend paid Actions minutes and would stop anonymous `raw.githubusercontent.com` reads, which is how the site loads prices. Do not add `research/` or any research notes.
