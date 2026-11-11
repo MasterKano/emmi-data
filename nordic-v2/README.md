@@ -24,9 +24,22 @@ Every JSON has `schema_version: 1` and `as_of` (`YYYY-MM-DD`, or null). `as_of` 
 
 ### `prices.json`
 
-`units: EUR/MWh`, `source`, `columns: [date,value,ma30]`, `regions`, `futures`.
+`units: EUR/MWh`, `source`, `columns: [date,value,ma30]`, `baseline` `[2021, 2025]`, `baseline_label` `2021–2025`, `history_start`, `normal_method`, `regions`, `futures`.
 
-Each `regions[code]`: `as_of`, `rows`, optional `definition`. Codes: `Nordic` (official Nord Pool **system** price), `SE1`–`SE4`, `NO1`–`NO5`, `FI`, `DK1`, `DK2`, plus `SE`, `NO`, `DK`. Country prices are **equal-weight bidding-zone averages**, not load-weighted national prices. Never label the country average as the system price. `ma30` needs all 30 calendar days. 123 plotted days are retained; older input days warm up the average.
+The plotted window is unchanged: each `regions[code]` still has `as_of`, `rows` as `[date,value,ma30]`, and optional `definition`. 123 plotted days are retained; older days stay on the box and only warm up `ma30`. Added beside that, without changing row shape: `history_start`, `baseline`, `baseline_label`, `coverage` (`days`, `gap_count`, `gaps`), and optional `summary` (latest 30-day average vs the same-date normal). Codes: `Nordic` (official Nord Pool **system** price), `SE1`–`SE4`, `NO1`–`NO5`, `FI`, `DK1`, `DK2`, plus `SE`, `NO`, `DK`. Country prices are **equal-weight bidding-zone averages**, not load-weighted national prices. Never label the country average as the system price. `ma30` needs all 30 calendar days.
+
+Bidding-zone and country history runs from 2021-01-01. A day is the mean of all complete Europe/Zurich delivery-hour or 15-minute prices (ENTSO-E A44). Windows are split at 1 Oct 2025, the first 15-minute SDAC delivery day; a window that still mixes resolutions (Norwegian 2025) is averaged per resolution so complete hourly days are not dropped. Nordic SYS is still Nord Pool `AggregatePrices`; that API currently returns HTTP 401 for years before 2024, so the Nordic region's `baseline_label` is `2024–2025` and `history_start` is `2024-01-01`. Do not replace the official system price with a zone average.
+
+### `prices_normals.json`
+
+`baseline` `[2021, 2025]`, `baseline_label` `2021–2025`, `history_start`, `history_end`, `method`, `notes`, compact arrays:
+
+- `month_days` plus `normal[region]`: unsmoothed average of the same month/day in the region's baseline years (Feb 29 uses the available leap years).
+- `months` plus `monthly[region]`: calendar-month mean of complete delivery days, 2021-01 through the latest month.
+- `monthly_normal[region][MM]`: `normal`, `min`, `max`, `n_years` of that month inside 2021–2025 (complete years only).
+
+The live `/v2/power/` page does not read this file yet. The daily price block still says no historical price normal is published, and the monthly block still uses the stale legacy snapshot in `monthly.json` (prices only from 2024-09, six zones). Point the page at these fields and at each region's `baseline_label` when it is ready; do not change the 123-day `[date,value,ma30]` rows.
+
 
 `futures.front_month` and `futures.next_quarter`: `as_of` (settlement date), `contract` (e.g. Dec-26/Q1-27), `unit`, `regions`. A region value is the existing EEX helper's `{p,d1,w1,m1,s1,from?}`: settlement, absolute 1-day/7-day/28-day/since-first changes and optional first-history date. Null means no quote. These are fixed named contracts, not a synthetic continuous roll series. Source is MasterKano/scrape `master/eex_master.csv`, which starts 2026-09-01.
 

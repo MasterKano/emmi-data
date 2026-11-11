@@ -24,6 +24,9 @@ REGIONS=['Nordic','SE','NO','FI','DK']
 TODAY=dt.datetime.now(ec.CET).date()
 ERRORS=[]
 BASELINE=(2006,2025)
+PRICE_HISTORY_START=dt.date(2021,1,1)
+PRICE_BASELINE=(2021,2025)
+PRICE_MTU_SWITCH=dt.date(2025,10,1)  # first 15-minute SDAC delivery day
 
 def log(s): print(ec._redact(s),flush=True)
 def clean(v):
@@ -49,13 +52,13 @@ def get_json(url,params=None,cache_key=None,max_age=0):
     if dest:dest.write_text(json.dumps(j,separators=(',',':')))
     return j
 
-def query(params,key,final=False,max_age=None):
+def query(params,key,final=False,max_age=None,tries=2):
     p=CACHE/(key+'.xml')
     ttl=6*3600 if max_age is None else max_age
     if p.exists() and (final or time.time()-p.stat().st_mtime<ttl):
         text=p.read_text()
     else:
-        text=ec.entsoe_raw(params,tries=2).text
+        text=ec.entsoe_raw(params,tries=tries).text
         root=ec._strip_ns(text);ec._ack(root)
         p.write_text(text)
     return text
@@ -244,40 +247,216 @@ def daily_series(items,psrs=None):
     frame=pd.concat(columns,axis=1)
     return frame.sum(axis=1,min_count=len(columns)).sort_index()
 
+def price_windows(start,end):
+    """Inclusive start, exclusive end. Yearly chunks, split at the Oct 2025 15-minute switch
+    so daily_series never combines hourly and 15-minute series in one window."""
+    cuts={start,end}
+    for y in range(start.year+1,end.year+1):
+        d=dt.date(y,1,1)
+        if start<d<end:cuts.add(d)
+    if start<PRICE_MTU_SWITCH<end:cuts.add(PRICE_MTU_SWITCH)
+    cuts=sorted(cuts)
+    return [(a,b,b<=dt.date(TODAY.year,1,1)) for a,b in zip(cuts,cuts[1:]) if a<b]
+
+def _next_month(d):
+    return dt.date(d.year+1,1,1) if d.month==12 else dt.date(d.year,d.month+1,1)
+
+def fetch_price_window(z,e,a,b,final):
+    """Daily CET delivery-day series for [a,b). On a long-window failure, split into months."""
+    key=f'price_{z}_{a}_{b}'
+    csv=CACHE/f'price_daily_{z}_{a}_{b}.csv'
+    if final and csv.exists():
+        s=pd.read_csv(csv,parse_dates=['date'],index_col='date')['value']
+        s.index=pd.to_datetime(s.index).tz_localize(None)
+        return s,None
+    try:
+        text=query(dict(documentType='A44',in_Domain=e,out_Domain=e,**ec._period(a,b)),key,final,tries=4)
+        items=ec.entsoe_parse(text)
+        # A window can mix hourly and 15-minute days (Norwegian 2025). Average each resolution
+        # separately so daily_series does not drop complete hourly days.
+        by={}
+        for it in items:by.setdefault(it['step'],[]).append(it)
+        parts=[daily_series(group) for group in by.values()]
+        daily=pd.concat(parts).sort_index() if parts else pd.Series(dtype=float)
+        daily=daily[~daily.index.duplicated(keep='last')]
+        if final:
+            pd.Series(daily,name='value').to_csv(csv,index_label='date')
+        return daily,items
+    except Exception as err:
+        if (b-a).days<=32:raise
+        log(f'price {z} {a}..{b} failed ({ec._redact(err)[:100]}); splitting into months')
+        parts=[];items=None
+        cur=a
+        while cur<b:
+            nxt=min(b,_next_month(cur))
+            d,items=fetch_price_window(z,e,cur,nxt,final and nxt<=dt.date(TODAY.year,1,1))
+            if d is not None and len(d):parts.append(d)
+            cur=nxt
+        daily=pd.concat(parts).sort_index() if parts else pd.Series(dtype=float)
+        daily=daily[~daily.index.duplicated(keep='last')]
+        if final and len(daily):pd.Series(daily,name='value').to_csv(csv,index_label='date')
+        return daily,items
+
+def missing_days(s,start,end):
+    if end<start:return []
+    have=set(pd.Timestamp(t).normalize() for t in s.index)
+    return [str(d.date()) for d in pd.date_range(start,end) if d not in have]
+
+def seasonal_normal(s,y0,y1):
+    b=s.loc[f'{y0}-01-01':f'{y1}-12-31'].dropna()
+    if b.empty:return pd.Series(dtype=float)
+    return b.groupby(b.index.strftime('%m-%d')).mean()
+
+def month_series(s):
+    s=s.dropna().copy();s.index=pd.to_datetime(s.index)
+    if s.empty:return pd.Series(dtype=float)
+    return s.groupby(s.index.to_period('M')).mean()
+
+def system_price_history():
+    parts=[];blocked=[]
+    for y in range(PRICE_HISTORY_START.year,TODAY.year+1):
+        final=y<TODAY.year
+        key=f'sys_{y}' if final else f'sys_{TODAY}'
+        dest=CACHE/(key+'.json')
+        if dest.exists() and (final or time.time()-dest.stat().st_mtime<21600):
+            js=json.loads(dest.read_text())
+        else:
+            try:
+                r=requests.get(bp.NP_API+'AggregatePrices',params=dict(year=y,market='DayAhead',deliveryArea='SYS',currency='EUR'),
+                               headers=getattr(bp,'NP_HDR',{'Accept':'application/json'}),timeout=90)
+                if r.status_code==401:
+                    blocked.append(y);log(f'system price {y}: Nord Pool AggregatePrices HTTP 401 (not available for this year)');continue
+                r.raise_for_status();js=r.json();dest.write_text(json.dumps(js,separators=(',',':')))
+            except Exception as e:
+                safe(f'system price {y}',lambda e=e:(_ for _ in ()).throw(e))
+                continue
+        vals={pd.Timestamp(x['deliveryStart'][:10]):x['averagePerArea'].get('SYS')
+              for x in js.get('multiAreaDailyAggregates',[])
+              if x.get('averagePerArea',{}).get('SYS') is not None and x['deliveryStart'][:10]<=str(TODAY)}
+        if vals:parts.append(pd.Series(vals,dtype=float))
+    if blocked:log(f'system price: years {blocked[0]}–{blocked[-1]} unavailable from Nord Pool; Nordic history uses later years only')
+    if not parts:return pd.Series(dtype=float)
+    s=pd.concat(parts).sort_index();return s[~s.index.duplicated(keep='last')]
+
 def prices():
-    jobs=list(ZONES.items());series={}
+    jobs=list(ZONES.items());series={};history={};end=TODAY+dt.timedelta(days=2)
+    windows=price_windows(PRICE_HISTORY_START,end)
+    log('prices: ENTSO-E A44 '+str(PRICE_HISTORY_START)+' to '+str(end)+', '+str(len(windows))+' windows per zone')
     def one(item):
-        z,e=item
-        text=query(dict(documentType='A44',in_Domain=e,out_Domain=e,**ec._period(TODAY-dt.timedelta(days=153),TODAY+dt.timedelta(days=2))),f'price_{z}_{TODAY}')
-        items=ec.entsoe_parse(text);s=ec._combine(items)
-        daily=daily_series(items)
-        return z,s,daily
-    for item in ec.pmap(lambda x:safe('price '+x[0],lambda:one(x)),jobs):
-        if item:series[item[0]]=(item[1],item[2])
-    out={'as_of':None,'units':'EUR/MWh','columns':['date','value','ma30'],
-         'source':'ENTSO-E A44; system price Nord Pool','regions':{}}
-    for z,(_,s) in series.items():
-        s=s[s.index.date<=TODAY];ma=trailing(s);dates=s.index[s.index>=pd.Timestamp(TODAY-dt.timedelta(days=122))]
-        out['regions'][z]={'as_of':str(s.index.max().date()),'rows':[[str(t.date()),s.loc[t],ma.get(t)] for t in dates]}
-    # This is exactly the existing Nord Pool SYS source, with a longer retained window.
-    js=safe('system price',lambda:get_json(bp.NP_API+'AggregatePrices',params=dict(year=TODAY.year,market='DayAhead',deliveryArea='SYS',currency='EUR'),cache_key=f'sys_{TODAY}',max_age=21600))
-    if js:
-        vals={pd.Timestamp(x['deliveryStart'][:10]):x['averagePerArea'].get('SYS') for x in js.get('multiAreaDailyAggregates',[]) if x.get('averagePerArea',{}).get('SYS') is not None and x['deliveryStart'][:10]<=str(TODAY)}
-        s=pd.Series(vals,dtype=float).sort_index();ma=trailing(s)
-        if len(s):out['regions']['Nordic']={'as_of':str(s.index.max().date()),'definition':'official unconstrained Nordic system price, not country average','rows':[[str(t.date()),v,ma.get(t)] for t,v in s.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))]}
+        z,e=item;parts=[];hourly=None
+        for a,b,final in windows:
+            daily,items=fetch_price_window(z,e,a,b,final)
+            if daily is not None and len(daily):parts.append(daily)
+            if items and b>TODAY:hourly=ec._combine(items)
+        daily=pd.concat(parts).sort_index() if parts else pd.Series(dtype=float)
+        daily=daily[~daily.index.duplicated(keep='last')]
+        daily=daily[daily.index.date<=TODAY]
+        if hourly is None and len(daily):
+            # Last-resort hourly window if the current-year file was served from daily CSV only.
+            text=query(dict(documentType='A44',in_Domain=e,out_Domain=e,**ec._period(TODAY-dt.timedelta(days=3),end)),f'price_{z}_hourly_{TODAY}',tries=4)
+            hourly=ec._combine(ec.entsoe_parse(text))
+        return z,hourly,daily
+    for item in ec.pmap(lambda x:safe('price '+x[0],lambda:one(x)),jobs,4):
+        if item:
+            series[item[0]]=(item[1],item[2]);history[item[0]]=item[2]
+    sys_s=system_price_history()
+    if len(sys_s):history['Nordic']=sys_s[sys_s.index.date<=TODAY]
     for c,zz in {'SE':['SE1','SE2','SE3','SE4'],'NO':['NO1','NO2','NO3','NO4','NO5'],'DK':['DK1','DK2']}.items():
-        if all(z in series for z in zz):
-            f=pd.concat([series[z][1] for z in zz],axis=1);s=f.mean(axis=1).where(f.notna().all(axis=1));s=s[s.index.date<=TODAY].dropna();ma=trailing(s)
-            if len(s):out['regions'][c]={'as_of':str(s.index.max().date()),'definition':'equal-weight average of bidding zones, not load-weighted','rows':[[str(t.date()),v,ma.get(t)] for t,v in s.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))]}
+        if all(z in history for z in zz):
+            f=pd.concat([history[z] for z in zz],axis=1);s=f.mean(axis=1).where(f.notna().all(axis=1))
+            history[c]=s[s.index.date<=TODAY].dropna() if len(s) else pd.Series(dtype=float)
+    definitions={'Nordic':'official unconstrained Nordic system price, not country average',
+                 'SE':'equal-weight average of bidding zones, not load-weighted',
+                 'NO':'equal-weight average of bidding zones, not load-weighted',
+                 'DK':'equal-weight average of bidding zones, not load-weighted'}
+    y0,y1=PRICE_BASELINE
+    label=f'{y0}–{y1}'
+    method=('Unsmoothed average of the same month/day in '+label+'. Feb 29 uses the available leap years. '
+            'A day is the mean of all complete Europe/Zurich delivery-hour or 15-minute prices. '
+            'Country values are equal-weight bidding-zone averages, not load-weighted. '
+            'Nordic is the official Nord Pool system price.')
+    out={'as_of':None,'units':'EUR/MWh','columns':['date','value','ma30'],
+         'source':'ENTSO-E A44; system price Nord Pool',
+         'baseline':list(PRICE_BASELINE),'baseline_label':label,
+         'history_start':str(PRICE_HISTORY_START),'normal_method':method,
+         'regions':{}}
+    normals={};monthly_months=None;monthly={};monthly_normal={}
+    period_end=None
+    for code in ['NO1','NO2','NO3','NO4','NO5','SE1','SE2','SE3','SE4','FI','DK1','DK2','Nordic','SE','NO','DK']:
+        s=history.get(code)
+        if s is None or not len(s):continue
+        s=s.sort_index();s=s[~s.index.duplicated(keep='last')];s=s[s.index.date<=TODAY].dropna()
+        if not len(s):continue
+        as_of=s.index.max().date();start=s.index.min().date()
+        expected_end=min(TODAY,as_of)
+        gaps=missing_days(s,max(PRICE_HISTORY_START,start),expected_end)
+        ma=trailing(s);norm=seasonal_normal(s,y0,y1);normals[code]=norm
+        n=pd.Series([norm.loc[t.strftime('%m-%d')] if t.strftime('%m-%d') in norm.index else float('nan') for t in s.index],index=s.index)
+        n30=trailing(n)
+        end_t=s.index.max()
+        b0=int(s.loc[f'{y0}-01-01':f'{y1}-12-31'].index.min().year) if len(s.loc[f'{y0}-01-01':f'{y1}-12-31']) else y0
+        b1=int(s.loc[f'{y0}-01-01':f'{y1}-12-31'].index.max().year) if len(s.loc[f'{y0}-01-01':f'{y1}-12-31']) else y1
+        rec={'as_of':str(as_of),'history_start':str(start),'baseline':[b0,b1],'baseline_label':f'{b0}–{b1}',
+             'coverage':{'days':int(s[s.index>=pd.Timestamp(PRICE_HISTORY_START)].shape[0]),
+                         'gap_count':len(gaps),'gaps':gaps},
+             'rows':[[str(t.date()),s.loc[t],ma.get(t)] for t in s.index[s.index>=pd.Timestamp(TODAY-dt.timedelta(days=122))]]}
+        if code in definitions:rec['definition']=definitions[code]
+        if end_t in ma.index and end_t in n30.index:
+            rec['summary']=summary(ma.loc[end_t],n30.loc[end_t],'EUR/MWh')
+        out['regions'][code]=rec
+        ms=month_series(s)
+        if len(ms):
+            months=[str(p) for p in ms.index]
+            monthly[code]=[None if pd.isna(v) else float(v) for v in ms.values]
+            if monthly_months is None:monthly_months=months
+            elif months!=monthly_months:
+                # Align later; stash with its own index
+                monthly[code]=(months,monthly[code])
+            by={}
+            for p,v in ms.items():
+                if p.year<y0 or p.year>y1:continue
+                if p.year==TODAY.year:continue
+                by.setdefault(p.month,[]).append(float(v))
+            monthly_normal[code]={f'{m:02d}':{'normal':(sum(vs)/len(vs) if vs else None),'min':(min(vs) if vs else None),
+                                              'max':(max(vs) if vs else None),'n_years':len(vs)} for m,vs in by.items()}
+        period_end=as_of if period_end is None else max(period_end,as_of)
+    # Harmonise monthly arrays onto a shared month index.
+    if monthly:
+        all_months=sorted({m for v in monthly.values() for m in (v[0] if isinstance(v,tuple) else monthly_months or [])})
+        if not all_months:
+            all_months=monthly_months or []
+        aligned={}
+        for code,v in monthly.items():
+            if isinstance(v,tuple):
+                d=dict(zip(*v))
+            else:
+                d=dict(zip(monthly_months,v))
+            aligned[code]=[d.get(m) for m in all_months]
+        monthly,monthly_months=aligned,all_months
     out['as_of']=max((r['as_of'] for r in out['regions'].values()),default=None)
     eex=safe('EEX futures',bp.build_eex)
     out['futures']={}
     if eex:
-        for k,label in [('M','front_month'),('Q','next_quarter')]:
+        for k,lab in [('M','front_month'),('Q','next_quarter')]:
             contract=eex['bench'].get(k)
-            out['futures'][label]={'as_of':eex['asof'],'contract':contract,'unit':'EUR/MWh','regions':{z:v.get(contract) for z,v in eex['zones'].items() if z in ['Nordic',*ZONES]}}
+            out['futures'][lab]={'as_of':eex['asof'],'contract':contract,'unit':'EUR/MWh','regions':{z:v.get(contract) for z,v in eex['zones'].items() if z in ['Nordic',*ZONES]}}
     write('prices.json',out)
+    md=sorted({k for n in normals.values() for k in n.index})
+    # Compact: one month-day index, then a value array per region. Feb 29 is kept for leap years.
+    notes=[]
+    nord=history.get('Nordic')
+    if nord is not None and len(nord) and nord.index.min().date()>PRICE_HISTORY_START:
+        notes.append('Nordic (official Nord Pool system price) history starts '+str(nord.index.min().date())+'; Nord Pool AggregatePrices returns HTTP 401 for SYS years before 2024. Bidding-zone normals use 2021–2025. Nordic uses the years actually on file, currently 2024–2025.')
+    write('prices_normals.json',{'as_of':f'{y1}-12-31','baseline':list(PRICE_BASELINE),'baseline_label':label,
+          'history_start':str(PRICE_HISTORY_START),'history_end':str(period_end or TODAY),
+          'units':'EUR/MWh','source':out['source'],'method':method,'notes':notes,
+          'month_days':md,
+          'normal':{code:[None if k not in n.index or pd.isna(n.loc[k]) else float(n.loc[k]) for k in md] for code,n in normals.items()},
+          'months':monthly_months or [],'monthly':monthly,'monthly_normal':monthly_normal,
+          'columns':{'normal':['month_days','normal[region]'],'monthly':['months','monthly[region]'],
+                     'monthly_normal':'monthly_normal[region][MM] with normal, min, max, n_years'}})
     return series
+
 
 def capacity(c,y):
     text=query(dict(documentType='A68',processType='A33',in_Domain=COUNTRIES[c],**ec._period(dt.date(y,1,1),dt.date(y+1,1,1))),f'capacity_{c}_{y}',y<TODAY.year)
