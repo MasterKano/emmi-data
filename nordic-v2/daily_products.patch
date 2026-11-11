@@ -1,8 +1,7 @@
 --- a/daily_products.py
 +++ b/daily_products.py
-@@ -513,6 +513,81 @@
+@@ -513,6 +513,79 @@
      return daily, mtd, summary
- 
  
 +def regional_raw_daily(boundaries_path, output_cache):
 +    """V2 land-area weighted ERA5 means; no workbook calibration or legacy writes.
@@ -14,13 +13,13 @@
 +    not a wind-farm-weighted series. Keep wind at 100m for both data and baseline.
 +    """
 +    from shapely.geometry import shape, box
-+    import hashlib
++    import hashlib, time
 +    cache = Path(output_cache)
 +    # Reuse the existing source fetcher, never the legacy refresh writer.
-+    # ERA5 is delayed: request through D-5 and retain only complete country days.
-+    cutoff = date.today() - timedelta(days=5)
++    # ERA5 usually lags several days: request through today and retain only complete country days.
++    cutoff = date.today()
 +    current = cache.with_name(f"current_points_{date.today()}.csv")
-+    if not current.exists():
++    if not current.exists() or time.time() - current.stat().st_mtime > 6 * 3600:
 +        fresh = u.om_month(cutoff.year, cutoff.month, cutoff)
 +        fresh.to_csv(current, index=False)
 +    files = sorted(u.CACHE.glob("om_????_??.csv"))
@@ -77,8 +76,3 @@
 +    cache.parent.mkdir(parents=True,exist_ok=True)
 +    result.to_csv(cache,index=False);meta.write_text(json.dumps(m))
 +    return result,m
-+
-+
- def main():
-     today = date.today()
-     cal_path = u.BASE / "calibration.json"

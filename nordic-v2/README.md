@@ -10,7 +10,7 @@ This folder is the data layer for Jerry's Nordic redesign. Nothing here changes 
 /workspace/brief/.venv/bin/python /home/box/data/nordic-v2/build.py --baseline 2006:2025
 ```
 
-Default weather baseline **2006–2025**, Jerry's 11 Nov correction. Output is `/home/box/data/nordic-v2/output/`. `--out PATH` changes the destination; `--only weather,prices,generation,hydrology,tomorrow,monthly` selects blocks. The script does not publish, send email, change scheduling or write to EMMI. Publication is a separate reviewed data-only PR.
+Default weather baseline **2006–2025**, Jerry's 11 Nov correction. Output is `/home/box/data/nordic-v2/output/`. `--out PATH` changes the destination; `--only weather,prices,generation,hydrology,tomorrow,monthly,monthly_climate` selects blocks. The script does not publish, send email, change scheduling or write to EMMI. Publication is a separate reviewed data-only PR.
 
 Dependencies: box's existing brief virtualenv (pandas, numpy, requests, curl_cffi, shapely, openpyxl, beautifulsoup4); existing `/workspace/emmi-data/scripts` ENTSO-E/source helpers; existing `/home/box/data/nordic-climate/daily_products.py`. The tracked `daily_products.patch` records the additive box-only extension (legacy refresh logic is unchanged). That file remains the only climate product builder: its added `regional_raw_daily()` calls the existing ERA5 fetcher and never calls the legacy product refresh writer. API keys are environment-only: `ENTSOE_API_TOKEN`, optional `FINGRID_API_KEY`. No keys or raw hourly weather downloads are published. The full 1940+ cache remains on the box.
 
@@ -82,30 +82,44 @@ Each region: `as_of`, actual `history_start`, `metrics`. Metrics: `wind_load_fac
 
 ### `tomorrow.json`
 
-`delivery_date`, `timezone`, `hours` (ISO delivery-hour timestamps), `units`, `source`, `regions`, `temperature`. `as_of` is the forecast retrieval day, distinct from the future `delivery_date`.
+`delivery_date`, `timezone`, `hours` (ISO delivery-hour timestamps), `units`, `source`, `regions`, `temperature`, `wind100`. `as_of` is the forecast retrieval day, distinct from the future `delivery_date`.
 
-Each zone/country: `as_of`, arrays `price`, `wind_fc`, `solar_fc`, `load_fc`, `residual_load`; `complete` maps those fields to booleans. Arrays align to `hours`, including DST days. Prices are EUR/MWh; forecasts and residual load are MW. Residual load = load − wind − solar **only where all three forecasts exist**. No solar forecast is not assumed to be zero. Country prices are equal-weight means, power forecasts sum all applicable zones (with complete coverage required).
+Each zone/country/Nordic: `as_of`, arrays `price`, `wind_fc`, `solar_fc`, `load_fc`, `residual_load`; `complete` maps those fields to booleans; `forecast_source` names the series actually used. Arrays align to `hours`, including DST days. Prices are EUR/MWh; generation forecasts and residual load are MW. Residual load = load − wind − solar **only where all three forecasts exist**. No solar forecast is not assumed to be zero. Country prices are equal-weight bidding-zone means. `regions.Nordic.price` is the official Nord Pool **system** price (hourly from DayAheadPrices), never a country average. Power forecasts sum all applicable zones when every zone is complete; if a zone is missing, a published country-level ENTSO-E series may be used for that country and is labelled as such.
 
-`temperature[region]`: `as_of`, `hourly`, `daily_mean`, `daily_normal`, `difference_degC`, `normal_baseline`, `note`. Raw Open-Meteo IFS forecast at the same weighted points; comparison is forecast local-day mean versus ERA5 UTC-day seasonal daily normal. That small day-boundary distinction is disclosed; these are not hourly climatological normals.
+Wind and solar: ENTSO-E A69 process A01 (day-ahead) first. A03 single-point all-zero placeholders are treated as **unavailable, not 0 MW** (Statnett has published these for A01 on the delivery day). If A01 is missing or a stub, process A18 (intraday) is used and labelled. If ENTSO-E still lacks a real MW series, official TSO fallbacks are used when they exist: Fingrid open data datasets 245/248 (latest 15-minute wind/solar, not day-ahead) for Finland; Energinet Forecasts_Hour `ForecastDayAhead` for DK1/DK2. Open-Meteo 100m wind is never converted to MW.
 
-Tomorrow prices/load are available for all zones at build time, but wind/solar publication is incomplete for SE/FI/DK. Norway residual-load curves are complete. Other residual-load curves remain null and must display "forecast not available", not a zero curve.
+`temperature[region]` and `wind100[region]` (Nordic, SE, NO, FI, DK): `as_of`, `hourly`, `daily_mean`, `daily_normal`, `difference` (`difference_degC` for temperature), `difference_pct` for wind, `normal_baseline`, `source`/`note`. Raw Open-Meteo IFS forecast at the same weighted points; comparison is forecast local-day mean versus ERA5 UTC-day seasonal daily normal. Use `wind100` when a MW wind forecast is unavailable. These are not hourly climatological normals.
+
+A missing MW forecast or residual must display "forecast not available", not a zero curve.
+
+### `monthly_climate.json`
+
+This is the monthly climate file for the v2 page. It replaces the legacy Nordic climate snapshot tiles (`monthly.json` `climate_100m`), which used 1970–2025 / 1991–2020 normals on the old 72-point land-and-sea grid.
+
+`baseline: [2006, 2025]`, `history_start: "2021-01"`, `units`, `source`, `method`, `grid`, `point_counts`, `aggregation`, `columns: [month, value, normal, min, max, difference, difference_pct, days_covered, days_in_month, partial]`, `regions`. Geography, height and raw uncalibrated temperature/rain match `weather.json`. Regions: **Nordic, SE, NO, FI, DK**. Each metric (`wind100`, `temp`, `rain`) has `as_of` and `rows`.
+
+- `value`: mean of daily values in that month. Rain stays mm/day, not a monthly total.
+- `normal`: mean of the 2006–2025 yearly means for the same month. For a **partial** month (the current month, flagged `partial: true` with `days_covered` / `days_in_month`), the normal, min and max use the **same calendar days** in each baseline year, not the full-month normal.
+- `min` / `max`: minimum and maximum of those 20 yearly means (the quietest/windiest or coldest/warmest such month or same-days period in the baseline), not the min/max of daily values.
+- `difference`: value − normal, native units. `difference_pct` is set for wind and rain only; temperature uses degrees C, never a percentage.
+- Current-month rows are month-to-date through the latest complete ERA5 day. A mid-month source gap is not shortened into a still-valid mean; that month's `value` is null.
 
 ### `monthly.json`
 
 `source`, `stale`, `snapshots`, `climate_100m`, `wind_display_rule`, `note`. The two legacy objects (`snapshots.nordic_mtd`, `snapshots.nordic_monthly`) are copied **unchanged** from existing EMMI monthly-view inputs, including their native `generated_utc`, `days`/`months`, zone/country maps, `types`, generation, prices, weather, `inflow`, `gaps`, source metadata and build timings. Do not reinterpret native TWh/MW/price units. This is intentionally a marked-stale snapshot, not a newly refreshed source.
 
-`climate_100m` is the existing climate `mtd.json`, also unchanged: native `generated`, `wind_height_m`, `basis`, `months`, `daily_coverage`, `variable_coverage`, notes. Month records retain `days_covered`, first/last dates, units, `wind100`/`temp`/`rain`, historical min/mean/max/ranks, and `same_dates` (legacy 1991–2020). **Only `climate_100m.wind100` is approved for monthly wind speed; never render any old wx wind fields as 100m.** Legacy monthly reference periods remain unchanged; the new daily weather block is 2006–2025. Display monthly numbers to one decimal and label the dashed average line with its value. Preserve existing regional/month buttons.
+`climate_100m` is retained only as the old climate payload. **Do not use it for v2 monthly climate tiles.** Use `monthly_climate.json`. `climate_100m` still uses the old 72-point grid and 1970–2025 / 1991–2020 normals. Display monthly numbers to one decimal and label the dashed average line with its value. Preserve existing regional/month buttons.
 
 ## Provenance/history and known limits
 
-- ERA5 via Open-Meteo archive, raw 100m wind / temperature / precipitation: **1940-01-01** onward for wind/temperature; rain starts **1940-01-02** because the source has no first-day accumulation. Per-metric history starts are explicit. Roughly 5-day lag; all output dates are explicit. Natural Earth mask polygons are public domain.
+- ERA5 via Open-Meteo archive, raw 100m wind / temperature / precipitation: **1940-01-01** onward for wind/temperature; rain starts **1940-01-02** because the source has no first-day accumulation. Per-metric history starts are explicit. The archive is requested through today and only complete UTC days are kept; as of the 11 Nov 2026 refresh the latest complete day is still **2026-11-05**. Natural Earth mask polygons are public domain.
 - ENTSO-E A44 spot inputs: fetched 153 days back, retaining 123 daily points plus warmed 30-day averages. Nordic SYS comes from the existing Nord Pool aggregate source (calendar 2026). Sources are not substituted for each other.
 - EEX scraper: **2026-09-01** onward; settlement date is retained (currently may lag more than one business day).
-- ENTSO-E actual generation / annual capacities: requested **2015** onward. Actual country/metric start dates are in `generation.json` (SE first full day 2015-01-05, NO/FI 2015-01-01, DK 2015-01-02). DK recent actual generation has gaps.
+- ENTSO-E actual generation / annual capacities: requested **2015** onward. Actual country/metric start dates are in `generation.json` (SE first full day 2015-01-05, NO/FI 2015-01-01, DK 2015-01-02). ENTSO-E A75 for Denmark currently ends **2026-11-04 07:45Z**; later complete DK wind days are filled from Energinet ElectricityProdex5MinRealtime (DK1+DK2) and labelled in `source_notes`. Norway wind on **2026-10-26** remains null because A75 onshore (B19) is missing 14:00–14:45 UTC (4 of 96 intervals) and is not interpolated.
 - NVE reservoir history: available from **1995-01-08**; published min/median/max reference 2006–2025. SE/FI A72 query history starts 2015 (first week dated 2014-12-29).
 - Existing derived monthly inflow: **2021-01** onward; unchanged source through September 2026.
 - Nord Pool UMM: current availability + next 14 days, not historical plant output.
-- ENTSO-E tomorrow forecasts: delivery-day horizon, subject to publication timing. Open-Meteo IFS: current forecast; no historical forecast archive in this folder.
+- ENTSO-E tomorrow forecasts: delivery-day horizon, subject to publication timing. A69 A01 is unpublished for SE/FI/DK tomorrow at the 11 Nov 2026 build; Norway A01 is an all-zero A03 stub and is discarded. A18 intradaily MW forecasts are used for Norway (country aggregate, because NO5 A18 is also a zero stub) and Finland. Sweden and Denmark have no official MW wind/solar forecast for tomorrow from ENTSO-E or Energinet at build time; show `wind100` vs normal instead. Open-Meteo IFS: current forecast; no historical forecast archive in this folder.
 
 No signup, subscription, card, paid data service or new hosting was created. Test-page consumers can fetch these small public files directly from `raw.githubusercontent.com/MasterKano/emmi-data/main/nordic-v2/` after the data PR merges. Old site/email consumers are not redirected.
 

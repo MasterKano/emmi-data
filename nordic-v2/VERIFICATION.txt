@@ -5,12 +5,13 @@ test_hydrology_units_and_omissions_are_honest (__main__.Contract.test_hydrology_
 test_json_sizes_dates_and_finite_numbers (__main__.Contract.test_json_sizes_dates_and_finite_numbers) ... ok
 test_legacy_snapshots_unchanged_and_height_guard (__main__.Contract.test_legacy_snapshots_unchanged_and_height_guard) ... ok
 test_manifest_matches_actual_files (__main__.Contract.test_manifest_matches_actual_files) ... ok
+test_monthly_climate_20yr_new_geography (__main__.Contract.test_monthly_climate_20yr_new_geography) ... ok
 test_normal_uses_exact_2006_2025_source_days (__main__.Contract.test_normal_uses_exact_2006_2025_source_days) ... ok
 test_price_30_calendar_days (__main__.Contract.test_price_30_calendar_days) ... ok
 test_tomorrow_residual_and_missing_not_zero (__main__.Contract.test_tomorrow_residual_and_missing_not_zero) ... ok
 test_weather_source_height_and_country_weights (__main__.Contract.test_weather_source_height_and_country_weights) ... ok
 
 ----------------------------------------------------------------------
-Ran 11 tests in 1.378s
+Ran 12 tests in 1.363s
 
 OK
