@@ -105,9 +105,19 @@ class Contract(unittest.TestCase):
                 if None in [w,s,l]:self.assertIsNone(res)
                 else:self.assertAlmostEqual(l-w-s,res,delta=.003)
         for c,temp in t['temperature'].items():self.assertEqual(len(temp['hourly']),len(t['hours']))
-        self.assertTrue(t['regions']['NO']['complete']['residual_load'])
+        # Residual is only complete when wind, solar and load all exist. Norway solar is an A03 zero stub, so residual stays null.
+        if not t['regions']['NO']['complete']['solar_fc']:
+            self.assertFalse(t['regions']['NO']['complete']['residual_load'])
+            self.assertTrue(all(x is None for x in t['regions']['NO']['residual_load']))
         if not t['regions']['SE']['complete']['wind_fc']:
             self.assertTrue(any(x is None for x in t['regions']['SE']['residual_load']))
+        no=t['regions']['NO']['wind_fc']
+        self.assertTrue(any(v not in (None,0,0.0) for v in no), 'Norway wind forecast must not be the A01 zero stub')
+        self.assertTrue(t['regions']['NO']['complete']['wind_fc'])
+        self.assertIn('Nordic',t['regions'])
+        self.assertTrue(any(v is not None for v in t['regions']['Nordic']['price']))
+        self.assertEqual(set(t['wind100']),{'Nordic','SE','NO','FI','DK'})
+        self.assertEqual(len(t['wind100']['Nordic']['hourly']),len(t['hours']))
     def test_legacy_snapshots_unchanged_and_height_guard(self):
         m=read('monthly')
         for name,j in m['snapshots'].items():
@@ -121,5 +131,28 @@ class Contract(unittest.TestCase):
         self.assertIn('not full',h['balance_definition'])
         self.assertTrue(any('Snowpack' in x for x in h['omitted']))
         self.assertEqual(h['monthly_inflow']['NO']['as_of'],'2026-09-30')
+    def test_monthly_climate_20yr_new_geography(self):
+        m=read('monthly_climate')
+        self.assertEqual(m['baseline'],[2006,2025])
+        self.assertEqual(m['history_start'],'2021-01')
+        self.assertEqual(set(m['regions']),{'Nordic','SE','NO','FI','DK'})
+        self.assertEqual(m['units']['wind100'],'m/s at 100m')
+        cols=m['columns']
+        self.assertEqual(cols[0],'month')
+        for c,r in m['regions'].items():
+            wind=r['metrics']['wind100']['rows']
+            self.assertGreaterEqual(len(wind),12)
+            self.assertEqual(wind[0][0],'2021-01')
+            last=wind[-1]
+            row={cols[i]:last[i] for i in range(len(cols))}
+            self.assertTrue(row['partial'])
+            self.assertGreater(row['days_covered'],0)
+            self.assertLess(row['days_covered'],row['days_in_month'])
+            if row['value'] is not None and row['normal'] is not None:
+                self.assertAlmostEqual(row['difference'],row['value']-row['normal'],delta=.002)
+            jan=next(x for x in wind if x[0]=='2021-01')
+            self.assertFalse(jan[cols.index('partial')])
+            temp=r['metrics']['temp']['rows'][-1]
+            self.assertIsNone(temp[cols.index('difference_pct')])
 
 if __name__=='__main__':unittest.main(verbosity=2)

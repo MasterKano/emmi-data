@@ -49,9 +49,10 @@ def get_json(url,params=None,cache_key=None,max_age=0):
     if dest:dest.write_text(json.dumps(j,separators=(',',':')))
     return j
 
-def query(params,key,final=False):
+def query(params,key,final=False,max_age=None):
     p=CACHE/(key+'.xml')
-    if p.exists() and (final or time.time()-p.stat().st_mtime<6*3600):
+    ttl=6*3600 if max_age is None else max_age
+    if p.exists() and (final or time.time()-p.stat().st_mtime<ttl):
         text=p.read_text()
     else:
         text=ec.entsoe_raw(params,tries=2).text
@@ -63,6 +64,121 @@ def safe(job,fn):
     try:return fn()
     except Exception as e:
         msg=ec._redact(e)[:180];ERRORS.append({'part':job,'error':msg});log(f'{job}: {msg}');return None
+
+
+def is_stub(s):
+    # A03 single-point zero placeholders look like a complete 0 MW series after expansion.
+    if s is None or len(s.dropna())==0:return True
+    v=s.dropna();return bool((v==0).all() and v.nunique()<=1)
+
+def hourly_idx(items,idx):
+    s=ec._combine(items)
+    if s is None:return [None]*len(idx)
+    r=s.resample('1h');h=r.mean();step=min(x['step'] for x in items);h=h.where(r.count()>=max(1,60//step))
+    return none_list(h.reindex(idx).tolist())
+
+def forecast_from_items(items,idx):
+    out={}
+    for k,psrs in [('wind_fc',['B18','B19']),('solar_fc',['B16'])]:
+        parts=[]
+        for p in psrs:
+            it=[i for i in items if i['psr']==p]
+            if not it:continue
+            if is_stub(ec._combine(it)):continue
+            parts.append(hourly_idx(it,idx))
+        out[k]=none_list(pd.DataFrame(parts).sum(axis=0,min_count=len(parts)).tolist()) if parts else [None]*len(idx)
+    return out
+
+def entsoe_wind_solar(label,eic,process,target,idx,cache_key):
+    text=safe(label,lambda:query(dict(documentType='A69',processType=process,in_Domain=eic,**ec._period(target,target+dt.timedelta(days=1))),cache_key,max_age=0))
+    items=ec.entsoe_parse(text) if text else []
+    kind='day-ahead' if process=='A01' else 'intraday'
+    return forecast_from_items(items,idx),f'ENTSO-E A69 {process} ({kind})'
+
+def none_list(vals):
+    return [None if v is None or pd.isna(v) else v for v in vals]
+
+def fill_if_missing(dst,src,sources,key,source):
+    cur,new=none_list(dst[key]),none_list(src[key])
+    if all(v is None for v in cur) and any(v is not None for v in new):
+        dst[key]=new;sources[key]=source
+
+def fingrid_forecast(idx):
+    keys=[k for k in ((os.environ.get(v) or '').strip() for v in ('FINGRID_API_KEY','FINGRID_API_KEY_SECONDARY')) if k]
+    if not keys:return None
+    a,b=idx[0],idx[-1]+pd.Timedelta(hours=1)
+    out={}
+    # 245/248 are the rolling 72-hour forecasts and currently cover the full delivery day;
+    # day-ahead 246/247 stop one hour early.
+    for i,(ds,k) in enumerate(((245,'wind_fc'),(248,'solar_fc'))):
+        if i:time.sleep(6.5)
+        r=bp.get(f'{bp.FINGRID_API}{ds}/data',tries=2,headers={'x-api-key':keys[0],'Accept':'application/json'},
+                 params=dict(startTime=bp._ts(a-pd.Timedelta(hours=2)),endTime=bp._ts(b+pd.Timedelta(hours=2)),pageSize=20000,sortOrder='asc',format='json'))
+        js=r.json();rows=js.get('data') if isinstance(js,dict) else js
+        if not rows:raise LookupError(f'Fingrid {ds}: no data')
+        s=pd.Series([x['value'] for x in rows],index=pd.to_datetime([x['startTime'] for x in rows],utc=True),dtype=float).sort_index()
+        out[k]=none_list(s.resample('1h').mean().reindex(idx).tolist())
+    return out
+
+def energinet_forecast(idx,target):
+    a=idx[0]-pd.Timedelta(hours=2);b=idx[-1]+pd.Timedelta(hours=14)
+    fc=bp._eds('Forecasts_Hour',a,b,{'PriceArea':['DK1','DK2'],'ForecastType':['Offshore Wind','Onshore Wind','Solar']},
+               ['HourUTC','PriceArea','ForecastType','ForecastDayAhead'])
+    if fc is None or fc.empty:return {}
+    fc=fc.assign(t=pd.to_datetime(fc['HourUTC'],utc=True))
+    out={}
+    for z in ['DK1','DK2']:
+        y=fc[fc['PriceArea']==z]
+        if y.empty:continue
+        p=y.pivot_table(index='t',columns='ForecastType',values='ForecastDayAhead',aggfunc='last')
+        res={'wind_fc':[None]*len(idx),'solar_fc':[None]*len(idx)}
+        wcols=[c for c in ('Offshore Wind','Onshore Wind') if c in p.columns]
+        if wcols:res['wind_fc']=none_list(p[wcols].sum(axis=1,min_count=len(wcols)).resample('1h').mean().reindex(idx).tolist())
+        if 'Solar' in p.columns:res['solar_fc']=none_list(p['Solar'].resample('1h').mean().reindex(idx).tolist())
+        out[z]=res
+    return out
+
+def fill_dk_wind(frames,denominators,daily_cap,latest,out):
+    if 'DK' not in frames:return []
+    g=frames['DK'];last=g['wind'].dropna().index.max() if 'wind' in g and g['wind'].notna().any() else None
+    if last is not None and last.date()>=TODAY-dt.timedelta(days=1):return []
+    start=(last.date()+dt.timedelta(days=1)) if last is not None else TODAY-dt.timedelta(days=14)
+    a,_=ec._cet_bounds(start,start+dt.timedelta(days=1));_,b=ec._cet_bounds(TODAY,TODAY+dt.timedelta(days=1))
+    act=bp._eds('ElectricityProdex5MinRealtime',a,min(pd.Timestamp(dt.datetime.now(dt.timezone.utc)),pd.Timestamp(b)),
+                {'PriceArea':['DK1','DK2']},['Minutes5UTC','PriceArea','OffshoreWindPower','OnshoreWindPower'])
+    if act is None or act.empty:return ['DK wind after ENTSO-E cutoff: Energinet returned no actuals']
+    act=act.assign(t=pd.to_datetime(act['Minutes5UTC'],utc=True))
+    act['wind']=act[['OffshoreWindPower','OnshoreWindPower']].astype(float).sum(axis=1,min_count=1)
+    p=act.pivot_table(index='t',columns='PriceArea',values='wind',aggfunc='last')
+    if not {'DK1','DK2'}.issubset(p.columns):return ['DK wind after ENTSO-E cutoff: Energinet missing a bidding zone']
+    tot=p[['DK1','DK2']].sum(axis=1,min_count=2).sort_index()
+    added=[]
+    for day,s in tot.groupby(tot.index.tz_convert(ec.CET).strftime('%Y-%m-%d')):
+        d=dt.date.fromisoformat(day);lo,hi=ec._cet_bounds(d,d+dt.timedelta(days=1))
+        need=int((hi-lo).total_seconds()/300)
+        part=s.loc[(s.index>=lo)&(s.index<hi)]
+        if part.notna().sum()!=need:continue
+        ts=pd.Timestamp(d)
+        if ts not in g.index:g.loc[ts,g.columns]=np.nan
+        if pd.isna(g.loc[ts,'wind']):
+            g.loc[ts,'wind']=float(part.mean());added.append(str(d))
+    g.sort_index(inplace=True)
+    frames['DK']=g
+    path=CACHE/f'gen_daily_v2_DK_{TODAY.year}.csv'
+    g[['wind','hydro','nuclear']].rename_axis('date').to_csv(path)
+    if not added:return ['DK wind after ENTSO-E cutoff: Energinet actuals had no complete extra delivery days']
+    cap=denominators['DK']
+    if 'DK' in daily_cap:
+        cap=daily_cap['DK'].reindex(g.index).combine_first(cap.reindex(g.index))
+    else:
+        cap=cap.reindex(g.index)
+    denominators['DK']=cap
+    g['wind_load_factor']=100*g.wind/cap
+    g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
+    frames['DK']=g
+    out['capacity_daily']['DK']={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))],'latest_source':latest['DK']}
+    out['source']='ENTSO-E A75 actual generation; A68 annual installed capacity; Energinet ElectricityProdex5MinRealtime for recent DK wind where A75 is incomplete'
+    return [f"DK wind {added[0]}..{added[-1]} from Energinet ElectricityProdex5MinRealtime (DK1+DK2); ENTSO-E A75 currently ends 2026-11-04 07:45Z"]
 
 def trailing(s):
     if s.empty:return s
@@ -299,6 +415,9 @@ def generation():
         # Reporting/capacity mismatches are not silently clipped.
         g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
         frames[c]=g
+    notes=safe('DK Energinet generation fill',lambda:fill_dk_wind(frames,denominators,daily_cap,latest,out))
+    if notes:out.setdefault('source_notes',[]).extend(notes)
+    out.setdefault('source_notes',[]).append('NO wind 2026-10-26 remains null: ENTSO-E A75 onshore (B19) is missing 14:00-14:45 UTC (4 of 96 intervals); not interpolated')
     if all(c in frames for c in COUNTRIES):
         g=pd.concat(frames.values()).sort_index()
         nord=pd.concat({k:pd.concat([frames[c][k] for c in members],axis=1).sum(axis=1,min_count=len(members)) for k,members in {'wind':list(COUNTRIES),'hydro':['NO','SE','FI'],'nuclear':['SE','FI']}.items()},axis=1)
@@ -392,51 +511,108 @@ def hydrology():
 def tomorrow(price_series,normals,meta):
     target=TODAY+dt.timedelta(days=1);a,b=ec._cet_bounds(target,target+dt.timedelta(days=1));idx=pd.date_range(a,b,freq='h',inclusive='left')
     out={'as_of':str(TODAY),'delivery_date':str(target),'timezone':'Europe/Zurich','hours':[t.tz_convert(ec.CET).isoformat() for t in idx],
-         'units':{'price':'EUR/MWh','wind_fc':'MW','solar_fc':'MW','load_fc':'MW','residual_load':'MW','temp':'degC'},
-         'source':'ENTSO-E A44/A69/A65 A01 day-ahead forecasts; Open-Meteo IFS temperature','regions':{},'temperature':{}}
-    def hourly(items):
-        s=ec._combine(items)
-        if s is None:return [None]*len(idx)
-        # Complete within-hour averages only; no filling of missing forecasts.
-        r=s.resample('1h');h=r.mean();step=min(x['step'] for x in items);h=h.where(r.count()>=max(1,60//step))
-        return h.reindex(idx).tolist()
+         'units':{'price':'EUR/MWh','wind_fc':'MW','solar_fc':'MW','load_fc':'MW','residual_load':'MW','temp':'degC','wind100':'m/s at 100m'},
+         'source':'ENTSO-E A44 prices and A65 load; ENTSO-E A69 A01 day-ahead wind/solar, or A18 intradaily when A01 is a zero stub or unpublished; Fingrid and Energinet TSO forecasts as labelled fallbacks; Nord Pool official SYS hourly; Open-Meteo IFS temperature and 100m wind speed. MW is never invented from wind speed.',
+         'regions':{},'temperature':{},'wind100':{}}
+    n=len(idx)
     def one(item):
-        z,e=item;res={'as_of':str(TODAY),'price':[]}
+        z,e=item;res={'as_of':str(TODAY)};sources={}
         s=price_series.get(z,(None,None))[0]
-        res['price']=s.resample('1h').mean().reindex(idx).tolist() if s is not None else [None]*len(idx)
-        text=safe('forecast '+z,lambda:query(dict(documentType='A69',processType='A01',in_Domain=e,**ec._period(target,target+dt.timedelta(days=1))),f'forecast_{z}_{TODAY}'))
-        items=ec.entsoe_parse(text) if text else []
-        for k,psr in [('wind_fc',['B18','B19']),('solar_fc',['B16'])]:
-            by={p:[i for i in items if i['psr']==p] for p in psr};parts=[hourly(it) for it in by.values() if it]
-            if parts:res[k]=pd.DataFrame(parts).sum(axis=0,min_count=len(parts)).tolist()
-            else:res[k]=[None]*len(idx)
+        res['price']=none_list(s.resample('1h').mean().reindex(idx).tolist()) if s is not None else [None]*n
+        sources['price']='ENTSO-E A44 day-ahead'
+        parsed,src=entsoe_wind_solar('forecast '+z+' A01',e,'A01',target,idx,f'forecast_A01_{z}_{TODAY}')
+        res.update(parsed);sources['wind_fc']=src if any(v is not None for v in parsed['wind_fc']) else None
+        sources['solar_fc']=src if any(v is not None for v in parsed['solar_fc']) else None
+        if all(v is None for v in res['wind_fc']) or all(v is None for v in res['solar_fc']):
+            parsed,src=entsoe_wind_solar('forecast '+z+' A18',e,'A18',target,idx,f'forecast_A18_{z}_{TODAY}')
+            fill_if_missing(res,parsed,sources,'wind_fc',src)
+            fill_if_missing(res,parsed,sources,'solar_fc',src)
         text=safe('load forecast '+z,lambda:query(dict(documentType='A65',processType='A01',outBiddingZone_Domain=e,**ec._period(target,target+dt.timedelta(days=1))),f'loadfc_{z}_{TODAY}'))
-        res['load_fc']=hourly(ec.entsoe_parse(text)) if text else [None]*len(idx)
-        res['residual_load']=[l-w-s if all(pd.notna(v) for v in [l,w,s]) else None for l,w,s in zip(res['load_fc'],res['wind_fc'],res['solar_fc'])]
-        res['complete']={k:all(pd.notna(v) for v in res[k]) for k in ['price','wind_fc','solar_fc','load_fc','residual_load']}
+        res['load_fc']=hourly_idx(ec.entsoe_parse(text),idx) if text else [None]*n
+        sources['load_fc']='ENTSO-E A65 A01 day-ahead' if any(v is not None for v in res['load_fc']) else None
+        res['forecast_source']=sources
         return z,res
     for row in ec.pmap(lambda j:safe('tomorrow '+j[0],lambda:one(j)),list(ZONES.items()),6):
         if row:out['regions'][row[0]]=row[1]
-    for c,zz in {'SE':['SE1','SE2','SE3','SE4'],'NO':['NO1','NO2','NO3','NO4','NO5'],'DK':['DK1','DK2']}.items():
+    # Finland: Fingrid official MW if ENTSO-E still lacks a real series.
+    if 'FI' in out['regions'] and (all(v is None for v in out['regions']['FI']['wind_fc']) or all(v is None for v in out['regions']['FI']['solar_fc'])):
+        fg=safe('Fingrid FI forecast',lambda:fingrid_forecast(idx))
+        if fg:
+            src='Fingrid open data (CC BY 4.0), latest 15-minute forecast (datasets 245/248); ENTSO-E A69 A01 not published for this delivery day'
+            fill_if_missing(out['regions']['FI'],fg,out['regions']['FI']['forecast_source'],'wind_fc',src)
+            fill_if_missing(out['regions']['FI'],fg,out['regions']['FI']['forecast_source'],'solar_fc',src)
+    # Denmark: Energinet day-ahead if ENTSO-E lacks tomorrow.
+    if any(z in out['regions'] and all(v is None for v in out['regions'][z]['wind_fc']) for z in ['DK1','DK2']):
+        eds=safe('Energinet DK forecast',lambda:energinet_forecast(idx,target)) or {}
+        src='Energinet Energi Data Service Forecasts_Hour, ForecastDayAhead'
+        for z,parsed in eds.items():
+            if z in out['regions']:
+                fill_if_missing(out['regions'][z],parsed,out['regions'][z]['forecast_source'],'wind_fc',src)
+                fill_if_missing(out['regions'][z],parsed,out['regions'][z]['forecast_source'],'solar_fc',src)
+    groups={'SE':['SE1','SE2','SE3','SE4'],'NO':['NO1','NO2','NO3','NO4','NO5'],'DK':['DK1','DK2']}
+    for c,zz in groups.items():
         if not all(z in out['regions'] for z in zz):continue
-        res={'as_of':str(TODAY),'price_definition':'equal-weight zone average, not load-weighted'}
-        for k in ['price','wind_fc','solar_fc','load_fc','residual_load']:
+        res={'as_of':str(TODAY),'price_definition':'equal-weight zone average, not load-weighted','forecast_source':{}}
+        for k in ['price','wind_fc','solar_fc','load_fc']:
             f=pd.DataFrame([out['regions'][z][k] for z in zz]);s=f.sum(axis=0,min_count=len(zz))
-            res[k]=(s/len(zz) if k=='price' else s).tolist()
-        res['complete']={k:all(pd.notna(v) for v in res[k]) for k in ['price','wind_fc','solar_fc','load_fc','residual_load']};out['regions'][c]=res
-    # Temperature uses the same fractional-country grid weights as historical normals.
-    pts=sorted({(a,b) for c in COUNTRIES for a,b,w in meta['weights'][c]})
-    js=safe('temperature forecast',lambda:get_json('https://api.open-meteo.com/v1/forecast',params=dict(latitude=','.join(str(p[0]) for p in pts),longitude=','.join(str(p[1]) for p in pts),hourly='temperature_2m',timezone='GMT',start_date=str(a.date()),end_date=str(b.date()),models='ecmwf_ifs025'),cache_key=f'tempfc_utc_{TODAY}',max_age=21600))
+            res[k]=none_list((s/len(zz) if k=='price' else s).tolist())
+            if k=='price':res['forecast_source'][k]='equal-weight zone average of ENTSO-E A44'
+            elif all(v is not None for v in res[k]):
+                res['forecast_source'][k]='sum of bidding-zone forecasts'
+        # Official country-level ENTSO-E series when a zone is missing (e.g. NO5 A18 wind stub).
+        if all(v is None for v in res['wind_fc']) or all(v is None for v in res['solar_fc']):
+            for proc in ['A01','A18']:
+                parsed,src=entsoe_wind_solar(f'forecast {c} country {proc}',COUNTRIES[c],proc,target,idx,f'forecast_{proc}_{c}_{TODAY}')
+                fill_if_missing(res,parsed,res['forecast_source'],'wind_fc',src+' country aggregate')
+                fill_if_missing(res,parsed,res['forecast_source'],'solar_fc',src+' country aggregate')
+                if any(v is not None for v in res['wind_fc']) and any(v is not None for v in res['solar_fc']):break
+        out['regions'][c]=res
+    # Official Nord Pool system price for the Nordic view; never a country average.
+    nord={'as_of':str(TODAY),'price_definition':'official unconstrained Nordic system price, not a country average','forecast_source':{}}
+    js=safe('Nord Pool SYS hourly',lambda:get_json(bp.NP_API+'DayAheadPrices',params=dict(date=str(target),market='DayAhead',deliveryArea='SYS',currency='EUR'),cache_key=f'np_sys_{target}',max_age=3600))
+    if js:
+        ent=[(e['deliveryStart'],(e.get('entryPerArea') or {}).get('SYS')) for e in js.get('multiAreaEntries') or []]
+        ent=[(t,v) for t,v in ent if v is not None]
+        if ent:
+            s=pd.Series([v for _,v in ent],index=pd.to_datetime([t for t,_ in ent],utc=True),dtype=float).sort_index()
+            nord['price']=none_list(s.resample('1h').mean().reindex(idx).tolist())
+            nord['forecast_source']['price']='Nord Pool DayAheadPrices, official SYS'
+        else:nord['price']=[None]*n
+    else:nord['price']=[None]*n
+    members=['NO','SE','FI','DK']
+    if all(c in out['regions'] for c in members):
+        for k in ['wind_fc','solar_fc','load_fc']:
+            f=pd.DataFrame([out['regions'][c][k] for c in members])
+            nord[k]=none_list(f.sum(axis=0,min_count=len(members)).tolist())
+            if all(pd.notna(v) for v in nord[k]):nord['forecast_source'][k]='sum of country forecasts (NO+SE+FI+DK)'
+    else:
+        for k in ['wind_fc','solar_fc','load_fc']:nord[k]=[None]*n
+    out['regions']['Nordic']=nord
+    for code,res in out['regions'].items():
+        res['residual_load']=[l-w-s if all(pd.notna(v) for v in [l,w,s]) else None for l,w,s in zip(res['load_fc'],res['wind_fc'],res['solar_fc'])]
+        res['complete']={k:all(pd.notna(v) for v in res[k]) for k in ['price','wind_fc','solar_fc','load_fc','residual_load']}
+    # Temperature and 100m wind speed use the same fractional-country grid weights as historical normals.
+    pts=sorted({(x,y) for c in COUNTRIES for x,y,w in meta['weights'][c]})
+    js=safe('weather forecast',lambda:get_json('https://api.open-meteo.com/v1/forecast',params=dict(latitude=','.join(str(p[0]) for p in pts),longitude=','.join(str(p[1]) for p in pts),hourly='temperature_2m,wind_speed_100m',timezone='GMT',start_date=str(a.date()),end_date=str(b.date()),models='ecmwf_ifs025',wind_speed_unit='ms'),cache_key=f'metfc_utc_{TODAY}',max_age=21600))
     if js:
         if not isinstance(js,list):js=[js]
-        if len(js)!=len(pts):raise ValueError('temperature forecast point mismatch')
-        arrays={p:pd.Series(j['hourly']['temperature_2m'],index=pd.to_datetime(j['hourly']['time'],utc=True),dtype=float).reindex(idx).to_numpy() for p,j in zip(pts,js)}
-        if any(np.isnan(v).any() or len(v)!=len(idx) for v in arrays.values()):raise ValueError('Incomplete temperature forecast delivery hours')
+        if len(js)!=len(pts):raise ValueError('weather forecast point mismatch')
+        def arr(key):
+            arrays={p:pd.Series(j['hourly'][key],index=pd.to_datetime(j['hourly']['time'],utc=True),dtype=float).reindex(idx).to_numpy() for p,j in zip(pts,js)}
+            if any(np.isnan(v).any() or len(v)!=len(idx) for v in arrays.values()):raise ValueError(f'Incomplete {key} forecast delivery hours')
+            return arrays
+        temps,winds=arr('temperature_2m'),arr('wind_speed_100m')
         for c in REGIONS:
-            weights=meta['weights'][c];v=np.average(np.stack([arrays[(a,b)] for a,b,w in weights]),axis=0,weights=[w for a,b,w in weights])
-            norm=float(normals[c].loc[target.strftime('%m-%d'),'temp'])
-            out['temperature'][c]={'as_of':str(TODAY),'hourly':v.tolist(),'daily_mean':float(np.mean(v)),'daily_normal':norm,'difference_degC':float(np.mean(v))-norm,
+            weights=meta['weights'][c];wt=[w for x,y,w in weights]
+            tv=np.average(np.stack([temps[(x,y)] for x,y,w in weights]),axis=0,weights=wt)
+            wv=np.average(np.stack([winds[(x,y)] for x,y,w in weights]),axis=0,weights=wt)
+            tnorm=float(normals[c].loc[target.strftime('%m-%d'),'temp']);wnorm=float(normals[c].loc[target.strftime('%m-%d'),'wind100'])
+            out['temperature'][c]={'as_of':str(TODAY),'hourly':tv.tolist(),'daily_mean':float(np.mean(tv)),'daily_normal':tnorm,'difference_degC':float(np.mean(tv))-tnorm,
              'normal_baseline':list(BASELINE),'note':'Forecast local delivery-day mean vs ERA5 UTC daily climatology; small timezone alignment difference, not hourly normals'}
+            out['wind100'][c]={'as_of':str(TODAY),'hourly':wv.tolist(),'daily_mean':float(np.mean(wv)),'daily_normal':wnorm,
+             'difference':float(np.mean(wv))-wnorm,'difference_pct':((float(np.mean(wv))/wnorm-1)*100 if wnorm else None),
+             'normal_baseline':list(BASELINE),'source':'Open-Meteo IFS 100m wind speed at the same land-area-weighted points as ERA5 history; not converted to MW',
+             'note':'Use this speed-vs-normal comparison when a MW wind forecast is unavailable. Never treat this as generation or residual load.'}
     write('tomorrow.json',out)
 
 def monthly():
@@ -449,8 +625,55 @@ def monthly():
     result['wind_display_rule']='Only use climate_100m.wind100 for wind speed; legacy wx wind fields are not approved 100m and must not be rendered.'
     dates=result['snapshots']['nordic_mtd'].get('days',[])
     result['as_of']=max(dates) if dates else None
-    result['note']='Legacy snapshot is not represented as current. Native fields and units preserved. Display numeric values to 1 decimal place; label dashed average with its numeric value.'
+    result['note']='Legacy snapshot is not represented as current. Native fields and units preserved. Display numeric values to 1 decimal place; label dashed average with its numeric value. Monthly climate tiles should use monthly_climate.json (2006-2025, new geography), not climate_100m.'
     write('monthly.json',result)
+
+def monthly_climate():
+    """Monthly climate on the same raw 100m / country-mask geography as weather.json, 2006-2025 baseline."""
+    d,meta=climate.regional_raw_daily(CACHE/'countries.geojson',CACHE/'regional_daily.csv')
+    units={'wind100':'m/s at 100m','temp':'degC at 2m','rain':'mm/day'}
+    result={'as_of':str(d.date.max().date()),'baseline':list(BASELINE),'history_start':'2021-01',
+            'units':units,'source':'https://archive-api.open-meteo.com/v1/archive?models=era5',
+            'method':meta['method'],'grid':meta['grid'],'point_counts':meta['points'],
+            'aggregation':'mean of daily values in the month (or the available days if partial); rain stays mm/day, not a monthly total',
+            'columns':['month','value','normal','min','max','difference','difference_pct','days_covered','days_in_month','partial'],
+            'regions':{}}
+    start=pd.Timestamp('2021-01-01')
+    for c,g in d.groupby('region'):
+        g=g.sort_values('date').set_index('date')
+        b=g.loc[f'{BASELINE[0]}-01-01':f'{BASELINE[1]}-12-31']
+        end=g[list(climate.u.VARS)].dropna(how='all').index.max()
+        months=pd.period_range(start,end,freq='M')
+        metrics={k:{'as_of':str(g[k].dropna().index.max().date()) if g[k].notna().any() else None,'rows':[]} for k in climate.u.VARS}
+        for period in months:
+            days=pd.date_range(period.start_time,period.end_time,freq='D')
+            days=days[days<=end]
+            days_in_month=period.days_in_month
+            days_covered=int(g.loc[days,list(climate.u.VARS)].dropna(how='all').shape[0]) if len(days) else 0
+            # Require every requested calendar day for the metric; a gap is not a shorter month.
+            partial=len(days)<days_in_month
+            for k in climate.u.VARS:
+                cur=g.reindex(days)[k]
+                if cur.notna().sum()!=len(days) or not len(days):
+                    value=None
+                else:
+                    value=float(cur.mean())
+                yearly=[]
+                for year in range(BASELINE[0],BASELINE[1]+1):
+                    use=[]
+                    for t in days:
+                        try:use.append(t.replace(year=year))
+                        except ValueError:continue
+                    hs=g.reindex(use)[k]
+                    if hs.notna().sum()==len(use) and use:yearly.append(float(hs.mean()))
+                normal=float(np.mean(yearly)) if yearly else None
+                mn=float(np.min(yearly)) if yearly else None
+                mx=float(np.max(yearly)) if yearly else None
+                diff=(value-normal) if value is not None and normal is not None else None
+                pct=((value/normal-1)*100 if k!='temp' and value is not None and normal not in (None,0) else None)
+                metrics[k]['rows'].append([period.strftime('%Y-%m'),value,normal,mn,mx,diff,pct,int(cur.notna().sum()),days_in_month,partial])
+        result['regions'][c]={'as_of':str(end.date()),'metrics':metrics}
+    write('monthly_climate.json',result)
 
 def main():
     global TODAY,BASELINE,OUT
@@ -473,6 +696,7 @@ def main():
         if px is None:px=prices()
         tomorrow(px,normals,meta)
     if selected('monthly'):monthly()
+    if selected('monthly_climate'):monthly_climate()
     files={p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'as_of':json.loads(p.read_text()).get('as_of')} for p in OUT.glob('*.json') if p.name!='manifest.json'}
     write('manifest.json',{'as_of':str(TODAY),'built_at':dt.datetime.now(ec.CET).isoformat(timespec='seconds'),'baseline':list(BASELINE),'files':files,'errors':ERRORS,
                          'status':'partial' if ERRORS else 'built','policy':'null means unavailable; no invented, silently carried-forward or paid inputs'})
