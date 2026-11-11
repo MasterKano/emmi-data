@@ -33,7 +33,7 @@ class Contract(unittest.TestCase):
             self.assertEqual(j['schema_version'],1)
             if j['as_of']:dt.date.fromisoformat(j['as_of'])
             self.assertLess(p.stat().st_size,200000);total+=p.stat().st_size
-        self.assertLess(total,500000)
+        self.assertLess(total,650000)  # room for prices_normals after the 2021-2025 price backfill
     def test_20_year_weather_baseline_and_all_regions(self):
         w=read('weather');self.assertEqual(w['baseline'],[2006,2025]);self.assertEqual(w['history_start'],'1940-01-01')
         self.assertEqual(set(w['regions']),{'Nordic','SE','NO','FI','DK'})
@@ -71,6 +71,39 @@ class Contract(unittest.TestCase):
                 if v.notna().all():self.assertAlmostEqual(v.mean(),ma,delta=.001)
                 else:self.assertIsNone(ma)
         f=read('prices')['futures'];self.assertIn('front_month',f);self.assertIn('next_quarter',f)
+    def test_price_baseline_2021_2025_and_unbroken_rows(self):
+        p=read('prices');n=read('prices_normals')
+        self.assertEqual(p['columns'],['date','value','ma30'])
+        self.assertEqual(p['baseline'],[2021,2025])
+        self.assertEqual(p['baseline_label'],'2021–2025')
+        self.assertEqual(p['history_start'],'2021-01-01')
+        self.assertEqual(n['baseline'],[2021,2025])
+        self.assertEqual(n['baseline_label'],'2021–2025')
+        self.assertEqual(len(n['month_days']),366)
+        self.assertIn('02-29',n['month_days'])
+        zones=['NO1','NO2','NO3','NO4','NO5','SE1','SE2','SE3','SE4','FI','DK1','DK2']
+        for c in zones+['SE','NO','DK']:
+            r=p['regions'][c]
+            self.assertEqual(r['history_start'],'2021-01-01')
+            self.assertEqual(r['baseline_label'],'2021–2025')
+            self.assertEqual(r['coverage']['gap_count'],0)
+            self.assertEqual(r['coverage']['gaps'],[])
+            rows=r['rows']
+            self.assertEqual(len(rows),123)
+            self.assertEqual(len(set(x[0] for x in rows)),123)
+            self.assertEqual([len(x) for x in rows],[3]*123)
+        nord=p['regions']['Nordic']
+        self.assertEqual(nord['history_start'],'2024-01-01')
+        self.assertEqual(nord['baseline_label'],'2024–2025')
+        self.assertEqual(nord['coverage']['gap_count'],0)
+        # Seasonal normal is the mean of the same month/day in 2021-2025, from the cached daily files.
+        parts=[]
+        for f in sorted((ROOT/'cache').glob('price_daily_SE3_*.csv')):
+            s=pd.read_csv(f,parse_dates=['date'],index_col='date')['value']
+            s.index=pd.to_datetime(s.index);parts.append(s)
+        s=pd.concat(parts).sort_index();s=s[~s.index.duplicated(keep='last')]
+        vals=[float(s.loc[pd.Timestamp(f'{y}-01-01')]) for y in range(2021,2026)]
+        self.assertAlmostEqual(sum(vals)/5,n['normal']['SE3'][n['month_days'].index('01-01')],delta=.002)
     def test_generation_capacity_date_and_real_division(self):
         g=read('generation')
         fi=json.loads((ROOT/f'cache/fi_capacity_{build.TODAY.year}.json').read_text())
