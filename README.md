@@ -41,6 +41,10 @@ Repository secrets, never committed. Intraday quotes do not use them. Copy the v
 
 Until those secrets exist here, prices still refresh. Power sections that need ENTSO-E or Fingrid fall back or keep prior values. Gas storage stays on the seeded file.
 
+
+## Nordic climate
+
+Versioned Nordic climate history and 1991–2020 daily normals live in [`nordic-climate/`](nordic-climate/), on `main`. They are not published to the `live-data` branch. The Monthly Nordic climate update routine refreshes that folder.
 ## Keep this repo public
 
 A private repo would spend paid Actions minutes and would stop anonymous `raw.githubusercontent.com` reads, which is how the site loads prices. Do not add `research/` or any research notes.
