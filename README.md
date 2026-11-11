@@ -45,6 +45,7 @@ Until those secrets exist here, prices still refresh. Power sections that need E
 ## Nordic climate
 
 Versioned Nordic climate history and 1991–2020 daily normals live in [`nordic-climate/`](nordic-climate/), on `main`. They are not published to the `live-data` branch. The Monthly Nordic climate update routine refreshes that folder.
+
 ## Keep this repo public
 
 A private repo would spend paid Actions minutes and would stop anonymous `raw.githubusercontent.com` reads, which is how the site loads prices. Do not add `research/` or any research notes.
