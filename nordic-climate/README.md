@@ -1,53 +1,40 @@
-# Nordic climate daily history and normals
+# Nordic climate: daily 1940 onward, wind at 100m
 
-Compact files for the Nordic box **55–71°N, 4–32°E**, so weather panels can compare the current period with the same calendar dates' 1991–2020 average, not month on month.
+Nordic box **55–71°N, 4–32°E**, land and sea: 72 fixed points (latitudes 55,57,…,71; longitudes 4,8,…,32), cosine-latitude area weights using the returned ERA5 cell latitudes, exactly as in the original temperature/rain calibration. This is a regional weather indicator, not a wind-farm-output-weighted index.
 
-Raw per-point Open-Meteo downloads stay on the build machine and are not in this folder.
+Jerry approved moving **all wind to 100m**, including Pulse, normals and history (11 Nov 2026 09:24 Zurich, card t1102s3502), then extending daily history as far back as possible (09:25 Zurich, t1103u). The old 10m workbook is not a calibration target for 100m wind.
 
-## Files
+## Compact files
 
-| File | What it is |
+| File | Contents |
 |---|---|
-| `monthly.csv` | Monthly wind (m/s), temperature (°C) and rain (mm/d) from 1970, from Jerry's [mr-climate](https://github.com/MasterKano/mr-climate) history (KNMI/ERA5 workbook, later Copernicus CDS). Occasional trailing months may be a provisional calibrated Open-Meteo estimate until the history publishes them. |
-| `daily_grid_mean.csv` | Daily area-mean wind, temperature and rain, 1991 to the latest available day, linearly calibrated to that history. Rain is clipped at 0 after calibration. |
-| `daily_normals.csv` | For each day of the year, including 29 February: the 1991–2020 mean, 10th and 90th percentiles, min and max. `*_mean_smooth` is the unsmoothed mean passed through a circular ±7-day window (29 Feb is day 60 of a 366-day calendar). Use the unsmoothed exact-date statistics for figures; use the smoothed mean for a seasonal curve. 29 Feb uses the eight leap years in 1991–2020; every other day uses 30 years. |
-| `mtd.json` | Month-to-date values. Legacy fields still compare a partial month with the full-month 1970–2025 climatology. `same_dates` compares the month-to-date mean with the 1991–2020 mean of those exact dates, plus the anomaly, the percentile in that 30-year sample, and the same dates last year. Rain also has `season_cumulative`: the sum since 1 October, in mm, against the same-dates normal. |
+| `daily_grid_mean.csv` | Date, `wind100` (m/s at 100m), `temp` (°C), `rain` (mm/day), from 1940-01-01 to the latest complete ERA5 day. Rounded to two decimals; this is the canonical daily series used to build other daily products. |
+| `daily_normals.csv` | 1991–2020 exact-date mean, p10/p90, minimum, maximum and circular ±7-day smoothed mean for each variable. `wind100_*` is exclusively 100m. February 29 has 8 years; other dates have 30. The smoothed mean is a chart guide, not the same-dates comparison. |
+| `monthly.csv` | Complete-month raw 100m wind means (`wind100`), plus temperature and rainfall. Existing post-1970 workbook temperature/rain are preserved; otherwise calibrated daily means are used. `wind10_legacy` preserves the old workbook reference only: it must never feed charts or comparisons. `wind_source` is separate from the temperature/rain `source`. |
+| `mtd.json` | Latest two months, raw 100m wind under `wind100`, temperature and rain; legacy full-month 1970–2025 comparisons and exact-calendar-date 1991–2020 `same_dates` comparisons. Includes anomaly, empirical percentile and same dates last year. Rain has cumulative totals from 1 October. |
 
-Units: wind in m/s, temperature in °C, rain in mm/day in the daily and monthly files. Cumulative rain in `mtd.json` is the sum of daily rain, in mm.
+## Source and aggregation
 
-## Sources and grid
+[Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api), `models=era5`, `timezone=GMT`, `wind_speed_unit=ms`. Wind uses **hourly `wind_speed_100m`**, averaged only over complete 24-hour UTC days, then cosine-latitude weighted over all 72 points. This is mean scalar speed, not speed computed from averaged wind vectors. Temperature uses `temperature_2m_mean`; rainfall uses `precipitation_sum`.
 
-- Monthly history: [MasterKano/mr-climate](https://github.com/MasterKano/mr-climate), from the KNMI Climate Explorer workbook and Copernicus ERA5 (`reanalysis-era5-single-levels`, area `[71, 4, 55, 32]`).
-- Daily values: [Open-Meteo archive API](https://open-meteo.com/) `models=era5`, free, no signup. Daily `wind_speed_10m_mean` (m/s), `temperature_2m_mean` (°C) and `precipitation_sum` (mm), timezone GMT.
-- Grid: 72 points, latitude 55, 57, …, 71 (step 2°) and longitude 4, 8, …, 32 (step 4°), land and sea. A few coastal points may snap to a nearby land cell.
-- Open-Meteo ERA5 typically lags about five days, so the latest month-to-date window ends then.
+All 72 points must be present and unique for a daily row. Wind and temperature are complete from 1940-01-01. The API returns no rainfall for 1940-01-01 at any of the 72 points; that one boundary value is left blank, never imputed. Rain starts 1940-01-02, with no subsequent gaps. `monthly.csv` includes `rain_days`, so January 1940 visibly has 30 rain days, not 31. Gaps from 1940 to the last available day block migration. Missing 1991–2020 days block normals. ERA5 normally lags about five days. UTC weather days differ from the CET/CEST ENTSO-E generation days; generation figures are not wind-speed measurements and remain unchanged.
+
+Three coastal grid requests snap to nearby ERA5 cells: (55,12)→(55.25,12), (69,16)→(69,15.75), (69,28)→(69.25,28). These are the same cells used previously; the actual cell coordinates are retained in the raw point cache.
+
+Raw hourly responses (gzip JSON), per-point daily caches and calibration files stay on the box, under `cache/openmeteo100m/`; only compact files above are published to `MasterKano/emmi-data/nordic-climate/` on main. Requests use 12-coordinate batches with quota tracking and 429 backoff; completed batches and months are reusable.
 
 ## Calibration
 
-Open-Meteo daily area means are linearly calibrated to Jerry's monthly history over **2024-01..2026-09** (33 months). The fit is at monthly scale; the same slope and intercept are applied to each daily value, then rain is clipped at 0. Each variable uses a cosine-latitude weighted mean:
+**100m wind is raw ERA5, with no linear calibration or extrapolation from 10m.** Temperature and rain retain the existing 2024-01..2026-09 monthly-workbook calibration, applied to daily values: temperature slope 1.029240/intercept −0.414674; rain slope 1.094392/intercept −0.099367. Exact coefficients remain in the local `calibration.json`. Rain is clipped to zero. Pre-1970 temperature/rain reuse this post-1970 calibration: these are calibrated reanalysis estimates, not newly recovered observations. This assumes the modern calibration transfers back in time; rainfall may differ from the monthly workbook.
 
-| Variable | Scheme | Slope | Intercept | Correlation | Calibrated RMSE |
-|---|---|---:|---:|---:|---:|
-| Wind (m/s) | coslat | 0.912145 | 0.167952 | 0.9979 | 0.0392 |
-| Temperature (°C) | coslat | 1.029240 | -0.414674 | 0.9997 | 0.1696 |
-| Rain (mm/d) | coslat | 1.094392 | -0.099367 | 0.9933 | 0.0757 |
+The normal remains **1991–2020**, the standard recent 30-year climatology; a longer history does not justify changing that comparison baseline. Percentiles are the proportion of the 30 same-date yearly period means less than or equal to the current mean (not a percentile of individual days).
 
-## Update schedule
+## Refresh
 
-The Grok Bot routine **Monthly Nordic climate update** runs `/home/box/data/nordic-climate/update.py`. That script refreshes the Open-Meteo cache for any new complete month, rebuilds these compact files, and publishes this folder to `MasterKano/emmi-data` on `main`. It does not commit the raw 72-point cache or any secrets.
+`update.py` is the monthly routine entry point; `fetch_daily_history.py` is the resumable downloader; `daily_products.py` is the only daily-products builder. The monthly routine preserves 100m data and refreshes normals/MTD/history together. Run locally without publication:
 
-Re-run locally:
-
-```bash
-/workspace/brief/.venv/bin/python /home/box/data/nordic-climate/update.py
+```
+/workspace/brief/.venv/bin/python /home/box/data/nordic-climate/update.py --no-publish
 ```
 
-Use `--no-publish` to rebuild local files without pushing.
-
-## Sanity check and caveats
-
-On 2024-01..2026-09 (the calibration window) the monthly means of the daily series match `monthly.csv` with essentially zero bias and the same RMSE as the table above.
-
-Over 1991–2020, wind stays close (bias +0.006 m/s, RMSE 0.048) and temperature is a little cool (bias −0.077 °C, RMSE 0.146). Rain is systematically about 0.20 mm/d drier than `monthly.csv` (RMSE 0.215). That offset almost disappears from 2021. The month-to-date `same_dates` figures are still internally consistent, because both the current period and the 1991–2020 normal come from the same calibrated daily series. The rain offset only matters if those daily monthly means are compared with `monthly.csv`.
-
-Coverage at the last rebuild: 13,093 consecutive days, 1991-01-01 to 2026-11-05, with a complete 72-point grid every day. 2026-11 is not cached until the month is complete; the monthly routine adds the published days of the current month on the fly.
+Pulse's provisional IFS top-up also uses hourly 100m wind and a versioned 100m cache; the overlap correction is at the same height. It never applies the old 10m calibration. ERA5 overlap values come from the canonical daily CSV, so comparisons can be reproduced directly. IFS and the generation charts retain their existing separate provenance and lag notes.
