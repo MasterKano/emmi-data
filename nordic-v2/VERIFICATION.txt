@@ -1,0 +1,16 @@
+test_20_year_weather_baseline_and_all_regions (__main__.Contract.test_20_year_weather_baseline_and_all_regions) ... ok
+test_delivery_days_dst_and_incomplete_input (__main__.Contract.test_delivery_days_dst_and_incomplete_input) ... ok
+test_generation_capacity_date_and_real_division (__main__.Contract.test_generation_capacity_date_and_real_division) ... ok
+test_hydrology_units_and_omissions_are_honest (__main__.Contract.test_hydrology_units_and_omissions_are_honest) ... ok
+test_json_sizes_dates_and_finite_numbers (__main__.Contract.test_json_sizes_dates_and_finite_numbers) ... ok
+test_legacy_snapshots_unchanged_and_height_guard (__main__.Contract.test_legacy_snapshots_unchanged_and_height_guard) ... ok
+test_manifest_matches_actual_files (__main__.Contract.test_manifest_matches_actual_files) ... ok
+test_normal_uses_exact_2006_2025_source_days (__main__.Contract.test_normal_uses_exact_2006_2025_source_days) ... ok
+test_price_30_calendar_days (__main__.Contract.test_price_30_calendar_days) ... ok
+test_tomorrow_residual_and_missing_not_zero (__main__.Contract.test_tomorrow_residual_and_missing_not_zero) ... ok
+test_weather_source_height_and_country_weights (__main__.Contract.test_weather_source_height_and_country_weights) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.378s
+
+OK

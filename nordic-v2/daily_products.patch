@@ -1,0 +1,84 @@
+--- a/daily_products.py
++++ b/daily_products.py
+@@ -513,6 +513,81 @@
+     return daily, mtd, summary
+ 
+ 
++def regional_raw_daily(boundaries_path, output_cache):
++    """V2 land-area weighted ERA5 means; no workbook calibration or legacy writes.
++
++    Use fractional country intersections of existing 2 degree x 4 degree grid
++    cells, weighted by cos(latitude). The mainland countries all fit within the
++    existing grid extent (2-34E, 54-72N). Offshore islands outside it are excluded.
++    ERA5 point values represent each intersected cell: a coarse regional proxy,
++    not a wind-farm-weighted series. Keep wind at 100m for both data and baseline.
++    """
++    from shapely.geometry import shape, box
++    import hashlib
++    cache = Path(output_cache)
++    # Reuse the existing source fetcher, never the legacy refresh writer.
++    # ERA5 is delayed: request through D-5 and retain only complete country days.
++    cutoff = date.today() - timedelta(days=5)
++    current = cache.with_name(f"current_points_{date.today()}.csv")
++    if not current.exists():
++        fresh = u.om_month(cutoff.year, cutoff.month, cutoff)
++        fresh.to_csv(current, index=False)
++    files = sorted(u.CACHE.glob("om_????_??.csv"))
++    partial = u.CACHE / "audit_partial_2026-11-05.csv"
++    # Partial audit is an already-built point product, not a second fetcher.
++    if partial.exists():
++        files.append(partial)
++    files.append(current)
++    signature = hashlib.sha256(b"country-product-v2-preserve-per-variable-coverage" + Path(boundaries_path).read_bytes() +
++        repr([(str(f), f.stat().st_size, f.stat().st_mtime_ns) for f in files]).encode()).hexdigest()
++    meta = cache.with_suffix(".meta.json")
++    if cache.exists() and meta.exists():
++        m = json.loads(meta.read_text())
++        if m["signature"] == signature:
++            return pd.read_csv(cache, parse_dates=["date"]), m
++    boundaries = json.loads(Path(boundaries_path).read_text())
++    codes = {"SWE":"SE", "NOR":"NO", "FIN":"FI", "DNK":"DK"}
++    regions = {codes[f["properties"]["ADM0_A3"]]:shape(f["geometry"])
++               for f in boundaries["features"] if f["properties"]["ADM0_A3"] in codes}
++    weights = {}
++    for c, geom in regions.items():
++        weights[c] = {(float(la), float(lo)): box(lo-2, la-1, lo+2, la+1).intersection(geom).area * np.cos(np.deg2rad(la))
++                      for la in u.LATS for lo in u.LONS}
++    weights["Nordic"] = {p:sum(w[p] for w in weights.values()) for p in next(iter(weights.values()))}
++    # Returned coordinates can be snapped by Open-Meteo by a fraction of a degree.
++    # Align to requested grid, and reject points outside that tolerance.
++    frames = []
++    for f in files:
++        d = pd.read_csv(f)
++        if not set(["date", "lat", "lon", *u.VARS]).issubset(d):
++            continue
++        d["la"] = d.lat.map(lambda x:min(u.LATS, key=lambda a:abs(a-x)))
++        d["lo"] = d.lon.map(lambda x:min(u.LONS, key=lambda a:abs(a-x)))
++        if ((d.lat-d.la).abs().max()>0.6 or (d.lon-d.lo).abs().max()>0.6):
++            raise ValueError("Cache coordinates outside expected ERA5 grid")
++        for c,w in weights.items():
++            x=d.copy();x["w"]=[w[(float(a),float(b))] for a,b in zip(x.la,x.lo)]
++            x=x[x.w>0].drop_duplicates(["date","la","lo"])
++            count=sum(v>0 for v in w.values())
++            x=x[x.groupby("date")["w"].transform("size").eq(count)]
++            for k in u.VARS:
++                x[k]=x[k]*x.w
++            sums=x.groupby("date")[[*u.VARS,"w"]].sum(min_count=count)
++            result=sums[list(u.VARS)].div(sums.w,axis=0).dropna(how="all").reset_index()
++            result["region"]=c;frames.append(result)
++    result=pd.concat(frames).drop_duplicates(["date","region"],keep="last").sort_values(["region","date"])
++    result["date"]=pd.to_datetime(result.date)
++    m={"signature":signature,"method":"fractional land-cell area times cos(latitude); raw ERA5; UTC days",
++       "history_start":str(result.date.min().date()),
++       "points":{c:int(sum(v>0 for v in w.values())) for c,w in weights.items()},
++       "weights":{c:[[a,b,round(v,7)] for (a,b),v in w.items() if v>0] for c,w in weights.items()},
++       "boundary_source":"Natural Earth 1:50m admin-0 countries, public domain",
++       "grid":"2x4 degree cells; Nordic is the land-area weighted union NO/SE/FI/DK; not legacy land+sea mean"}
++    cache.parent.mkdir(parents=True,exist_ok=True)
++    result.to_csv(cache,index=False);meta.write_text(json.dumps(m))
++    return result,m
++
++
+ def main():
+     today = date.today()
+     cal_path = u.BASE / "calibration.json"
