@@ -1,0 +1,105 @@
+{
+  "generated": "2026-11-11",
+  "basis": "Open-Meteo ERA5 daily, 72-pt grid 55-71N 4-32E, linearly calibrated to Jerry's history (calibration.json)",
+  "note": "Partial months are compared with full-month climatology (legacy fields) and with the 1991-2020 normal for the same calendar dates (same_dates). ERA5 on Open-Meteo lags ~5 days.",
+  "months": {
+    "2026-11": {
+      "days_covered": 5,
+      "first_day": "2026-11-01",
+      "last_day": "2026-11-05",
+      "days_in_month": 30,
+      "wind": {
+        "value": 5.396,
+        "mean_1970_2025": 5.456,
+        "min_1970_2025": 4.689,
+        "min_year": 2019,
+        "max_1970_2025": 6.473,
+        "max_year": 2001,
+        "mean_1991_2020": 5.398,
+        "rank_high_to_low": "34 of 57",
+        "anomaly_vs_1970_2025": -0.061,
+        "pct_vs_1970_2025_mean": -1.1,
+        "n_years_climo": 56
+      },
+      "temp": {
+        "value": 5.414,
+        "mean_1970_2025": 0.991,
+        "min_1970_2025": -2.222,
+        "min_year": 1998,
+        "max_1970_2025": 4.337,
+        "max_year": 2020,
+        "mean_1991_2020": 1.383,
+        "rank_high_to_low": "1 of 57",
+        "anomaly_vs_1970_2025": 4.423,
+        "pct_vs_1970_2025_mean": 446.3,
+        "n_years_climo": 56
+      },
+      "rain": {
+        "value": 1.76,
+        "mean_1970_2025": 2.821,
+        "min_1970_2025": 1.232,
+        "min_year": 1993,
+        "max_1970_2025": 3.526,
+        "max_year": 1972,
+        "mean_1991_2020": 2.764,
+        "rank_high_to_low": "56 of 57",
+        "anomaly_vs_1970_2025": -1.06,
+        "pct_vs_1970_2025_mean": -37.6,
+        "n_years_climo": 56
+      },
+      "units": {
+        "wind": "m/s",
+        "temp": "degC",
+        "rain": "mm/d"
+      },
+      "same_dates": {
+        "period": "2026-11-01 to 2026-11-05",
+        "climatology": "1991-2020, exact calendar dates, unsmoothed calibrated grid-mean",
+        "wind": {
+          "value": 5.396,
+          "normal_1991_2020": 5.499,
+          "anomaly": -0.104,
+          "percentile": 40.0,
+          "same_dates_last_year": 5.376,
+          "n_years": 30
+        },
+        "temp": {
+          "value": 5.414,
+          "normal_1991_2020": 3.19,
+          "anomaly": 2.224,
+          "percentile": 76.7,
+          "same_dates_last_year": 7.102,
+          "n_years": 30
+        },
+        "rain": {
+          "value": 1.76,
+          "normal_1991_2020": 2.828,
+          "anomaly": -1.067,
+          "percentile": 16.7,
+          "same_dates_last_year": 3.628,
+          "n_years": 30,
+          "unit": "mm/d",
+          "season_cumulative": {
+            "season_start": "2026-10-01",
+            "through": "2026-11-05",
+            "unit": "mm",
+            "value": 98.31,
+            "normal_1991_2020": 97.57,
+            "anomaly": 0.74,
+            "percentile": 46.7,
+            "last_year": 126.05,
+            "n_years": 30
+          }
+        }
+      }
+    }
+  },
+  "same_dates_note": "same_dates compares the month-to-date mean with the 1991-2020 mean of those exact calendar dates (unsmoothed). daily_normals.csv also has a \u00b17-day smoothed seasonal curve, which is for charts and is not used in these figures. Rain season_cumulative is the sum since 1 Oct, in mm.",
+  "daily_coverage": {
+    "start": "1991-01-01",
+    "end": "2026-11-05",
+    "n_days": 13093,
+    "expected_days": 13093,
+    "gaps": []
+  }
+}
