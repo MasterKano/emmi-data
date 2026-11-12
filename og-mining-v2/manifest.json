@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "as_of": "2026-11-12",
-  "built_at": "2026-11-12T02:22:39+01:00",
+  "built_at": "2026-11-12T02:33:44+01:00",
   "universe": "Jerry tighter O&G list 12 Nov 2026 02:06 Zurich (t1171u): 32 oil & gas + 6 Lundin mining. Serica=SER.L, ShaMaran=SNM-SDB.ST, IPC=IPCO.ST, Meren=MER.ST. Orr\u00f6n excluded. Faraday/Fireweed/Valiente out.",
   "files": {
     "companies_mining.json": {
-      "bytes": 5681,
-      "sha256": "6d86b0c4b57148a3bdf4179275b6afc9a9a7c49dec3b671ec5ba4c64cf96ba3f",
+      "bytes": 5656,
+      "sha256": "7195c33de671d6017249d0c3960fa2e739f3ec5c50279cd59ec5b925fb6beabc",
       "as_of": "2026-11-12"
     },
     "companies_oil_gas.json": {
