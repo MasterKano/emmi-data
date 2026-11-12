@@ -1,20 +1,22 @@
 {
   "as_of": "2026-11-12",
-  "source": "Jerry, 12 Nov 2026 02:06 Zurich (t1171u). Tighter O&G list. Mining unchanged: Lundin mining only.",
+  "source": "Jerry, 12 Nov 2026 02:06 Zurich (t1171u), tighter O&G list; Navitas added 12 Nov 2026 23:04 Zurich (t585u). Mining unchanged: Lundin mining only.",
   "rule": {
     "london": "Only the 17 names Jerry listed. No other LSE/AIM oil companies.",
     "sweden": "International Petroleum, ShaMaran (Swedish SDB line), and all other Swedish-listed oil companies (Meren, Africa Energy). Orrön stays out (renewable power). Keo stays out.",
     "norway": "All Oslo Børs and Euronext Growth Oslo oil E&P/integrated names, excluding duals of a London line (GKP.OL, ZENA.OL) and services/drillers already excluded.",
     "duals": "One line per company. ShaMaran uses SNM-SDB.ST (Jerry said Sweden). Gulf Keystone uses GKP.L.",
     "tickers": "Serica is SER.L (not SQZ.L). Africa Oil is now Meren Energy MER.ST.",
-    "tiles": "Squeeze market cap and EV onto the company tiles and make them look good."
+    "tiles": "Squeeze market cap and EV onto the company tiles and make them look good.",
+    "tel_aviv": "Navitas Petroleum, added 12 Nov 2026 at Jerry's ask. Primary TASE line (Yahoo NVPT.TA, prices in ILA). There is a thin US OTC line (NVPTF) that is not used."
   },
   "counts": {
     "london": 17,
     "sweden": 4,
     "norway": 11,
-    "oil_gas_total": 32,
-    "mining_lundin": 6
+    "oil_gas_total": 33,
+    "mining_lundin": 6,
+    "tel_aviv": 1
   },
   "companies": [
     {
@@ -688,6 +690,27 @@
       "as_of": "2026-11-12",
       "venue_group": "Norway",
       "short": "Interoil Exploration and Production"
+    },
+    {
+      "company": "Navitas Petroleum, Limited Partnership",
+      "venue": "Tel Aviv Stock Exchange",
+      "segment": "TASE",
+      "exchange_ticker": "NVPT",
+      "yahoo": "NVPT.TA",
+      "tradingview": "TASE:NVPT",
+      "isin": "IL0011419699",
+      "country_inc": "Israel",
+      "currency_line": "ILA",
+      "mcap_local": 14678000000.0,
+      "mcap_ccy": "ILS",
+      "bucket": "core",
+      "type": "Large E&P",
+      "note": "Israeli exploration and production company: US Gulf of America (Shenandoah, Buckskin, Monument) and Falklands Sea Lion; Eco Atlantic partner on the Orinduik option and Block 1 CBK. Also a thin US OTC line (NVPTF).",
+      "in_emmi_v1": false,
+      "dual_of": null,
+      "as_of": "2026-11-12",
+      "venue_group": "Tel Aviv",
+      "short": "Navitas Petroleum"
     }
   ]
 }

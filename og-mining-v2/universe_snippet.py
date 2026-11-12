@@ -1,4 +1,4 @@
-# Jerry tighter O&G list, 12 Nov 2026 02:06 Zurich (t1171u). 32 oil & gas + 6 Lundin mining.
+# Jerry tighter O&G list, 12 Nov 2026 02:06 Zurich (t1171u), plus Navitas (t585u, 12 Nov 23:04 Zurich). 33 oil & gas + 6 Lundin mining.
 # Serica = SER.L. ShaMaran = SNM-SDB.ST (Sweden). Meren = MER.ST (ex-Africa Oil). Orrön excluded.
 OIL_GAS_V2 = dict(id="oilgas_v2", label="Oil & gas", sections=[
     dict(label="London", rows=[
@@ -38,6 +38,9 @@ OIL_GAS_V2 = dict(id="oilgas_v2", label="Oil & gas", sections=[
         R("PNOR.OL", "PetroNor E&P ASA", "OSL:PNOR", note="Small E&P: PetroNor: Congo-Brazzaville (PNGF Sud)."),
         R("QEC.OL", "Questerre Energy Corporation", "OSL:QEC", note="Small E&P: Questerre: Quebec/Alberta gas (Utica); primary TSX QEC. QGAS pref line deduped."),
         R("IOX.OL", "Interoil Exploration and Production ASA", "OSL:IOX", note="Small E&P: Interoil: Argentina/Colombia small producer."),
+    ]),
+    dict(label="Tel Aviv", rows=[
+        R("NVPT.TA", "Navitas Petroleum, Limited Partnership", "TASE:NVPT", note="Large exploration and production company: US Gulf of America (Shenandoah, Buckskin, Monument) and Falklands Sea Lion; Eco Atlantic partner on the Orinduik option and Block 1 CBK. Also a thin US OTC line (NVPTF)."),
     ]),
 ])
 LUNDIN_MINING_V2 = dict(id="lundin_mining_v2", label="Mining (Lundin Group)", sections=[dict(label=None, rows=[

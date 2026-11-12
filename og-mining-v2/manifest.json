@@ -2,7 +2,7 @@
   "schema_version": 1,
   "as_of": "2026-11-12",
   "built_at": "2026-11-12T02:33:44+01:00",
-  "universe": "Jerry tighter O&G list 12 Nov 2026 02:06 Zurich (t1171u): 32 oil & gas + 6 Lundin mining. Serica=SER.L, ShaMaran=SNM-SDB.ST, IPC=IPCO.ST, Meren=MER.ST. Orr\u00f6n excluded. Faraday/Fireweed/Valiente out.",
+  "universe": "Jerry tighter O&G list 12 Nov 2026 02:06 Zurich (t1171u), plus Navitas Petroleum NVPT.TA on 12 Nov 23:04 (t585u): 33 oil and gas + 6 Lundin mining. Serica=SER.L, ShaMaran=SNM-SDB.ST, IPC=IPCO.ST, Meren=MER.ST, Navitas=NVPT.TA. Orrön excluded. Faraday/Fireweed/Valiente out.",
   "files": {
     "companies_mining.json": {
       "bytes": 5656,
@@ -10,8 +10,8 @@
       "as_of": "2026-11-12"
     },
     "companies_oil_gas.json": {
-      "bytes": 20960,
-      "sha256": "b39b9a3e504ce8f6b0db41d58bab0a547e8eb5d5ead920d040696220b468a819",
+      "bytes": 22015,
+      "sha256": "f0d5232ca7aa3eee4c75347ea1fb8657e10acc8a7b86c275f29b6bb277a72b63",
       "as_of": "2026-11-12"
     },
     "cost_curves.json": {
@@ -20,8 +20,8 @@
       "as_of": "2026-11-12"
     },
     "jerry_list.json": {
-      "bytes": 21797,
-      "sha256": "2386e434ea735dac89eb93bb9245af07c2c95b9245807764953368949c16e0b5",
+      "bytes": 22804,
+      "sha256": "3f639301e84af953b109701a9c0d107e8f6efd0d09d86224e137b12476b1f58f",
       "as_of": "2026-11-12"
     },
     "mining_production_usgs.json": {
@@ -50,8 +50,8 @@
       "as_of": "2026-11-03"
     },
     "universe_snippet.py": {
-      "bytes": 5665,
-      "sha256": "402507227f717396dac48f8ededcc58764c48794327036abde865470784cbdc1"
+      "bytes": 6047,
+      "sha256": "064b937ad34845f7a157ad5b9b99131cd9ef628f4d27feb652ef767d83e748bc"
     },
     "us_weekly.json": {
       "bytes": 21734,
