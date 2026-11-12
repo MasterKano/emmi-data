@@ -1,0 +1,65 @@
+name: Nordic v2 weather (ERA5)
+
+# Energy weather charts read nordic-v2/weather.json and monthly_climate.json from main
+# (not live-data). This job is the daily updater: Open-Meteo ERA5, keyless, same 72-point
+# country masks and 2006–2025 baseline as the box Nordic v2 builder. Only complete UTC days
+# are published; ERA5 usually lags about five days, so a run that finds no new complete day
+# commits nothing. 06:15 and 18:15 UTC catch the archive's once-a-day update.
+on:
+  schedule:
+    - cron: "15 6 * * *"
+    - cron: "15 18 * * *"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "commit the result to main (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nordic-v2-weather
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q pandas numpy requests
+      - name: Build
+        id: b
+        run: |
+          set +e
+          python scripts/build_nordic_v2_weather.py
+          rc=$?
+          if [ $rc = 3 ]; then echo "new=0" >> "$GITHUB_OUTPUT"; exit 0; fi
+          [ $rc = 0 ] && echo "new=1" >> "$GITHUB_OUTPUT"
+          exit $rc
+      - name: Publish to main (weather.json, monthly_climate.json)
+        if: steps.b.outputs.new == '1' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          asof=$(python -c 'import json; print(json.load(open("nordic-v2/weather.json"))["as_of"])')
+          git add nordic-v2/weather.json nordic-v2/monthly_climate.json nordic-v2/regional_daily.csv nordic-v2/manifest.json
+          git commit -m "Nordic weather as of ${asof}" || { echo "no change"; exit 0; }
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved underneath us, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
