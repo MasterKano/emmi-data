@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "as_of": "2026-11-12",
-  "built_at": "2026-11-12T02:11:23+01:00",
+  "built_at": "2026-11-12T02:22:39+01:00",
   "universe": "Jerry tighter O&G list 12 Nov 2026 02:06 Zurich (t1171u): 32 oil & gas + 6 Lundin mining. Serica=SER.L, ShaMaran=SNM-SDB.ST, IPC=IPCO.ST, Meren=MER.ST. Orr\u00f6n excluded. Faraday/Fireweed/Valiente out.",
   "files": {
     "companies_mining.json": {
@@ -57,6 +57,12 @@
       "bytes": 21734,
       "sha256": "dac4335a3b86a1a937aac5ae160d61f00d4b58c7e0eeabb749bef1ddcc3f99ac",
       "as_of": "2026-10-30"
+    },
+    "annual_energy.json": {
+      "bytes": 771704,
+      "sha256": "1db3deb62a298eea569e8cfe6ff9bac4b899f74edf1bf33c5080d2fbdf389cbf",
+      "as_of": "2025",
+      "source": "Energy Institute Statistical Review of World Energy 2026 (via OWID meadow); GDP World Bank WDI constant 2015 USD (lastupdated 2026-11-11 for GDP per capita, 2026-10-08 for GDP totals)"
     }
   },
   "errors": [],
