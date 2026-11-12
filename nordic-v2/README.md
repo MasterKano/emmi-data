@@ -34,9 +34,9 @@ Bidding-zone and country history runs from 2021-01-01. A day is the mean of all 
 
 `baseline` `[2021, 2025]`, `baseline_label` `2021–2025`, `history_start`, `history_end`, `method`, `notes`, compact arrays:
 
-- `month_days` plus `normal[region]`: unsmoothed average of the same month/day in the region's baseline years (Feb 29 uses the available leap years).
-- `months` plus `monthly[region]`: calendar-month mean of complete delivery days, 2021-01 through the latest month.
-- `monthly_normal[region][MM]`: `normal`, `min`, `max`, `n_years` of that month inside 2021–2025 (complete years only).
+- `month_days` plus `normal[region]`: unsmoothed average of the same month/day in the region's baseline years (Feb 29 uses the available leap years). Unchanged by the monthly-aggregate fix.
+- `months` plus `monthly[region]`: one value per calendar month, 2021-01 through the latest month. From 2024-01 this is Nord Pool's Monthly Aggregate: the unweighted mean of day-ahead delivery periods whose Europe/Zurich delivery day falls in the month, not the mean of daily averages. A clock-change day counts for every period (92 or 100 at 15 minutes; 23 or 25 when the auction was hourly). The public DayAheadPrices API serves about two months, so a build calculates that period mean while the days are still public and otherwise reads Nord Pool `AggregatePrices` `multiAreaMonthlyAggregates` (the same official aggregate, not an average of the daily rows). A month with no clock change keeps its previous mean when that mean already rounds to the published aggregate. `Nordic` is SYS. `SE`, `NO` and `DK` are an equal-weight of their bidding zones at period level, only when every zone has that period; they are not an official Nord Pool country price and are not load-weighted. 2021-01 through 2023-12 stays the mean of ENTSO-E A44 daily averages because Nord Pool returns HTTP 401 for those years, so March and October in 2021–2023 are still day-weighted.
+- `monthly_normal[region][MM]`: `normal`, `min`, `max`, `n_years` of that month inside 2021–2025, excluding the current year. Nordic uses the years on file, 2024–2025.
 
 The live `/v2/power/` page does not read this file yet. The daily price block still says no historical price normal is published, and the monthly block still uses the stale legacy snapshot in `monthly.json` (prices only from 2024-09, six zones). Point the page at these fields and at each region's `baseline_label` when it is ready; do not change the 123-day `[date,value,ma30]` rows.
 
@@ -138,4 +138,4 @@ No signup, subscription, card, paid data service or new hosting was created. Tes
 
 ## Verification
 
-`/workspace/brief/.venv/bin/python /home/box/data/nordic-v2/verify.py` checks actual source values, 2006–2025 normals, requested-cell country masks, 100m height, 30 complete calendar days, DST delivery days, real capacity division, missing-data handling, unchanged monthly snapshots, file sizes and manifest hashes. `VERIFICATION.txt` records the successful snapshot check. Run on the box with its source caches, not in the page builder.
+`/workspace/brief/.venv/bin/python /home/box/data/nordic-v2/verify.py` checks actual source values, 2006–2025 normals, requested-cell country masks, 100m height, 30 complete calendar days, DST delivery days, real capacity division, missing-data handling, unchanged monthly snapshots, file sizes and manifest hashes. `VERIFICATION.txt` records the successful snapshot check. Run on the box with its source caches, not in the page builder. `test_price_monthlies.py` checks that a month containing a 100-period day is period-weighted, and that October 2026 Nordic and NO1 in `prices_normals.json` match Nord Pool's Monthly Aggregate.
