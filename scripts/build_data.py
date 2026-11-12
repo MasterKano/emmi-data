@@ -74,7 +74,8 @@ def fetch_chart(sym, years=10, tries=6):
             meta = res.get("meta", {})
             tz = meta.get("exchangeTimezoneName") or "UTC"
             idx = pd.to_datetime(ts, unit="s", utc=True).tz_convert(tz)
-            df = pd.DataFrame({"close": q.get("close"), "volume": q.get("volume")}, index=idx)
+            df = pd.DataFrame({"open": q.get("open"), "high": q.get("high"), "low": q.get("low"),
+                               "close": q.get("close"), "volume": q.get("volume")}, index=idx)
             return df, meta
         except LookupError as e:
             last_err = e
@@ -94,7 +95,8 @@ def fetch_yf(sym, years=10):
     h = t.history(period=f"{years}y", interval="1d", auto_adjust=False, actions=False)
     if h is None or h.empty:
         raise RuntimeError("yfinance returned no rows")
-    df = pd.DataFrame({"close": h["Close"], "volume": h.get("Volume")}, index=h.index)
+    df = pd.DataFrame({"open": h.get("Open"), "high": h.get("High"), "low": h.get("Low"),
+                       "close": h["Close"], "volume": h.get("Volume")}, index=h.index)
     meta = {}
     try:
         meta = t.history_metadata or {}
@@ -140,6 +142,11 @@ def fill_last_close(df, meta):
         if session_state(meta) == "open":
             # session in progress: the quote is the latest print; the daily bar can lag it
             df.iloc[p, df.columns.get_loc("close")] = px
+            for col, key, fn in (("high", "regularMarketDayHigh", max), ("low", "regularMarketDayLow", min)):
+                if col in df.columns:
+                    vals = [x for x in (df.iloc[p, df.columns.get_loc(col)], meta.get(key)) if isinstance(x, (int, float)) and x == x and x > 0]
+                    if vals:
+                        df.iloc[p, df.columns.get_loc(col)] = fn(vals)
             v, qv = df.iloc[p, df.columns.get_loc("volume")], meta.get("regularMarketVolume")
             if qv and (v is None or pd.isna(v) or float(qv) > v):
                 df.iloc[p, df.columns.get_loc("volume")] = float(qv)
@@ -391,6 +398,12 @@ def clean(df):
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
     df["volume"] = pd.to_numeric(df["volume"], errors="coerce")
     df = df[df["close"].notna() & (df["close"] > 0)]
+    if {"open", "high", "low"} <= set(df.columns):
+        for col in ("open", "high", "low"):
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            df.loc[~(df[col] > 0), col] = float("nan")
+        df["high"] = df[["high", "open", "close"]].max(axis=1).where(df["high"].notna())
+        df["low"] = df[["low", "open", "close"]].min(axis=1).where(df["low"].notna())
     # one row per local trading date (Yahoo sometimes repeats the live bar)
     df["d"] = [t.date() for t in df.index]
     df = df.groupby("d").tail(1)
@@ -675,6 +688,46 @@ def sig(x, s=5):
     return float(f"{x:.{s}g}")
 
 
+CANDLE_DAYS, CANDLE_MONTHS = 22, 13   # one month of sessions; 13 calendar months = the 1Y line
+
+
+def _bar(o, h, l, c, s=4):
+    """[open, high, low, close] at s significant digits; an unknown open/high/low stays null (drawn as a close tick)."""
+    f = lambda x: None if x is None or pd.isna(x) else sig(float(x), s)
+    return [f(o), f(h), f(l), f(c)]
+
+
+def candles(df, s=4):
+    """Tile candles from the same daily bars as the closes: the last CANDLE_DAYS sessions (one bar per day) and the
+    last CANDLE_MONTHS calendar months (first open, highest high, lowest low, last close; the current month runs to
+    date). None when the source has no open/high/low (official yields, CNBC): the tile keeps its line. FX uses 5
+    significant digits (a day's EURCHF range is a few pips)."""
+    if not {"open", "high", "low"} <= set(df.columns) or df.empty:
+        return None
+    d = df[["open", "high", "low", "close"]]
+    tail = d.tail(CANDLE_DAYS)
+    full = tail[["open", "high", "low"]].notna().all(axis=1)
+    if full.sum() < max(2, len(tail) // 2):
+        return None
+    out = dict(d=[_bar(*r, s=s) for r in tail.itertuples(index=False)], d0=tail.index[0].strftime("%Y-%m-%d"))
+    last = d.index[-1]
+    m0 = pd.Timestamp(year=last.year, month=last.month, day=1) - pd.DateOffset(months=CANDLE_MONTHS - 1)
+    mm = d[d.index >= m0]
+    bars, first = [], None
+    for key, g in mm.groupby([mm.index.year, mm.index.month]):
+        o, h, l = g["open"].dropna(), g["high"].dropna(), g["low"].dropna()
+        if o.empty or h.empty or l.empty:
+            bars.append(_bar(None, None, None, g["close"].iloc[-1], s=s))
+        else:
+            c = float(g["close"].iloc[-1])
+            op = float(o.iloc[0])
+            bars.append(_bar(op, max(float(h.max()), op, c), min(float(l.min()), op, c), c, s=s))
+        first = first or "%04d-%02d" % key
+    if len(bars) >= 2:
+        out.update(m=bars, m0=first)
+    return out
+
+
 def base_on_or_before(c, when):
     s = c[c.index <= when]
     return None if s.empty else float(s.iloc[-1])
@@ -777,6 +830,7 @@ def analyse(spec, df, meta, src, now, fund=None, fx_table=None):
     # 4 significant digits in between (invisible on a sparkline, ~10 KB less); first and latest points at 5
     out["spark"] = [sig(float(s.iloc[i]), 5 if k in (0, len(idx) - 1) else 4) for k, i in enumerate(idx)]
     out["spark_from"] = s.index[0].strftime("%Y-%m-%d") if len(s) else None
+    out["ohlc"] = candles(df, 5 if spec.get("kind") == "fx" else 4)
     out["roll"] = spec.get("kind") == "future"
 
     # Market cap / enterprise value (equities & ETFs), converted to EUR when FX is known
