@@ -569,7 +569,7 @@ def generation():
     out={'as_of':None,'source':'ENTSO-E A75 actual generation; A68 annual installed capacity',
          'history_requested_start':'2015-01-01','history_normal':'mean of same-calendar-day trailing 30-day values in all available preceding years; minimum 3 years',
          'columns':['date','value','ma30','normal_ma30','normal_n_years'],'units':{'wind_load_factor':'%','wind':'MW','hydro':'MW','nuclear':'MW'},'regions':{},
-         'capacity':caps,'capacity_notes':'A68 annual values are not current turbine counts. Each year uses its own capacity, never latest capacity for historical output. Missing capacity gives null load factor.'}
+         'capacity':caps,'capacity_notes':'A68 annual values are not current turbine counts. Each year uses its own capacity, never latest capacity for historical output. Missing capacity gives null load factor. Sweden has no current-year country A68, so its last annual country A68 is held for current-year dates only (see capacity_latest.SE); this can slightly overstate the load factor if capacity grew. Bidding-zone A68 is a separate scope and is not summed to replace it.'}
     latest,daily_cap,zone_cap=capacity_supplement()
     out['capacity_latest']=latest
     out['capacity_zones']=zone_cap
@@ -585,7 +585,19 @@ def generation():
         if c in daily_cap:
             national=daily_cap[c].reindex(g.index)
             cap=national.combine_first(cap)
+        held=None
+        if c=='SE' and (caps[c].get(TODAY.year) or {}).get('wind_mw') is None:
+            # No country A68 for the current year: hold the last annual country A68 for current-year dates only.
+            # Earlier years keep their own capacity; nothing is applied backwards.
+            prior=[y for y in caps[c] if y<TODAY.year and caps[c][y].get('wind_mw') is not None]
+            if prior:
+                held=caps[c][max(prior)]
+                cur=g.index.year==TODAY.year
+                cap[cur]=cap[cur].fillna(held['wind_mw'])
         denominators[c]=cap
+        if c not in latest and held is not None:
+            latest[c]=dict(held,status=f"annual ENTSO-E A68, {held['year']} vintage held for {TODAY.year} dates; not a current turbine count. ENTSO-E has no {TODAY.year} country A68 for Sweden; bidding-zone A68 not summed. If the fleet grew in {TODAY.year}, the load factor is slightly overstated",
+                           applies_to=f'{TODAY.year}-01-01 onward',vintage_year=held['year'],stale_days=(TODAY-dt.date.fromisoformat(held['valid_through'])).days)
         if c not in latest:
             record=caps[c].get(TODAY.year)
             latest[c]=dict(record,status='annual ENTSO-E, not a current turbine census') if record else dict(caps[c].get(max(caps[c]),{}),status='last available annual observation only; not used for current load factor. National Swedish PxWeb failed TLS verification; not bypassed')
@@ -597,6 +609,7 @@ def generation():
     notes=safe('DK Energinet generation fill',lambda:fill_dk_wind(frames,denominators,daily_cap,latest,out))
     if notes:out.setdefault('source_notes',[]).extend(notes)
     out.setdefault('source_notes',[]).append('NO wind 2026-10-26 remains null: ENTSO-E A75 onshore (B19) is missing 14:00-14:45 UTC (4 of 96 intervals); not interpolated')
+    out.setdefault('source_notes',[]).append('SE wind 2026-11-08 remains null: ENTSO-E A75 wind is missing 15:45-16:00 UTC (1 of 96 intervals); not interpolated, so SE and Nordic 30-day averages stay blank until that day leaves the window')
     if all(c in frames for c in COUNTRIES):
         g=pd.concat(frames.values()).sort_index()
         nord=pd.concat({k:pd.concat([frames[c][k] for c in members],axis=1).sum(axis=1,min_count=len(members)) for k,members in {'wind':list(COUNTRIES),'hydro':['NO','SE','FI'],'nuclear':['SE','FI']}.items()},axis=1)
