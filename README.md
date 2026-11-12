@@ -30,6 +30,8 @@ https://raw.githubusercontent.com/MasterKano/emmi-data/live-data/data/market.jso
 
 Same prefix for the other files under `data/`.
 
+Nordic power v2 reads `nordic-v2/` on `main`. Oil & gas and Mining v2 read `og-mining-v2/` on `main` (see that folder's README).
+
 ## Actions secrets
 
 Repository secrets, never committed. Intraday quotes do not use them. Copy the values from the original source (GitHub will not reveal the existing emmi secrets):

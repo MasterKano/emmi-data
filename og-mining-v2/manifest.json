@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-11-12",
+  "built_at": "2026-11-12T02:11:23+01:00",
+  "universe": "Jerry tighter O&G list 12 Nov 2026 02:06 Zurich (t1171u): 32 oil & gas + 6 Lundin mining. Serica=SER.L, ShaMaran=SNM-SDB.ST, IPC=IPCO.ST, Meren=MER.ST. Orr\u00f6n excluded. Faraday/Fireweed/Valiente out.",
+  "files": {
+    "companies_mining.json": {
+      "bytes": 5681,
+      "sha256": "6d86b0c4b57148a3bdf4179275b6afc9a9a7c49dec3b671ec5ba4c64cf96ba3f",
+      "as_of": "2026-11-12"
+    },
+    "companies_oil_gas.json": {
+      "bytes": 20960,
+      "sha256": "b39b9a3e504ce8f6b0db41d58bab0a547e8eb5d5ead920d040696220b468a819",
+      "as_of": "2026-11-12"
+    },
+    "cost_curves.json": {
+      "bytes": 13560,
+      "sha256": "7ce5869df04f139e7261a1917c9ae2e6ab7a66b6743c366f481ae937a8ef9939",
+      "as_of": "2026-11-12"
+    },
+    "jerry_list.json": {
+      "bytes": 21797,
+      "sha256": "2386e434ea735dac89eb93bb9245af07c2c95b9245807764953368949c16e0b5",
+      "as_of": "2026-11-12"
+    },
+    "mining_production_usgs.json": {
+      "bytes": 76047,
+      "sha256": "521b1d64f37c1d59c30c09edcfe078da3711f58e041bcee226d5f3da8473f8ab",
+      "as_of": "2025-12-31"
+    },
+    "oil_balance_steo.json": {
+      "bytes": 134523,
+      "sha256": "dc9d85b09831c61e9f5f0e9dc350e5324c938c7baad275120218dc232d740b1c",
+      "as_of": "2026-11-05"
+    },
+    "oil_gas_history_ei.json": {
+      "bytes": 138560,
+      "sha256": "8b8119b3c3d27d952668dc9c18e7f79c2bab8b19c50588337edf42583e4755e0",
+      "as_of": "2025-12-31"
+    },
+    "outlooks.json": {
+      "bytes": 16930,
+      "sha256": "20c20abdf798a3d0a2bc9dff72ae7f09fb49d768e03390a072cb508e724a8913",
+      "as_of": "2026-11-12"
+    },
+    "spot_daily.json": {
+      "bytes": 7560,
+      "sha256": "af643bd74ecc1e0a08b3736691e4e4ada1672920443415802f1679eb1940ff54",
+      "as_of": "2026-11-03"
+    },
+    "universe_snippet.py": {
+      "bytes": 5665,
+      "sha256": "402507227f717396dac48f8ededcc58764c48794327036abde865470784cbdc1"
+    },
+    "us_weekly.json": {
+      "bytes": 21734,
+      "sha256": "dac4335a3b86a1a937aac5ae160d61f00d4b58c7e0eeabb749bef1ddcc3f99ac",
+      "as_of": "2026-10-30"
+    }
+  },
+  "errors": [],
+  "status": "built",
+  "policy": "null means unavailable; no invented, silently carried-forward or paid inputs. Free sources only."
+}

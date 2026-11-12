@@ -1,0 +1,1091 @@
+{
+ "meta": {
+  "built": "2026-11-12",
+  "rule": "Numbers copied from the cited tables; null = not published. No interpolation."
+ },
+ "oil": {
+  "short_term": {
+   "source": "EIA STEO Nov 2026 (see oil_balance_steo.json) + IEA OMR Oct 2026 public highlights",
+   "iea_omr_oct2026_highlights": {
+    "url": "https://www.iea.org/reports/oil-market-report-october-2026",
+    "published": "2026-10-14",
+    "next": "2026-11-13",
+    "demand_2026_change_mbd": -2.6,
+    "demand_2027_vs_2025_kbd": -620,
+    "supply_2026_mbd": 100.7,
+    "supply_2026_change_mbd": -5.8,
+    "supply_2027_change_mbd": 7.7,
+    "context": "Iran war / Strait of Hormuz disruption: Gulf crude exports 13.9 mb/d in Sep 2026, >75% of pre-war; observed global stocks 509 mb below end-Feb."
+   }
+  },
+  "medium_term_iea": {
+   "source": "IEA Oil 2025 - Analysis and forecast to 2030 (Table 1)",
+   "published": "2025-06-17",
+   "url": "https://www.iea.org/reports/oil-2025",
+   "unit": "mb/d",
+   "note": "IEA 'Oil 2026' (forecast to 2031), due 17 Jun 2026, was postponed (IEA OMR product page, checked 12 Nov 2026). Oil 2025 is pre-war: treat as structural baseline only.",
+   "years": [
+    2024,
+    2025,
+    2026,
+    2027,
+    2028,
+    2029,
+    2030
+   ],
+   "rows": {
+    "OECD Americas": [
+     24.9,
+     25.0,
+     24.9,
+     24.9,
+     24.7,
+     24.5,
+     24.4
+    ],
+    "OECD Europe": [
+     13.5,
+     13.5,
+     13.4,
+     13.2,
+     13.0,
+     12.9,
+     12.7
+    ],
+    "OECD Asia Oceania": [
+     7.2,
+     7.1,
+     7.0,
+     7.0,
+     7.0,
+     6.9,
+     6.9
+    ],
+    "Total OECD": [
+     45.7,
+     45.6,
+     45.3,
+     45.1,
+     44.7,
+     44.4,
+     44.0
+    ],
+    "Eurasia": [
+     4.7,
+     4.7,
+     4.8,
+     4.9,
+     4.9,
+     5.0,
+     5.0
+    ],
+    "Non-OECD Europe": [
+     0.8,
+     0.8,
+     0.8,
+     0.8,
+     0.8,
+     0.9,
+     0.9
+    ],
+    "China": [
+     16.6,
+     16.7,
+     16.9,
+     16.9,
+     16.9,
+     16.8,
+     16.7
+    ],
+    "Other Asia": [
+     15.0,
+     15.3,
+     15.7,
+     16.1,
+     16.4,
+     16.9,
+     17.3
+    ],
+    "Latin America": [
+     6.4,
+     6.5,
+     6.6,
+     6.7,
+     6.8,
+     7.0,
+     7.1
+    ],
+    "Middle East": [
+     9.2,
+     9.4,
+     9.5,
+     9.6,
+     9.6,
+     9.4,
+     9.2
+    ],
+    "Africa": [
+     4.6,
+     4.8,
+     4.9,
+     5.0,
+     5.2,
+     5.3,
+     5.4
+    ],
+    "Total Non-OECD": [
+     57.4,
+     58.2,
+     59.2,
+     60.1,
+     60.7,
+     61.2,
+     61.5
+    ],
+    "Total demand": [
+     103.0,
+     103.8,
+     104.5,
+     105.1,
+     105.4,
+     105.6,
+     105.5
+    ],
+    "Total non-OPEC supply": [
+     70.3,
+     71.6,
+     72.4,
+     72.8,
+     73.4,
+     73.2,
+     72.7
+    ],
+    "Call on OPEC crude + stock change": [
+     27.2,
+     26.5,
+     26.2,
+     26.1,
+     25.5,
+     25.6,
+     null
+    ]
+   }
+  },
+  "long_term_opec": {
+   "source": "OPEC World Oil Outlook 2026 (Tables 3.1 and 4.1)",
+   "url": "https://publications.opec.org/ASSETS/assetdb/woo-2026.pdf",
+   "unit": "mb/d",
+   "demand": {
+    "years": [
+     2025,
+     2030,
+     2035,
+     2040,
+     2045,
+     2050
+    ],
+    "rows": {
+     "OECD Americas": [
+      25.4,
+      25.9,
+      25.8,
+      24.9,
+      23.6,
+      22.4
+     ],
+     "OECD Europe": [
+      13.4,
+      13.7,
+      13.3,
+      12.3,
+      11.2,
+      10.2
+     ],
+     "OECD Asia-Pacific": [
+      7.1,
+      7.1,
+      6.8,
+      6.4,
+      5.9,
+      5.5
+     ],
+     "OECD": [
+      45.9,
+      46.7,
+      45.9,
+      43.6,
+      40.8,
+      38.0
+     ],
+     "China": [
+      16.9,
+      18.1,
+      18.9,
+      18.8,
+      18.4,
+      18.0
+     ],
+     "India": [
+      5.6,
+      7.1,
+      8.8,
+      10.4,
+      12.1,
+      13.8
+     ],
+     "Other Asia": [
+      9.8,
+      11.3,
+      12.5,
+      13.4,
+      14.3,
+      15.1
+     ],
+     "Latin America": [
+      6.9,
+      7.8,
+      8.6,
+      9.2,
+      9.5,
+      9.7
+     ],
+     "Middle East": [
+      8.9,
+      9.9,
+      11.0,
+      12.0,
+      12.9,
+      13.6
+     ],
+     "Africa": [
+      4.9,
+      5.7,
+      6.5,
+      7.4,
+      8.3,
+      9.2
+     ],
+     "Russia": [
+      4.0,
+      4.3,
+      4.4,
+      4.3,
+      4.3,
+      4.2
+     ],
+     "Other Eurasia": [
+      1.3,
+      1.5,
+      1.6,
+      1.6,
+      1.7,
+      1.7
+     ],
+     "Other Europe": [
+      0.8,
+      0.9,
+      1.0,
+      1.0,
+      0.9,
+      0.9
+     ],
+     "Non-OECD": [
+      59.2,
+      66.6,
+      73.1,
+      78.1,
+      82.3,
+      86.1
+     ],
+     "World": [
+      105.1,
+      113.3,
+      119.0,
+      121.7,
+      123.1,
+      124.1
+     ]
+    }
+   },
+   "supply": {
+    "years": [
+     2025,
+     2030,
+     2035,
+     2040,
+     2045,
+     2050
+    ],
+    "rows": {
+     "US": [
+      22.2,
+      22.6,
+      22.0,
+      21.1,
+      20.3,
+      19.6
+     ],
+     "US tight oil": [
+      15.1,
+      15.7,
+      15.9,
+      15.7,
+      15.3,
+      14.8
+     ],
+     "Canada": [
+      6.1,
+      6.4,
+      6.7,
+      7.0,
+      7.4,
+      8.0
+     ],
+     "OECD Americas": [
+      28.3,
+      28.9,
+      28.7,
+      28.1,
+      27.7,
+      27.6
+     ],
+     "OECD Europe": [
+      3.6,
+      3.7,
+      3.7,
+      3.8,
+      3.8,
+      3.9
+     ],
+     "OECD Asia-Pacific": [
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.4,
+      0.5
+     ],
+     "Latin America": [
+      7.5,
+      9.6,
+      11.0,
+      11.5,
+      11.7,
+      11.6
+     ],
+     "Middle East (non-DoC)": [
+      2.0,
+      2.6,
+      2.8,
+      2.9,
+      2.9,
+      3.0
+     ],
+     "Africa (non-DoC)": [
+      2.3,
+      2.8,
+      3.0,
+      3.1,
+      3.1,
+      3.0
+     ],
+     "China": [
+      4.6,
+      4.6,
+      4.5,
+      4.5,
+      4.5,
+      4.4
+     ],
+     "India": [
+      0.8,
+      0.8,
+      0.8,
+      0.9,
+      0.8,
+      0.8
+     ],
+     "Other Asia": [
+      1.6,
+      1.6,
+      1.5,
+      1.4,
+      1.4,
+      1.3
+     ],
+     "Processing gains": [
+      2.5,
+      2.8,
+      3.0,
+      3.2,
+      3.3,
+      3.4
+     ],
+     "Non-DoC liquids": [
+      54.2,
+      58.2,
+      59.9,
+      60.1,
+      60.0,
+      59.6
+     ],
+     "DoC liquids": [
+      50.6,
+      55.3,
+      59.3,
+      61.6,
+      63.2,
+      64.5
+     ],
+     "World": [
+      104.7,
+      113.6,
+      119.1,
+      121.7,
+      123.2,
+      124.2
+     ]
+    }
+   }
+  },
+  "long_term_iea": {
+   "source": "IEA World Energy Outlook 2025 scenario pages",
+   "url": "https://www.iea.org/reports/world-energy-outlook-2025",
+   "stated_policies": "Oil demand peaks at 102 mb/d around 2030, then declines gradually.",
+   "current_policies": "Oil demand rises to 113 mb/d by 2050.",
+   "note": "WEO-2026 not yet published at build time. Detailed WEO tables need the paid 'extended dataset' - gap."
+  }
+ },
+ "gas": {
+  "long_term_opec": {
+   "source": "OPEC World Oil Outlook 2026, Table 2.8",
+   "years": [
+    2025,
+    2030,
+    2035,
+    2040,
+    2045,
+    2050
+   ],
+   "unit": "mboe/d",
+   "rows": {
+    "OECD Americas": [
+     19.9,
+     20.3,
+     20.6,
+     20.8,
+     20.8,
+     20.5
+    ],
+    "OECD Europe": [
+     7.3,
+     7.2,
+     7.0,
+     6.9,
+     6.7,
+     6.4
+    ],
+    "OECD Asia-Pacific": [
+     3.7,
+     3.7,
+     3.7,
+     3.8,
+     3.8,
+     3.8
+    ],
+    "OECD": [
+     30.9,
+     31.2,
+     31.4,
+     31.4,
+     31.2,
+     30.7
+    ],
+    "China": [
+     7.2,
+     8.4,
+     9.2,
+     9.6,
+     9.8,
+     9.9
+    ],
+    "India": [
+     1.3,
+     1.8,
+     2.3,
+     3.1,
+     4.0,
+     5.2
+    ],
+    "Other Asia": [
+     4.9,
+     5.8,
+     6.7,
+     7.4,
+     7.9,
+     8.1
+    ],
+    "Latin America": [
+     2.5,
+     3.0,
+     3.5,
+     4.0,
+     4.6,
+     5.1
+    ],
+    "Middle East": [
+     10.3,
+     11.7,
+     12.8,
+     13.5,
+     14.1,
+     14.4
+    ],
+    "Africa": [
+     3.0,
+     3.5,
+     4.1,
+     4.8,
+     5.6,
+     6.5
+    ],
+    "Russia": [
+     8.7,
+     8.4,
+     8.1,
+     7.9,
+     7.6,
+     7.4
+    ],
+    "Other Eurasia": [
+     2.8,
+     3.0,
+     3.3,
+     3.5,
+     3.6,
+     3.6
+    ],
+    "Other Europe": [
+     0.3,
+     0.3,
+     0.4,
+     0.4,
+     0.4,
+     0.4
+    ],
+    "Non-OECD": [
+     41.0,
+     45.9,
+     50.6,
+     54.2,
+     57.6,
+     60.6
+    ],
+    "World": [
+     72.0,
+     77.1,
+     81.9,
+     85.7,
+     88.9,
+     91.3
+    ]
+   }
+  },
+  "long_term_iea": {
+   "stated_policies": "Natural gas demand increases nearly 1% a year to 2035 (LNG expansions in the US and Qatar), then levels off.",
+   "url": "https://www.iea.org/reports/world-energy-outlook-2025/stated-policies-scenario"
+  }
+ },
+ "mining": {
+  "copper_icsg": {
+   "source": "ICSG press release, Copper Market Forecast 2026/2027",
+   "issued": "2026-10-14",
+   "url": "https://icsg.org/",
+   "unit": "kt Cu",
+   "years": [
+    2025,
+    2026,
+    2027
+   ],
+   "mine_production_by_region": {
+    "Africa": [
+     4478,
+     4584,
+     5179
+    ],
+    "N.America": [
+     2231,
+     2311,
+     2380
+    ],
+    "Latin America": [
+     8733,
+     8675,
+     8990
+    ],
+    "Asean-10": [
+     745,
+     707,
+     953
+    ],
+    "Asia ex Asean/CIS": [
+     2845,
+     3016,
+     3156
+    ],
+    "Asia-CIS": [
+     975,
+     995,
+     1026
+    ],
+    "EU": [
+     750,
+     768,
+     796
+    ],
+    "Europe Others": [
+     1588,
+     1724,
+     1817
+    ],
+    "Oceania": [
+     835,
+     767,
+     881
+    ],
+    "TOTAL": [
+     23180,
+     23546,
+     25176
+    ],
+    "World adjusted": [
+     23180,
+     23485,
+     24217
+    ]
+   },
+   "refined_production_by_region": {
+    "Africa": [
+     3111,
+     3234,
+     3653
+    ],
+    "N.America": [
+     1597,
+     1608,
+     1670
+    ],
+    "Latin America": [
+     2057,
+     2053,
+     2140
+    ],
+    "Asean-10": [
+     497,
+     536,
+     867
+    ],
+    "Asia ex Asean/CIS": [
+     16692,
+     17212,
+     17633
+    ],
+    "Asia-CIS": [
+     484,
+     491,
+     486
+    ],
+    "EU": [
+     2389,
+     2541,
+     2846
+    ],
+    "Europe Others": [
+     1294,
+     1315,
+     1363
+    ],
+    "Oceania": [
+     455,
+     304,
+     356
+    ],
+    "TOTAL": [
+     28578,
+     29294,
+     31012
+    ],
+    "World adjusted": [
+     28578,
+     28693,
+     29673
+    ]
+   },
+   "refined_usage_by_region": {
+    "Africa": [
+     193,
+     192,
+     183
+    ],
+    "N.America": [
+     2235,
+     2260,
+     2380
+    ],
+    "Latin America": [
+     391,
+     391,
+     402
+    ],
+    "Asean-10": [
+     1235,
+     1251,
+     1292
+    ],
+    "Asia ex Asean/CIS": [
+     20119,
+     20452,
+     20903
+    ],
+    "Asia-CIS": [
+     107,
+     107,
+     107
+    ],
+    "EU": [
+     2961,
+     2994,
+     3026
+    ],
+    "Europe Others": [
+     917,
+     943,
+     1012
+    ],
+    "TOTAL": [
+     28159,
+     28590,
+     29305
+    ]
+   },
+   "growth_pct": {
+    "mine": [
+     1.0,
+     1.3,
+     3.1
+    ],
+    "refined_production": [
+     4.3,
+     0.4,
+     3.4
+    ],
+    "refined_usage": [
+     2.7,
+     1.5,
+     2.5
+    ]
+   },
+   "refined_balance_kt": [
+    419,
+    104,
+    368
+   ],
+   "china_share_of_usage_pct": 59
+  },
+  "gold_wgc": {
+   "source": "World Gold Council, Gold Demand Trends Q3 2026 (Table 1, tonnes)",
+   "data_as_of": "2026-09-30",
+   "url": "https://www.gold.org/goldhub/research/gold-demand-trends/gold-demand-trends-q3-2026",
+   "rows": [
+    {
+     "item": "Mine Production",
+     "q3_25": 1040.7,
+     "q4_25": 999.8,
+     "q1_26": 907.7,
+     "q2_26": 951.3,
+     "q3_26": 1070.9,
+     "qoq_pct": 13.0,
+     "yoy_pct": 3.0
+    },
+    {
+     "item": "Net Producer Hedging",
+     "q3_25": -0.2,
+     "q4_25": -20.2,
+     "q1_26": -21.8,
+     "q2_26": -18.6,
+     "q3_26": -16.8,
+     "qoq_pct": null,
+     "yoy_pct": null
+    },
+    {
+     "item": "Recycled Gold",
+     "q3_25": 342.7,
+     "q4_25": 365.4,
+     "q1_26": 372.5,
+     "q2_26": 321.8,
+     "q3_26": 314.5,
+     "qoq_pct": -2.0,
+     "yoy_pct": -8.0
+    },
+    {
+     "item": "Total Supply",
+     "q3_25": 1383.2,
+     "q4_25": 1345.0,
+     "q1_26": 1258.4,
+     "q2_26": 1254.5,
+     "q3_26": 1368.6,
+     "qoq_pct": 9.0,
+     "yoy_pct": -1.0
+    },
+    {
+     "item": "Jewellery Fabrication",
+     "q3_25": 420.0,
+     "q4_25": 438.9,
+     "q1_26": 331.8,
+     "q2_26": 311.0,
+     "q3_26": 340.1,
+     "qoq_pct": 9.0,
+     "yoy_pct": -19.0
+    },
+    {
+     "item": "Jewellery Consumption",
+     "q3_25": 376.4,
+     "q4_25": 435.6,
+     "q1_26": 295.2,
+     "q2_26": 280.5,
+     "q3_26": 312.9,
+     "qoq_pct": 12.0,
+     "yoy_pct": -17.0
+    },
+    {
+     "item": "Jewellery Inventory",
+     "q3_25": 43.6,
+     "q4_25": 3.3,
+     "q1_26": 36.6,
+     "q2_26": 30.5,
+     "q3_26": 27.2,
+     "qoq_pct": -11.0,
+     "yoy_pct": -38.0
+    },
+    {
+     "item": "Technology",
+     "q3_25": 82.0,
+     "q4_25": 82.5,
+     "q1_26": 82.2,
+     "q2_26": 80.9,
+     "q3_26": 84.8,
+     "qoq_pct": 5.0,
+     "yoy_pct": 3.0
+    },
+    {
+     "item": "Electronics",
+     "q3_25": 68.9,
+     "q4_25": 69.4,
+     "q1_26": 70.0,
+     "q2_26": 68.9,
+     "q3_26": 72.5,
+     "qoq_pct": 5.0,
+     "yoy_pct": 5.0
+    },
+    {
+     "item": "Other Industrial",
+     "q3_25": 11.1,
+     "q4_25": 11.0,
+     "q1_26": 10.3,
+     "q2_26": 10.1,
+     "q3_26": 10.4,
+     "qoq_pct": 3.0,
+     "yoy_pct": -6.0
+    },
+    {
+     "item": "Dentistry",
+     "q3_25": 2.0,
+     "q4_25": 2.0,
+     "q1_26": 1.9,
+     "q2_26": 1.9,
+     "q3_26": 1.9,
+     "qoq_pct": -1.0,
+     "yoy_pct": -6.0
+    },
+    {
+     "item": "Investment",
+     "q3_25": 554.3,
+     "q4_25": 604.1,
+     "q1_26": 539.3,
+     "q2_26": 261.2,
+     "q3_26": 479.0,
+     "qoq_pct": 83.0,
+     "yoy_pct": -14.0
+    },
+    {
+     "item": "Total Bar and Coin",
+     "q3_25": 328.6,
+     "q4_25": 428.3,
+     "q1_26": 476.9,
+     "q2_26": 308.6,
+     "q3_26": 267.8,
+     "qoq_pct": -13.0,
+     "yoy_pct": -19.0
+    },
+    {
+     "item": "Bars",
+     "q3_25": 251.2,
+     "q4_25": 331.6,
+     "q1_26": 397.2,
+     "q2_26": 248.7,
+     "q3_26": 202.7,
+     "qoq_pct": -18.0,
+     "yoy_pct": -19.0
+    },
+    {
+     "item": "Official Coins",
+     "q3_25": 31.6,
+     "q4_25": 54.3,
+     "q1_26": 51.8,
+     "q2_26": 33.7,
+     "q3_26": 35.3,
+     "qoq_pct": 5.0,
+     "yoy_pct": 12.0
+    },
+    {
+     "item": "Medals Imitation Coins",
+     "q3_25": 45.9,
+     "q4_25": 42.4,
+     "q1_26": 27.9,
+     "q2_26": 26.2,
+     "q3_26": 29.8,
+     "qoq_pct": 14.0,
+     "yoy_pct": -35.0
+    },
+    {
+     "item": "ETFs and Similar Products",
+     "q3_25": 225.7,
+     "q4_25": 175.7,
+     "q1_26": 62.4,
+     "q2_26": -47.3,
+     "q3_26": 211.2,
+     "qoq_pct": null,
+     "yoy_pct": -6.0
+    },
+    {
+     "item": "Central Bank and Other Institutions",
+     "q3_25": 226.3,
+     "q4_25": 209.9,
+     "q1_26": 57.7,
+     "q2_26": 296.3,
+     "q3_26": 321.2,
+     "qoq_pct": 8.0,
+     "yoy_pct": 42.0
+    },
+    {
+     "item": "Gold Demand",
+     "q3_25": 1282.6,
+     "q4_25": 1335.3,
+     "q1_26": 1011.0,
+     "q2_26": 949.5,
+     "q3_26": 1225.1,
+     "qoq_pct": 29.0,
+     "yoy_pct": -4.0
+    },
+    {
+     "item": "OTC and other",
+     "q3_25": 100.6,
+     "q4_25": 9.7,
+     "q1_26": 247.4,
+     "q2_26": 305.0,
+     "q3_26": 143.5,
+     "qoq_pct": -53.0,
+     "yoy_pct": 43.0
+    },
+    {
+     "item": "Total Demand",
+     "q3_25": 1383.2,
+     "q4_25": 1345.0,
+     "q1_26": 1258.4,
+     "q2_26": 1254.5,
+     "q3_26": 1368.6,
+     "qoq_pct": 9.0,
+     "yoy_pct": -1.0
+    },
+    {
+     "item": "LBMA Gold Price (US$/oz)",
+     "q3_25": 3456.5,
+     "q4_25": 4135.2,
+     "q1_26": 4872.9,
+     "q2_26": 4506.3,
+     "q3_26": 4262.2,
+     "qoq_pct": -5.0,
+     "yoy_pct": 23.0
+    }
+   ]
+  },
+  "diamonds_kp": {
+   "source": "Kimberley Process public statistics, Annual Global Summary 2021-2025",
+   "url": "https://kimberleyprocessstatistics.org/public_statistics",
+   "world_by_year": {
+    "2021": {
+     "carats_m": 118.74,
+     "value_usd_bn": 12.922,
+     "usd_per_carat": 108.8
+    },
+    "2022": {
+     "carats_m": 120.66,
+     "value_usd_bn": 15.963,
+     "usd_per_carat": 132.3
+    },
+    "2023": {
+     "carats_m": 112.06,
+     "value_usd_bn": 12.892,
+     "usd_per_carat": 115.0
+    },
+    "2024": {
+     "carats_m": 107.9,
+     "value_usd_bn": 9.533,
+     "usd_per_carat": 88.4
+    },
+    "2025": {
+     "carats_m": 98.82,
+     "value_usd_bn": 9.233,
+     "usd_per_carat": 93.4
+    }
+   },
+   "botswana": [
+    {
+     "year": 2021,
+     "country": "Botswana",
+     "production_carats": 22696389.0,
+     "value_usd": 3687638888.0,
+     "usd_per_carat": 162.48
+    },
+    {
+     "year": 2022,
+     "country": "Botswana",
+     "production_carats": 24509939.0,
+     "value_usd": 4700321539.0,
+     "usd_per_carat": 191.77
+    },
+    {
+     "year": 2023,
+     "country": "Botswana",
+     "production_carats": 25094818.0,
+     "value_usd": 3283178851.0,
+     "usd_per_carat": 130.83
+    },
+    {
+     "year": 2024,
+     "country": "Botswana",
+     "production_carats": 18125016.0,
+     "value_usd": 1359240745.89,
+     "usd_per_carat": 74.99
+    },
+    {
+     "year": 2025,
+     "country": "Botswana",
+     "production_carats": 15495829.0,
+     "value_usd": 1978204562.0,
+     "usd_per_carat": 127.66
+    }
+   ]
+  }
+ }
+}

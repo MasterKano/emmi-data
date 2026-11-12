@@ -1,0 +1,159 @@
+{
+  "source": "Lundin Group mining companies (Jerry 12 Nov 2026: 'For mining just include the Lundin mining companies for now').\nMembership source: The Lundin Group 'Lundin Group Companies' list (thelundingroup.com/about-us), fetched via search 12 Nov 2026.\nListing check: Yahoo Finance profiles + Nasdaq Nordic screener (Stockholm lines), 12 Nov 2026.",
+  "companies": [
+    {
+      "company": "Lundin Mining",
+      "yahoo": "LUN.TO",
+      "tradingview": "TSX:LUN",
+      "primary_venue": "TSX",
+      "exchange_ticker": "LUN",
+      "other_lines": "Nasdaq Stockholm LUMI (LUMI.ST)",
+      "commodity": "Copper (+gold, nickel, zinc)",
+      "note": "Chile (Candelaria, Caserones), Brazil (Chapada), Argentina (Vicuña JV with BHP); 2025 output ~331kt Cu (company site).",
+      "bucket": "core",
+      "mcap": 26017900544,
+      "ccy": "CAD",
+      "last": 30.56,
+      "as_of": "2026-11-12"
+    },
+    {
+      "company": "Lundin Gold",
+      "yahoo": "LUG.TO",
+      "tradingview": "TSX:LUG",
+      "primary_venue": "TSX",
+      "exchange_ticker": "LUG",
+      "other_lines": "Nasdaq Stockholm LUG (LUG.ST)",
+      "commodity": "Gold",
+      "note": "Fruta del Norte, Ecuador; 2025 output 498,315 oz (Lundin Group 2025 review).",
+      "bucket": "core",
+      "mcap": 23314579456,
+      "ccy": "CAD",
+      "last": 96.5,
+      "as_of": "2026-11-12"
+    },
+    {
+      "company": "NGEx Minerals",
+      "yahoo": "NGEX.TO",
+      "tradingview": "TSX:NGEX",
+      "primary_venue": "TSX",
+      "exchange_ticker": "NGEX",
+      "other_lines": "OTCQX NGXXF",
+      "commodity": "Copper-gold explorer",
+      "note": "Lunahuasi (Argentina). Valiente Resources spin-out effective 12 Nov 2026 (ex-date 12 Nov): expect a price step.",
+      "bucket": "core",
+      "mcap": 4807759360,
+      "ccy": "CAD",
+      "last": 22.17,
+      "as_of": "2026-11-12"
+    },
+    {
+      "company": "Lucara Diamond",
+      "yahoo": "LUC.TO",
+      "tradingview": "TSX:LUC",
+      "primary_venue": "TSX",
+      "exchange_ticker": "LUC",
+      "other_lines": "Nasdaq First North Sweden LUC (LUC.ST)",
+      "commodity": "Diamonds",
+      "note": "Karowe mine, Botswana (underground expansion).",
+      "bucket": "core",
+      "mcap": 179154256,
+      "ccy": "CAD",
+      "last": 0.12,
+      "as_of": "2026-11-12"
+    },
+    {
+      "company": "Montage Gold",
+      "yahoo": "MAU.TO",
+      "tradingview": "TSX:MAU",
+      "primary_venue": "TSX",
+      "exchange_ticker": "MAU",
+      "other_lines": null,
+      "commodity": "Gold developer",
+      "note": "Koné, Côte d'Ivoire. Aug 2026 deck: first gold Q4 2026 via oxide circuit; 3 Nov 2026 release headline says the plant is already operating above nameplate. Expect a developer-to-producer re-rating window.",
+      "bucket": "core",
+      "mcap": 6488235008,
+      "ccy": "CAD",
+      "last": 16.05,
+      "as_of": "2026-11-12"
+    },
+    {
+      "company": "LunR Royalties",
+      "yahoo": "LUNR.TO",
+      "tradingview": "TSX:LUNR",
+      "primary_venue": "TSX",
+      "exchange_ticker": "LUNR",
+      "other_lines": null,
+      "commodity": "Royalties (Cu/Au/Ag)",
+      "note": "Listed 19 Dec 2025; NSR royalties on Los Helados and Lunahuasi. Not Nasdaq LUNR (Intuitive Machines).",
+      "bucket": "core",
+      "mcap": 2067220096,
+      "ccy": "CAD",
+      "last": 17.1,
+      "as_of": "2026-11-12"
+    }
+  ],
+  "excluded": [
+    {
+      "company": "Orrön Energy",
+      "yahoo": "ORRON.ST",
+      "reason": "renewable power"
+    },
+    {
+      "company": "International Petroleum",
+      "yahoo": "IPCO.TO / IPCO.ST",
+      "reason": "oil & gas (in O&G list)"
+    },
+    {
+      "company": "ShaMaran Petroleum",
+      "yahoo": "SNM.OL",
+      "reason": "oil & gas (in O&G list)"
+    },
+    {
+      "company": "Faraday Copper",
+      "yahoo": "FDY.TO",
+      "tradingview": "TSX:FDY",
+      "primary_venue": "TSX",
+      "exchange_ticker": "FDY",
+      "other_lines": null,
+      "commodity": "Copper explorer",
+      "note": "Copper Creek, Arizona. Listed on the Lundin Group companies page but not in Jerry's six: confirm.",
+      "bucket": "confirm_with_jerry",
+      "mcap": 1265591424,
+      "ccy": "CAD",
+      "last": 4.3,
+      "as_of": "2026-11-12",
+      "reason": "Not in Jerry's six Lundin mining names (12 Nov). Leave out until confirmed."
+    },
+    {
+      "company": "Fireweed Metals",
+      "yahoo": "FWZ.V",
+      "tradingview": "TSXV:FWZ",
+      "primary_venue": "TSX Venture",
+      "exchange_ticker": "FWZ",
+      "other_lines": null,
+      "commodity": "Zinc/lead/silver, tungsten explorer",
+      "note": "Yukon/NWT (Macpass, Mactung). On the Lundin Group page but not in Jerry's six: confirm.",
+      "bucket": "confirm_with_jerry",
+      "mcap": 551812416,
+      "ccy": "CAD",
+      "last": 2.43,
+      "as_of": "2026-11-12",
+      "reason": "Not in Jerry's six Lundin mining names (12 Nov). Leave out until confirmed."
+    },
+    {
+      "company": "Valiente Resources",
+      "yahoo": "VALX.V (expected)",
+      "tradingview": "TSXV:VALX",
+      "primary_venue": "TSX Venture",
+      "exchange_ticker": "VALX",
+      "other_lines": null,
+      "commodity": "Copper-gold explorer",
+      "note": "NGEx spin-out holding Valle Ancho; effective 12 Nov 2026, TSXV listing conditionally approved. New Lundin Group vehicle: confirm and add once it trades.",
+      "bucket": "confirm_with_jerry",
+      "as_of": "2026-11-12",
+      "reason": "Not in Jerry's six Lundin mining names (12 Nov). Leave out until confirmed."
+    }
+  ],
+  "as_of": "2026-11-12",
+  "note": "Jerry: Mining is the Lundin mining companies only for now (LUN, LUG, NGEX, LUC, MAU, LUNR). Faraday, Fireweed and Valiente left out pending confirm."
+}

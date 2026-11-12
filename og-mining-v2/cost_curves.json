@@ -1,0 +1,316 @@
+{
+  "meta": {
+    "note": "Rough cost curves from free sources.\n1) Dallas Fed Energy Survey Q1 2026 special questions (breakeven WTI by play, new vs existing wells), file\n   https://www.dallasfed.org/-/media/documents/research/surveys/des/documents/breakeven.xlsx (last update 25 Mar 2026).\n2) Company-reported unit operating/production costs, each checked against the primary document text (raw/company/*.txt) on\n   12 Nov 2026. Definitions DIFFER by company (production cost vs opex vs lifting cost; WI vs entitlement; incl./excl. royalties,\n   tariffs, leases). This is a ROUGH curve: order of magnitude and ranking only. It is NOT a full-cycle breakeven.",
+    "built": "2026-11-12",
+    "universe": "Jerry tighter O&G list 12 Nov 2026 (t1171u): 15 companies with reported unit costs; Dallas Fed kept as context."
+  },
+  "dallasfed_q1_2026": {
+    "source": "Dallas Fed Energy Survey, Q1 2026 special questions (collected 11-19 Mar 2026)",
+    "url": "https://www.dallasfed.org/research/surveys/des/data/breakeven",
+    "rows": [
+      {
+        "play": "All Responses",
+        "breakeven_new_well": 66.0,
+        "opex_existing_wells": 43.0
+      },
+      {
+        "play": "Eagle Ford",
+        "breakeven_new_well": 63.0,
+        "opex_existing_wells": 40.0
+      },
+      {
+        "play": "Large Firms (all responses)",
+        "breakeven_new_well": 59.0,
+        "opex_existing_wells": 32.0
+      },
+      {
+        "play": "Other U.S. (Nonshale)",
+        "breakeven_new_well": 67.82,
+        "opex_existing_wells": 47.0
+      },
+      {
+        "play": "Other U.S. (Shale)",
+        "breakeven_new_well": 62.38,
+        "opex_existing_wells": 44.12
+      },
+      {
+        "play": "Permian (all responses)",
+        "breakeven_new_well": 67.0,
+        "opex_existing_wells": 39.0
+      },
+      {
+        "play": "Permian Basin – Delaware",
+        "breakeven_new_well": 63.21,
+        "opex_existing_wells": 33.82
+      },
+      {
+        "play": "Permian Basin – Midland",
+        "breakeven_new_well": 68.57,
+        "opex_existing_wells": 41.54
+      },
+      {
+        "play": "Permian Basin – Other",
+        "breakeven_new_well": 70.0,
+        "opex_existing_wells": 43.63
+      },
+      {
+        "play": "Small Firms (all responses)",
+        "breakeven_new_well": 68.0,
+        "opex_existing_wells": 46.0
+      }
+    ]
+  },
+  "og_unit_cost_curve": [
+    {
+      "company": "Gulf Keystone",
+      "yahoo": "GKP.L",
+      "period": "FY2025",
+      "production_kboed": 41.56,
+      "production_basis": "gross field (GKP WI ~80%)",
+      "unit_cost_usd_boe": 4.3,
+      "metric": "gross opex per bbl (H1 2026: $9.6 on shut-in volumes)",
+      "source_url": "https://www.gulfkeystone.com/investors/summary-financials/",
+      "quote": "Summary financials: FY2025 gross production 41,560 bopd, gross opex $4.3/bbl; HY2026 14,600 bopd, $9.6/bbl",
+      "cum_production_kboed_end": 41.6,
+      "cum_production_kboed_start": 0.0
+    },
+    {
+      "company": "Equinor",
+      "yahoo": "EQNR.OL",
+      "period": "FY2025 cost / 9M 2026 volume",
+      "production_kboed": 2214.0,
+      "production_basis": "equity, 9M 2026",
+      "unit_cost_usd_boe": 6.6,
+      "metric": "production cost, equity volumes (USD/boe)",
+      "source_url": "https://www.equinor.com/investors/annual-reports",
+      "quote": "Annual Report 2025: 'Production cost equity volumes 6.6'; Q3 2026 report: 9M 2026 equity production 2,214 mboe/d",
+      "cum_production_kboed_end": 2255.6,
+      "cum_production_kboed_start": 41.6
+    },
+    {
+      "company": "DNO",
+      "yahoo": "DNO.OL",
+      "period": "Q3 2026",
+      "production_kboed": 142.768,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 8.5,
+      "metric": "lifting cost (USD/boe)",
+      "source_url": "https://www.dno.no/media/h4ocghbm/q3-2026-interim-results-report.pdf",
+      "quote": "'Lifting costs (USD/boe) 8.5'; 'Net production (boepd) 142,768'",
+      "cum_production_kboed_end": 2398.3,
+      "cum_production_kboed_start": 2255.5
+    },
+    {
+      "company": "Aker BP",
+      "yahoo": "AKRBP.OL",
+      "period": "Q3 2026",
+      "production_kboed": 374.3,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 9.0,
+      "metric": "production cost per boe produced",
+      "source_url": "https://akerbp.com/wp-content/uploads/2026/10/aker-bp-2026-q3-report.pdf",
+      "quote": "'average production cost was USD 9.0 (8.8) per boe produced'; 'Net production was 374 mboepd'",
+      "cum_production_kboed_end": 2772.6,
+      "cum_production_kboed_start": 2398.3
+    },
+    {
+      "company": "Vår Energi",
+      "yahoo": "VAR.OL",
+      "period": "Q3 2026",
+      "production_kboed": 369.0,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 11.1,
+      "metric": "production cost (USD/boe)",
+      "source_url": "https://cdn.prod.nntech.io/company-events/reports/5306842e-e06e-3c32-9474-a8d8a928d304/report.pdf",
+      "quote": "'Production cost USD/boe 11.1'; 'Total production kboepd 369'",
+      "cum_production_kboed_end": 3141.6,
+      "cum_production_kboed_start": 2772.6
+    },
+    {
+      "company": "Meren Energy",
+      "yahoo": "MER.ST",
+      "period": "9M 2026",
+      "production_kboed": 29.8,
+      "production_basis": "entitlement",
+      "unit_cost_usd_boe": 15.8,
+      "metric": "unit operating cost, entitlement basis (USD/boe)",
+      "source_url": "https://mereninc.com/wp-content/uploads/2026/11/2026-MEREN-Q3-Report-to-Shareholders.pdf",
+      "quote": "'unit operating costs of $15.8/boe on an entitlement basis'; entitlement production 29,800 boepd (9M)",
+      "cum_production_kboed_end": 3672.4,
+      "cum_production_kboed_start": 3642.6
+    },
+    {
+      "company": "Seplat Energy",
+      "yahoo": "SEPL.L",
+      "period": "FY2026 guidance / Q3 2026 volume",
+      "production_kboed": 155.801,
+      "production_basis": "working interest",
+      "unit_cost_usd_boe": 16.0,
+      "metric": "unit operating cost guidance midpoint ($15.5-16.5/boe)",
+      "source_url": "https://www.investegate.co.uk/announcement/rns/seplat-energy-di---sepl/unaudited-q3-results-ended-30th-september-2026/9846891",
+      "quote": "'Unit operating cost guidance increased to $15.5-$16.5/boe'; '3Q 2026 working interest production averaged 155,801 boepd'",
+      "cum_production_kboed_end": 3828.2,
+      "cum_production_kboed_start": 3672.4
+    },
+    {
+      "company": "Ithaca Energy",
+      "yahoo": "ITH.L",
+      "period": "H1 2026",
+      "production_kboed": 128.0,
+      "production_basis": "working interest",
+      "unit_cost_usd_boe": 18.0,
+      "metric": "unit operating expenditure (USD/boe)",
+      "source_url": "https://www.ithacaenergy.com/press-releases/first-half-results-for-the-six-months-to-30-june-2026",
+      "quote": "'unit operating expenditure of $18.0/boe'; 'H1 2026 average production of 128 kboe/d'",
+      "cum_production_kboed_end": 3956.2,
+      "cum_production_kboed_start": 3828.2
+    },
+    {
+      "company": "International Petroleum (IPC)",
+      "yahoo": "IPCO.ST",
+      "period": "Q3 2026",
+      "production_kboed": 44.0,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 20.9,
+      "metric": "operating costs per boe (non-IFRS)",
+      "source_url": "https://www.international-petroleum.com/download/q3-2026-md-and-a",
+      "quote": "'Operating costs per boe of USD 20.9 for Q3 2026'; 'average net production of approximately 44,000 boepd'",
+      "cum_production_kboed_end": 4000.2,
+      "cum_production_kboed_start": 3956.2
+    },
+    {
+      "company": "BlueNord",
+      "yahoo": "BNOR.OL",
+      "period": "Q3 2026",
+      "production_kboed": 43.6,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 22.9,
+      "metric": "field operating cost per boe (lifting cost 16.0)",
+      "source_url": "https://api3.oslo.oslobors.no/v1/newsreader/attachment?attachmentId=335149&messageId=684964",
+      "quote": "'equating to USD 22.9 per boe'; 'Total production of 43.6 mboepd net'",
+      "cum_production_kboed_end": 4043.8,
+      "cum_production_kboed_start": 4000.2
+    },
+    {
+      "company": "BW Energy",
+      "yahoo": "BWE.OL",
+      "period": "Q3 2026",
+      "production_kboed": 21.5,
+      "production_basis": "net (oil)",
+      "unit_cost_usd_boe": 27.7,
+      "metric": "production cost per barrel (excl. royalties, tariffs, workovers)",
+      "source_url": "https://storage.mfn.se/d7a6058d-6d57-44c8-bc67-ccfeae5a5235/bw-energy-financial-report-q3-2026.pdf",
+      "quote": "'Quarterly production cost of USD 27.7 (24.0) per barrel'; 'net production of 21.5 kbopd'",
+      "cum_production_kboed_end": 4065.3,
+      "cum_production_kboed_start": 4043.8
+    },
+    {
+      "company": "OKEA",
+      "yahoo": "OKEA.OL",
+      "period": "Q3 2026",
+      "production_kboed": 29.1,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 29.5,
+      "metric": "production expense per boe",
+      "source_url": "https://okea.no/2026/11/okea-asa-third-quarter-2026-financial-results/",
+      "quote": "'Production expenses ... corresponding to USD 29.5 (34.0) per boe'; 'Net production was 29.1 kboepd'",
+      "cum_production_kboed_end": 4094.4,
+      "cum_production_kboed_start": 4065.3
+    },
+    {
+      "company": "Serica Energy",
+      "yahoo": "SER.L",
+      "period": "H1 2026",
+      "production_kboed": 44.7,
+      "production_basis": "net",
+      "unit_cost_usd_boe": 30.0,
+      "metric": "operating costs as reported (~$30/boe; ex-Lancaster lower)",
+      "source_url": "https://www.serica-energy.com/media/vx1buftj/serica-2026-hy-results-final.pdf",
+      "quote": "'Operating costs as reported were approximately $30/boe'; 'Production increased to 44,700 boepd'",
+      "cum_production_kboed_end": 4139.1,
+      "cum_production_kboed_start": 4094.4
+    },
+    {
+      "company": "EnQuest",
+      "yahoo": "ENQ.L",
+      "period": "H1 2026",
+      "production_kboed": 41.544,
+      "production_basis": "working interest",
+      "unit_cost_usd_boe": 30.3,
+      "metric": "average unit operating cost (incl. ~$3/boe Magnus outage)",
+      "source_url": "https://www.enquest.com/media/press-releases/article/2026-half-year-results",
+      "quote": "'Average unit operating costs ($/Boe) 30.3'; 'averaging 41,544 Boepd'",
+      "cum_production_kboed_end": 4180.7,
+      "cum_production_kboed_start": 4139.2
+    },
+    {
+      "company": "Jadestone Energy",
+      "yahoo": "JSE.L",
+      "period": "H1 2026",
+      "production_kboed": 15.282,
+      "production_basis": "working interest",
+      "unit_cost_usd_boe": 37.64,
+      "metric": "adjusted unit operating cost (downtime-inflated)",
+      "source_url": "https://www.investegate.co.uk/announcement/rns/jadestone-energy--jse/2026-half-year-results-/9742142",
+      "quote": "'Adjusted unit operating costs of US$37.64/boe'; 'production at 15,282 boepd'",
+      "cum_production_kboed_end": 4196.0,
+      "cum_production_kboed_start": 4180.7
+    }
+  ],
+  "mining_costs": [
+    {
+      "company": "Lundin Gold",
+      "yahoo": "LUG.TO",
+      "period": "Q3 2026",
+      "commodity": "gold",
+      "production": 153736,
+      "production_unit": "oz/quarter",
+      "unit_cost": 1037.0,
+      "metric": "AISC USD/oz sold (cash operating cost $862/oz)",
+      "source_url": "https://lundingold.com/news/lundin-gold-reports-third-quarter-2026-results-122865/",
+      "quote": "'Cash operating costs and all-in sustaining costs were $862 and $1,037 per oz sold'; 'Gold production was 153,736 oz'"
+    },
+    {
+      "company": "Montage Gold (Koné, study)",
+      "yahoo": "MAU.TO",
+      "period": "2024 UFS life-of-mine",
+      "commodity": "gold",
+      "production": 300000,
+      "production_unit": "oz/yr (~first 10 yrs)",
+      "unit_cost": 1195.0,
+      "metric": "LOM AISC USD/oz at $4,000/oz gold (study, not actual)",
+      "source_url": "https://www.montagegold.com/_resources/presentations/2026/August-2026-Montage-Corporate-Presentation.pdf",
+      "quote": "'$1,195/oz LOM AISC at $4,000/oz in the 2024 UFS'; '300kozpa for the first 10 years'"
+    },
+    {
+      "company": "Lundin Mining",
+      "yahoo": "LUN.TO",
+      "period": "Q3 2026",
+      "commodity": "copper",
+      "production": 62610,
+      "production_unit": "t/quarter",
+      "unit_cost": 2.01,
+      "metric": "C1 cash cost USD/lb Cu (AISC table first column 3.21)",
+      "source_url": "https://www.lundinmining.com/investors/lundin-mining-reports-third-quarter-2026-results-delivering-strong-financial-performance-amidst-record-copper-prices",
+      "quote": "'62,610 tonnes at a consolidated cash cost of $2.01/lb'"
+    },
+    {
+      "company": "Lucara Diamond",
+      "yahoo": "LUC.TO",
+      "period": "Q2 2026",
+      "commodity": "diamonds",
+      "production": 90082,
+      "production_unit": "carats/quarter",
+      "unit_cost": 23.76,
+      "metric": "operating cost USD per tonne processed",
+      "source_url": "https://lucaradiamond.mediaroom.com/2026-08-07-LUCARA-ANNOUNCES-Q2-2026-RESULTS",
+      "quote": "'Operating cost of $23.76 per tonne processed'; '90,082 carats were recovered in Q2 2026'. Q3 report due 13 Nov 2026."
+    }
+  ],
+  "gaps": [
+    "No free industry-wide upstream cost curve (Rystad/WoodMac/IEA detail are paid).",
+    "Shell, BP, TotalEnergies do not publish a comparable unit production cost per boe; not on the curve.",
+    "Kosmos (403 on IR site), Energean (403), Tullow (cost not in release text), Panoro (no unit cost in Q3 update) not yet verified: add from PDFs by hand.",
+    "Mining: no free industry gold/copper cost curve (S&P/WoodMac paid); only Lundin company points."
+  ]
+}

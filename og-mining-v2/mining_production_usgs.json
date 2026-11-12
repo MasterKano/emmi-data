@@ -1,0 +1,5745 @@
+{
+ "meta": {
+  "source": "USGS Mineral Commodity Summaries 2026",
+  "published": "2026-02-06",
+  "url": "https://doi.org/10.5066/P1WKQ63T",
+  "via": "https://catalog.ourworldindata.org/garden/usgs/2026-11-09/mineral_commodity_summaries/",
+  "note": "2025 values are USGS estimates; reserves as published in MCS 2026. Industrial diamonds only, OWID stores them in tonnes: x5 = million carats (1 ct = 0.2 g). Gem diamonds: see Kimberley Process."
+ },
+ "cobalt_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 310000.0,
+    "prev": 302000.0,
+    "yoy_pct": 2.6,
+    "share_world_pct": null,
+    "reserves": 12000000.0,
+    "series": [
+     [
+      2020,
+      142000.0
+     ],
+     [
+      2021,
+      165000.0
+     ],
+     [
+      2022,
+      197000.0
+     ],
+     [
+      2023,
+      238000.0
+     ],
+     [
+      2024,
+      302000.0
+     ],
+     [
+      2025,
+      310000.0
+     ]
+    ]
+   },
+   {
+    "country": "Democratic Republic of Congo",
+    "latest_year": 2025,
+    "production": 230000.0,
+    "prev": 226000.0,
+    "yoy_pct": 1.8,
+    "share_world_pct": 74.2,
+    "reserves": 6000000.0,
+    "series": [
+     [
+      2020,
+      98000.0
+     ],
+     [
+      2021,
+      119000.0
+     ],
+     [
+      2022,
+      144000.0
+     ],
+     [
+      2023,
+      175000.0
+     ],
+     [
+      2024,
+      226000.0
+     ],
+     [
+      2025,
+      230000.0
+     ]
+    ]
+   },
+   {
+    "country": "Indonesia",
+    "latest_year": 2025,
+    "production": 44000.0,
+    "prev": 35000.0,
+    "yoy_pct": 25.7,
+    "share_world_pct": 14.2,
+    "reserves": 760000.0,
+    "series": [
+     [
+      2020,
+      1100.0
+     ],
+     [
+      2021,
+      2700.0
+     ],
+     [
+      2022,
+      9600.0
+     ],
+     [
+      2023,
+      19000.0
+     ],
+     [
+      2024,
+      35000.0
+     ],
+     [
+      2025,
+      44000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 9100.0,
+    "prev": 7780.0,
+    "yoy_pct": 17.0,
+    "share_world_pct": 2.9,
+    "reserves": 780000.0,
+    "series": [
+     [
+      2020,
+      7640.0
+     ],
+     [
+      2021,
+      4567.0
+     ],
+     [
+      2022,
+      6600.0
+     ],
+     [
+      2023,
+      6080.0
+     ],
+     [
+      2024,
+      7780.0
+     ],
+     [
+      2025,
+      9100.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 7700.0,
+    "prev": 8000.0,
+    "yoy_pct": -3.7,
+    "share_world_pct": 2.5,
+    "reserves": 800000.0,
+    "series": [
+     [
+      2020,
+      9000.0
+     ],
+     [
+      2021,
+      8000.0
+     ],
+     [
+      2022,
+      9200.0
+     ],
+     [
+      2023,
+      8700.0
+     ],
+     [
+      2024,
+      8000.0
+     ],
+     [
+      2025,
+      7700.0
+     ]
+    ]
+   },
+   {
+    "country": "Madagascar",
+    "latest_year": 2025,
+    "production": 3900.0,
+    "prev": 3100.0,
+    "yoy_pct": 25.8,
+    "share_world_pct": 1.3,
+    "reserves": 100000.0,
+    "series": [
+     [
+      2020,
+      850.0
+     ],
+     [
+      2021,
+      2800.0
+     ],
+     [
+      2022,
+      3500.0
+     ],
+     [
+      2023,
+      4000.0
+     ],
+     [
+      2024,
+      3100.0
+     ],
+     [
+      2025,
+      3900.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 3700.0,
+    "prev": 4780.0,
+    "yoy_pct": -22.6,
+    "share_world_pct": 1.2,
+    "reserves": 1700000.0,
+    "series": [
+     [
+      2020,
+      5630.0
+     ],
+     [
+      2021,
+      5295.0
+     ],
+     [
+      2022,
+      5790.0
+     ],
+     [
+      2023,
+      5220.0
+     ],
+     [
+      2024,
+      4780.0
+     ],
+     [
+      2025,
+      3700.0
+     ]
+    ]
+   },
+   {
+    "country": "Philippines",
+    "latest_year": 2025,
+    "production": 3700.0,
+    "prev": 3100.0,
+    "yoy_pct": 19.4,
+    "share_world_pct": 1.2,
+    "reserves": 260000.0,
+    "series": [
+     [
+      2020,
+      4500.0
+     ],
+     [
+      2021,
+      3600.0
+     ],
+     [
+      2022,
+      3900.0
+     ],
+     [
+      2023,
+      3800.0
+     ],
+     [
+      2024,
+      3100.0
+     ],
+     [
+      2025,
+      3700.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 3500.0,
+    "prev": 3350.0,
+    "yoy_pct": 4.5,
+    "share_world_pct": 1.1,
+    "reserves": 220000.0,
+    "series": [
+     [
+      2020,
+      3690.0
+     ],
+     [
+      2021,
+      4361.0
+     ],
+     [
+      2022,
+      3060.0
+     ],
+     [
+      2023,
+      4220.0
+     ],
+     [
+      2024,
+      3350.0
+     ],
+     [
+      2025,
+      3500.0
+     ]
+    ]
+   },
+   {
+    "country": "Papua New Guinea",
+    "latest_year": 2025,
+    "production": 2800.0,
+    "prev": 2630.0,
+    "yoy_pct": 6.5,
+    "share_world_pct": 0.9,
+    "reserves": 84000.0,
+    "series": [
+     [
+      2020,
+      2940.0
+     ],
+     [
+      2021,
+      2953.0
+     ],
+     [
+      2022,
+      2990.0
+     ],
+     [
+      2023,
+      3070.0
+     ],
+     [
+      2024,
+      2630.0
+     ],
+     [
+      2025,
+      2800.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 2000.0,
+    "prev": 2000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 0.6,
+    "reserves": 160000.0,
+    "series": [
+     [
+      2020,
+      2200.0
+     ],
+     [
+      2021,
+      2200.0
+     ],
+     [
+      2024,
+      2000.0
+     ],
+     [
+      2025,
+      2000.0
+     ]
+    ]
+   },
+   {
+    "country": "Cuba",
+    "latest_year": 2025,
+    "production": 2000.0,
+    "prev": 3450.0,
+    "yoy_pct": -42.0,
+    "share_world_pct": 0.6,
+    "reserves": 500000.0,
+    "series": [
+     [
+      2020,
+      3800.0
+     ],
+     [
+      2021,
+      4000.0
+     ],
+     [
+      2022,
+      3700.0
+     ],
+     [
+      2023,
+      3300.0
+     ],
+     [
+      2024,
+      3450.0
+     ],
+     [
+      2025,
+      2000.0
+     ]
+    ]
+   },
+   {
+    "country": "Turkey",
+    "latest_year": 2025,
+    "production": 1900.0,
+    "prev": 2200.0,
+    "yoy_pct": -13.6,
+    "share_world_pct": 0.6,
+    "reserves": 91000.0,
+    "series": [
+     [
+      2021,
+      2400.0
+     ],
+     [
+      2022,
+      2100.0
+     ],
+     [
+      2023,
+      2500.0
+     ],
+     [
+      2024,
+      2200.0
+     ],
+     [
+      2025,
+      1900.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 300.0,
+    "prev": 200.0,
+    "yoy_pct": 50.0,
+    "share_world_pct": 0.1,
+    "reserves": 70000.0,
+    "series": [
+     [
+      2020,
+      600.0
+     ],
+     [
+      2021,
+      650.0
+     ],
+     [
+      2022,
+      500.0
+     ],
+     [
+      2023,
+      500.0
+     ],
+     [
+      2024,
+      200.0
+     ],
+     [
+      2025,
+      300.0
+     ]
+    ]
+   },
+   {
+    "country": "Morocco",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      2300.0
+     ],
+     [
+      2021,
+      2300.0
+     ]
+    ]
+   },
+   {
+    "country": "New Caledonia",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2022,
+      2000.0
+     ],
+     [
+      2023,
+      2570.0
+     ]
+    ]
+   }
+  ]
+ },
+ "copper_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 23000000.0,
+    "prev": 23000000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": null,
+    "reserves": 980000000.0,
+    "series": [
+     [
+      2020,
+      20600000.0
+     ],
+     [
+      2021,
+      21200000.0
+     ],
+     [
+      2022,
+      21900000.0
+     ],
+     [
+      2023,
+      22600000.0
+     ],
+     [
+      2024,
+      23000000.0
+     ],
+     [
+      2025,
+      23000000.0
+     ]
+    ]
+   },
+   {
+    "country": "Chile",
+    "latest_year": 2025,
+    "production": 5300000.0,
+    "prev": 5510000.0,
+    "yoy_pct": -3.8,
+    "share_world_pct": 23.0,
+    "reserves": 180000000.0,
+    "series": [
+     [
+      2020,
+      5730000.0
+     ],
+     [
+      2021,
+      5620000.0
+     ],
+     [
+      2022,
+      5330000.0
+     ],
+     [
+      2023,
+      5250000.0
+     ],
+     [
+      2024,
+      5510000.0
+     ],
+     [
+      2025,
+      5300000.0
+     ]
+    ]
+   },
+   {
+    "country": "Democratic Republic of Congo",
+    "latest_year": 2025,
+    "production": 3200000.0,
+    "prev": 2990000.0,
+    "yoy_pct": 7.0,
+    "share_world_pct": 13.9,
+    "reserves": 80000000.0,
+    "series": [
+     [
+      2020,
+      1600000.0
+     ],
+     [
+      2021,
+      1740000.0
+     ],
+     [
+      2022,
+      2350000.0
+     ],
+     [
+      2023,
+      2930000.0
+     ],
+     [
+      2024,
+      2990000.0
+     ],
+     [
+      2025,
+      3200000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 3000000.0,
+    "prev": 2850000.0,
+    "yoy_pct": 5.3,
+    "share_world_pct": 13.0,
+    "reserves": 210000000.0,
+    "series": [
+     [
+      2020,
+      2840000.0
+     ],
+     [
+      2021,
+      2850000.0
+     ],
+     [
+      2022,
+      2850000.0
+     ],
+     [
+      2023,
+      3020000.0
+     ],
+     [
+      2024,
+      2850000.0
+     ],
+     [
+      2025,
+      3000000.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 2700000.0,
+    "prev": 2740000.0,
+    "yoy_pct": -1.5,
+    "share_world_pct": 11.7,
+    "reserves": 85000000.0,
+    "series": [
+     [
+      2020,
+      2150000.0
+     ],
+     [
+      2021,
+      2300000.0
+     ],
+     [
+      2022,
+      2450000.0
+     ],
+     [
+      2023,
+      2760000.0
+     ],
+     [
+      2024,
+      2740000.0
+     ],
+     [
+      2025,
+      2700000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 1800000.0,
+    "prev": 1840000.0,
+    "yoy_pct": -2.2,
+    "share_world_pct": 7.8,
+    "reserves": 41000000.0,
+    "series": [
+     [
+      2020,
+      1720000.0
+     ],
+     [
+      2021,
+      1910000.0
+     ],
+     [
+      2022,
+      1940000.0
+     ],
+     [
+      2023,
+      1820000.0
+     ],
+     [
+      2024,
+      1840000.0
+     ],
+     [
+      2025,
+      1800000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 1300000.0,
+    "prev": 1020000.0,
+    "yoy_pct": 27.5,
+    "share_world_pct": 5.7,
+    "reserves": 80000000.0,
+    "series": [
+     [
+      2020,
+      810000.0
+     ],
+     [
+      2021,
+      940000.0
+     ],
+     [
+      2022,
+      936000.0
+     ],
+     [
+      2023,
+      890000.0
+     ],
+     [
+      2024,
+      1020000.0
+     ],
+     [
+      2025,
+      1300000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 1000000.0,
+    "prev": 1050000.0,
+    "yoy_pct": -4.8,
+    "share_world_pct": 4.3,
+    "reserves": 47000000.0,
+    "series": [
+     [
+      2020,
+      1200000.0
+     ],
+     [
+      2021,
+      1230000.0
+     ],
+     [
+      2022,
+      1230000.0
+     ],
+     [
+      2023,
+      1130000.0
+     ],
+     [
+      2024,
+      1050000.0
+     ],
+     [
+      2025,
+      1000000.0
+     ]
+    ]
+   },
+   {
+    "country": "Zambia",
+    "latest_year": 2025,
+    "production": 940000.0,
+    "prev": 823000.0,
+    "yoy_pct": 14.2,
+    "share_world_pct": 4.1,
+    "reserves": 21000000.0,
+    "series": [
+     [
+      2020,
+      853000.0
+     ],
+     [
+      2021,
+      842000.0
+     ],
+     [
+      2022,
+      797000.0
+     ],
+     [
+      2023,
+      712000.0
+     ],
+     [
+      2024,
+      823000.0
+     ],
+     [
+      2025,
+      940000.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 730000.0,
+    "prev": 765000.0,
+    "yoy_pct": -4.6,
+    "share_world_pct": 3.2,
+    "reserves": 100000000.0,
+    "series": [
+     [
+      2020,
+      885000.0
+     ],
+     [
+      2021,
+      813000.0
+     ],
+     [
+      2022,
+      819000.0
+     ],
+     [
+      2023,
+      778000.0
+     ],
+     [
+      2024,
+      765000.0
+     ],
+     [
+      2025,
+      730000.0
+     ]
+    ]
+   },
+   {
+    "country": "Indonesia",
+    "latest_year": 2025,
+    "production": 710000.0,
+    "prev": 1010000.0,
+    "yoy_pct": -29.7,
+    "share_world_pct": 3.1,
+    "reserves": 21000000.0,
+    "series": [
+     [
+      2020,
+      505000.0
+     ],
+     [
+      2021,
+      731000.0
+     ],
+     [
+      2022,
+      941000.0
+     ],
+     [
+      2023,
+      907000.0
+     ],
+     [
+      2024,
+      1010000.0
+     ],
+     [
+      2025,
+      710000.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 710000.0,
+    "prev": 724000.0,
+    "yoy_pct": -1.9,
+    "share_world_pct": 3.1,
+    "reserves": 20000000.0,
+    "series": [
+     [
+      2020,
+      552000.0
+     ],
+     [
+      2021,
+      510000.0
+     ],
+     [
+      2022,
+      593000.0
+     ],
+     [
+      2023,
+      740000.0
+     ],
+     [
+      2024,
+      724000.0
+     ],
+     [
+      2025,
+      710000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 690000.0,
+    "prev": 717000.0,
+    "yoy_pct": -3.8,
+    "share_world_pct": 3.0,
+    "reserves": 53000000.0,
+    "series": [
+     [
+      2020,
+      733000.0
+     ],
+     [
+      2021,
+      734000.0
+     ],
+     [
+      2022,
+      754000.0
+     ],
+     [
+      2023,
+      699000.0
+     ],
+     [
+      2024,
+      717000.0
+     ],
+     [
+      2025,
+      690000.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 500000.0,
+    "prev": 515000.0,
+    "yoy_pct": -2.9,
+    "share_world_pct": 2.2,
+    "reserves": 7000000.0,
+    "series": [
+     [
+      2020,
+      585000.0
+     ],
+     [
+      2021,
+      550000.0
+     ],
+     [
+      2022,
+      520000.0
+     ],
+     [
+      2023,
+      500000.0
+     ],
+     [
+      2024,
+      515000.0
+     ],
+     [
+      2025,
+      500000.0
+     ]
+    ]
+   },
+   {
+    "country": "Poland",
+    "latest_year": 2025,
+    "production": 410000.0,
+    "prev": 400000.0,
+    "yoy_pct": 2.5,
+    "share_world_pct": 1.8,
+    "reserves": 33000000.0,
+    "series": [
+     [
+      2020,
+      393000.0
+     ],
+     [
+      2021,
+      391000.0
+     ],
+     [
+      2022,
+      393000.0
+     ],
+     [
+      2023,
+      395000.0
+     ],
+     [
+      2024,
+      400000.0
+     ],
+     [
+      2025,
+      410000.0
+     ]
+    ]
+   },
+   {
+    "country": "India",
+    "latest_year": 2025,
+    "production": 23000.0,
+    "prev": 27000.0,
+    "yoy_pct": -14.8,
+    "share_world_pct": 0.1,
+    "reserves": 2200000.0,
+    "series": [
+     [
+      2023,
+      27000.0
+     ],
+     [
+      2024,
+      27000.0
+     ],
+     [
+      2025,
+      23000.0
+     ]
+    ]
+   },
+   {
+    "country": "Germany",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   },
+   {
+    "country": "Japan",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   },
+   {
+    "country": "South Korea",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   }
+  ]
+ },
+ "copper_refinery": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 29000000.0,
+    "prev": 27600000.0,
+    "yoy_pct": 5.1,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      25300000.0
+     ],
+     [
+      2021,
+      25300000.0
+     ],
+     [
+      2022,
+      25900000.0
+     ],
+     [
+      2023,
+      27000000.0
+     ],
+     [
+      2024,
+      27600000.0
+     ],
+     [
+      2025,
+      29000000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 14000000.0,
+    "prev": 12400000.0,
+    "yoy_pct": 12.9,
+    "share_world_pct": 48.3,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      10000000.0
+     ],
+     [
+      2021,
+      10500000.0
+     ],
+     [
+      2022,
+      11100000.0
+     ],
+     [
+      2023,
+      12000000.0
+     ],
+     [
+      2024,
+      12400000.0
+     ],
+     [
+      2025,
+      14000000.0
+     ]
+    ]
+   },
+   {
+    "country": "Democratic Republic of Congo",
+    "latest_year": 2025,
+    "production": 2800000.0,
+    "prev": 2560000.0,
+    "yoy_pct": 9.4,
+    "share_world_pct": 9.7,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      1350000.0
+     ],
+     [
+      2021,
+      1450000.0
+     ],
+     [
+      2022,
+      1770000.0
+     ],
+     [
+      2023,
+      2170000.0
+     ],
+     [
+      2024,
+      2560000.0
+     ],
+     [
+      2025,
+      2800000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 2100000.0,
+    "prev": 2310000.0,
+    "yoy_pct": -9.1,
+    "share_world_pct": 7.2,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      3450000.0
+     ],
+     [
+      2021,
+      3170000.0
+     ],
+     [
+      2022,
+      2830000.0
+     ],
+     [
+      2023,
+      2460000.0
+     ],
+     [
+      2024,
+      2310000.0
+     ],
+     [
+      2025,
+      2100000.0
+     ]
+    ]
+   },
+   {
+    "country": "Chile",
+    "latest_year": 2025,
+    "production": 1700000.0,
+    "prev": 1940000.0,
+    "yoy_pct": -12.4,
+    "share_world_pct": 5.9,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      2330000.0
+     ],
+     [
+      2021,
+      2270000.0
+     ],
+     [
+      2022,
+      2150000.0
+     ],
+     [
+      2023,
+      2080000.0
+     ],
+     [
+      2024,
+      1940000.0
+     ],
+     [
+      2025,
+      1700000.0
+     ]
+    ]
+   },
+   {
+    "country": "Japan",
+    "latest_year": 2025,
+    "production": 1400000.0,
+    "prev": 1570000.0,
+    "yoy_pct": -10.8,
+    "share_world_pct": 4.8,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      1580000.0
+     ],
+     [
+      2021,
+      1510000.0
+     ],
+     [
+      2022,
+      1550000.0
+     ],
+     [
+      2023,
+      1490000.0
+     ],
+     [
+      2024,
+      1570000.0
+     ],
+     [
+      2025,
+      1400000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 950000.0,
+    "prev": 896000.0,
+    "yoy_pct": 6.0,
+    "share_world_pct": 3.3,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      1040000.0
+     ],
+     [
+      2021,
+      981000.0
+     ],
+     [
+      2022,
+      1010000.0
+     ],
+     [
+      2023,
+      1000000.0
+     ],
+     [
+      2024,
+      896000.0
+     ],
+     [
+      2025,
+      950000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 850000.0,
+    "prev": 921000.0,
+    "yoy_pct": -7.7,
+    "share_world_pct": 2.9,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      918000.0
+     ],
+     [
+      2021,
+      971000.0
+     ],
+     [
+      2022,
+      952000.0
+     ],
+     [
+      2023,
+      882000.0
+     ],
+     [
+      2024,
+      921000.0
+     ],
+     [
+      2025,
+      850000.0
+     ]
+    ]
+   },
+   {
+    "country": "India",
+    "latest_year": 2025,
+    "production": 620000.0,
+    "prev": 545000.0,
+    "yoy_pct": 13.8,
+    "share_world_pct": 2.1,
+    "reserves": null,
+    "series": [
+     [
+      2023,
+      509000.0
+     ],
+     [
+      2024,
+      545000.0
+     ],
+     [
+      2025,
+      620000.0
+     ]
+    ]
+   },
+   {
+    "country": "Germany",
+    "latest_year": 2025,
+    "production": 610000.0,
+    "prev": 597000.0,
+    "yoy_pct": 2.2,
+    "share_world_pct": 2.1,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      643000.0
+     ],
+     [
+      2021,
+      615000.0
+     ],
+     [
+      2022,
+      609000.0
+     ],
+     [
+      2023,
+      609000.0
+     ],
+     [
+      2024,
+      597000.0
+     ],
+     [
+      2025,
+      610000.0
+     ]
+    ]
+   },
+   {
+    "country": "South Korea",
+    "latest_year": 2025,
+    "production": 610000.0,
+    "prev": 604000.0,
+    "yoy_pct": 1.0,
+    "share_world_pct": 2.1,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      671000.0
+     ],
+     [
+      2021,
+      647000.0
+     ],
+     [
+      2022,
+      638000.0
+     ],
+     [
+      2023,
+      604000.0
+     ],
+     [
+      2024,
+      604000.0
+     ],
+     [
+      2025,
+      610000.0
+     ]
+    ]
+   },
+   {
+    "country": "Poland",
+    "latest_year": 2025,
+    "production": 560000.0,
+    "prev": 589000.0,
+    "yoy_pct": -4.9,
+    "share_world_pct": 1.9,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      560000.0
+     ],
+     [
+      2021,
+      578000.0
+     ],
+     [
+      2022,
+      586000.0
+     ],
+     [
+      2023,
+      592000.0
+     ],
+     [
+      2024,
+      589000.0
+     ],
+     [
+      2025,
+      560000.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 500000.0,
+    "prev": 498000.0,
+    "yoy_pct": 0.4,
+    "share_world_pct": 1.7,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      515000.0
+     ],
+     [
+      2021,
+      500000.0
+     ],
+     [
+      2022,
+      494000.0
+     ],
+     [
+      2023,
+      458000.0
+     ],
+     [
+      2024,
+      498000.0
+     ],
+     [
+      2025,
+      500000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 480000.0,
+    "prev": 489000.0,
+    "yoy_pct": -1.8,
+    "share_world_pct": 1.7,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      492000.0
+     ],
+     [
+      2021,
+      473000.0
+     ],
+     [
+      2022,
+      486000.0
+     ],
+     [
+      2023,
+      509000.0
+     ],
+     [
+      2024,
+      489000.0
+     ],
+     [
+      2025,
+      480000.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 460000.0,
+    "prev": 434000.0,
+    "yoy_pct": 6.0,
+    "share_world_pct": 1.6,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      427000.0
+     ],
+     [
+      2021,
+      385000.0
+     ],
+     [
+      2022,
+      401000.0
+     ],
+     [
+      2023,
+      442000.0
+     ],
+     [
+      2024,
+      434000.0
+     ],
+     [
+      2025,
+      460000.0
+     ]
+    ]
+   },
+   {
+    "country": "Indonesia",
+    "latest_year": 2025,
+    "production": 400000.0,
+    "prev": 349000.0,
+    "yoy_pct": 14.6,
+    "share_world_pct": 1.4,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      269000.0
+     ],
+     [
+      2021,
+      290000.0
+     ],
+     [
+      2022,
+      310000.0
+     ],
+     [
+      2023,
+      225000.0
+     ],
+     [
+      2024,
+      349000.0
+     ],
+     [
+      2025,
+      400000.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 340000.0,
+    "prev": 385000.0,
+    "yoy_pct": -11.7,
+    "share_world_pct": 1.2,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      324000.0
+     ],
+     [
+      2021,
+      336000.0
+     ],
+     [
+      2022,
+      391000.0
+     ],
+     [
+      2023,
+      403000.0
+     ],
+     [
+      2024,
+      385000.0
+     ],
+     [
+      2025,
+      340000.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 320000.0,
+    "prev": 324000.0,
+    "yoy_pct": -1.2,
+    "share_world_pct": 1.1,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      290000.0
+     ],
+     [
+      2021,
+      287000.0
+     ],
+     [
+      2022,
+      278000.0
+     ],
+     [
+      2023,
+      315000.0
+     ],
+     [
+      2024,
+      324000.0
+     ],
+     [
+      2025,
+      320000.0
+     ]
+    ]
+   },
+   {
+    "country": "Zambia",
+    "latest_year": 2025,
+    "production": 270000.0,
+    "prev": 189000.0,
+    "yoy_pct": 42.9,
+    "share_world_pct": 0.9,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      378000.0
+     ],
+     [
+      2021,
+      354000.0
+     ],
+     [
+      2022,
+      349000.0
+     ],
+     [
+      2023,
+      222000.0
+     ],
+     [
+      2024,
+      189000.0
+     ],
+     [
+      2025,
+      270000.0
+     ]
+    ]
+   }
+  ]
+ },
+ "diamond_mine_industrial": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 7.599999904632568,
+    "prev": 7.599999904632568,
+    "yoy_pct": 0.0,
+    "share_world_pct": null,
+    "reserves": 340.0,
+    "series": [
+     [
+      2020,
+      9.0
+     ],
+     [
+      2021,
+      9.199999809265137
+     ],
+     [
+      2022,
+      9.0
+     ],
+     [
+      2023,
+      8.199999809265137
+     ],
+     [
+      2024,
+      7.599999904632568
+     ],
+     [
+      2025,
+      7.599999904632568
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 3.200000047683716,
+    "prev": 3.200000047683716,
+    "yoy_pct": 0.0,
+    "share_world_pct": 42.1,
+    "reserves": 150.0,
+    "series": [
+     [
+      2020,
+      2.799999952316284
+     ],
+     [
+      2021,
+      3.4000000953674316
+     ],
+     [
+      2022,
+      3.5999999046325684
+     ],
+     [
+      2023,
+      3.200000047683716
+     ],
+     [
+      2024,
+      3.200000047683716
+     ],
+     [
+      2025,
+      3.200000047683716
+     ]
+    ]
+   },
+   {
+    "country": "Democratic Republic of Congo",
+    "latest_year": 2025,
+    "production": 1.399999976158142,
+    "prev": 1.399999976158142,
+    "yoy_pct": 0.0,
+    "share_world_pct": 18.4,
+    "reserves": 30.0,
+    "series": [
+     [
+      2020,
+      2.0
+     ],
+     [
+      2021,
+      2.200000047683716
+     ],
+     [
+      2022,
+      1.600000023841858
+     ],
+     [
+      2023,
+      1.399999976158142
+     ],
+     [
+      2024,
+      1.399999976158142
+     ],
+     [
+      2025,
+      1.399999976158142
+     ]
+    ]
+   },
+   {
+    "country": "Botswana",
+    "latest_year": 2025,
+    "production": 1.0,
+    "prev": 1.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 13.2,
+    "reserves": 50.0,
+    "series": [
+     [
+      2020,
+      1.0
+     ],
+     [
+      2021,
+      1.399999976158142
+     ],
+     [
+      2022,
+      1.399999976158142
+     ],
+     [
+      2023,
+      1.600000023841858
+     ],
+     [
+      2024,
+      1.0
+     ],
+     [
+      2025,
+      1.0
+     ]
+    ]
+   },
+   {
+    "country": "Zimbabwe",
+    "latest_year": 2025,
+    "production": 1.0,
+    "prev": 1.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 13.2,
+    "reserves": 11.199999809265137,
+    "series": [
+     [
+      2020,
+      0.4000000059604645
+     ],
+     [
+      2021,
+      0.800000011920929
+     ],
+     [
+      2022,
+      0.800000011920929
+     ],
+     [
+      2023,
+      0.800000011920929
+     ],
+     [
+      2024,
+      1.0
+     ],
+     [
+      2025,
+      1.0
+     ]
+    ]
+   },
+   {
+    "country": "South Africa",
+    "latest_year": 2025,
+    "production": 0.6000000238418579,
+    "prev": 0.6000000238418579,
+    "yoy_pct": 0.0,
+    "share_world_pct": 7.9,
+    "reserves": 17.399999618530273,
+    "series": [
+     [
+      2020,
+      0.4000000059604645
+     ],
+     [
+      2021,
+      1.2000000476837158
+     ],
+     [
+      2022,
+      1.2000000476837158
+     ],
+     [
+      2023,
+      0.800000011920929
+     ],
+     [
+      2024,
+      0.6000000238418579
+     ],
+     [
+      2025,
+      0.6000000238418579
+     ]
+    ]
+   },
+   {
+    "country": "Angola",
+    "latest_year": 2025,
+    "production": 0.20000000298023224,
+    "prev": 0.20000000298023224,
+    "yoy_pct": 0.0,
+    "share_world_pct": 2.6,
+    "reserves": 30.0,
+    "series": [
+     [
+      2022,
+      0.20000000298023224
+     ],
+     [
+      2023,
+      0.20000000298023224
+     ],
+     [
+      2024,
+      0.20000000298023224
+     ],
+     [
+      2025,
+      0.20000000298023224
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 0.20000000298023224,
+    "prev": 0.20000000298023224,
+    "yoy_pct": 0.0,
+    "share_world_pct": 2.6,
+    "reserves": 50.0,
+    "series": [
+     [
+      2020,
+      0.20000000298023224
+     ],
+     [
+      2021,
+      0.20000000298023224
+     ],
+     [
+      2022,
+      0.20000000298023224
+     ],
+     [
+      2023,
+      0.20000000298023224
+     ],
+     [
+      2024,
+      0.20000000298023224
+     ],
+     [
+      2025,
+      0.20000000298023224
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      2.200000047683716
+     ],
+     [
+      2021,
+      0.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   }
+  ]
+ },
+ "gold_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 3300.0,
+    "prev": 3280.0,
+    "yoy_pct": 0.6,
+    "share_world_pct": null,
+    "reserves": 66000.0,
+    "series": [
+     [
+      2020,
+      3030.0
+     ],
+     [
+      2021,
+      3090.0
+     ],
+     [
+      2022,
+      3060.0
+     ],
+     [
+      2023,
+      3250.0
+     ],
+     [
+      2024,
+      3280.0
+     ],
+     [
+      2025,
+      3300.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 1000.0,
+    "prev": 1020.0,
+    "yoy_pct": -2.0,
+    "share_world_pct": 30.3,
+    "reserves": 11000.0,
+    "series": [
+     [
+      2020,
+      572.0
+     ],
+     [
+      2021,
+      626.0
+     ],
+     [
+      2022,
+      726.0
+     ],
+     [
+      2023,
+      777.0
+     ],
+     [
+      2024,
+      1020.0
+     ],
+     [
+      2025,
+      1000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 380.0,
+    "prev": 377.0,
+    "yoy_pct": 0.8,
+    "share_world_pct": 11.5,
+    "reserves": 3200.0,
+    "series": [
+     [
+      2020,
+      365.0
+     ],
+     [
+      2021,
+      329.0
+     ],
+     [
+      2022,
+      372.0
+     ],
+     [
+      2023,
+      375.0
+     ],
+     [
+      2024,
+      377.0
+     ],
+     [
+      2025,
+      380.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 310.0,
+    "prev": 310.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 9.4,
+    "reserves": 12000.0,
+    "series": [
+     [
+      2020,
+      305.0
+     ],
+     [
+      2021,
+      320.0
+     ],
+     [
+      2022,
+      310.0
+     ],
+     [
+      2023,
+      313.0
+     ],
+     [
+      2024,
+      310.0
+     ],
+     [
+      2025,
+      310.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 280.0,
+    "prev": 284.0,
+    "yoy_pct": -1.4,
+    "share_world_pct": 8.5,
+    "reserves": 13000.0,
+    "series": [
+     [
+      2020,
+      328.0
+     ],
+     [
+      2021,
+      315.0
+     ],
+     [
+      2022,
+      314.0
+     ],
+     [
+      2023,
+      296.0
+     ],
+     [
+      2024,
+      284.0
+     ],
+     [
+      2025,
+      280.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 200.0,
+    "prev": 200.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 6.1,
+    "reserves": 3200.0,
+    "series": [
+     [
+      2020,
+      170.0
+     ],
+     [
+      2021,
+      223.0
+     ],
+     [
+      2022,
+      206.0
+     ],
+     [
+      2023,
+      198.0
+     ],
+     [
+      2024,
+      200.0
+     ],
+     [
+      2025,
+      200.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 160.0,
+    "prev": 163.0,
+    "yoy_pct": -1.8,
+    "share_world_pct": 4.8,
+    "reserves": 3000.0,
+    "series": [
+     [
+      2020,
+      193.0
+     ],
+     [
+      2021,
+      187.0
+     ],
+     [
+      2022,
+      173.0
+     ],
+     [
+      2023,
+      170.0
+     ],
+     [
+      2024,
+      163.0
+     ],
+     [
+      2025,
+      160.0
+     ]
+    ]
+   },
+   {
+    "country": "Ghana",
+    "latest_year": 2025,
+    "production": 150.0,
+    "prev": 149.0,
+    "yoy_pct": 0.7,
+    "share_world_pct": 4.5,
+    "reserves": 1000.0,
+    "series": [
+     [
+      2020,
+      125.0
+     ],
+     [
+      2021,
+      88.0
+     ],
+     [
+      2022,
+      88.0
+     ],
+     [
+      2023,
+      126.0
+     ],
+     [
+      2024,
+      149.0
+     ],
+     [
+      2025,
+      150.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 140.0,
+    "prev": 140.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 4.2,
+    "reserves": 1400.0,
+    "series": [
+     [
+      2020,
+      102.0
+     ],
+     [
+      2021,
+      120.0
+     ],
+     [
+      2022,
+      120.0
+     ],
+     [
+      2023,
+      127.0
+     ],
+     [
+      2024,
+      140.0
+     ],
+     [
+      2025,
+      140.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 130.0,
+    "prev": 130.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 3.9,
+    "reserves": 2300.0,
+    "series": [
+     [
+      2020,
+      63.0
+     ],
+     [
+      2021,
+      116.0
+     ],
+     [
+      2022,
+      115.0
+     ],
+     [
+      2023,
+      133.0
+     ],
+     [
+      2024,
+      130.0
+     ],
+     [
+      2025,
+      130.0
+     ]
+    ]
+   },
+   {
+    "country": "Uzbekistan",
+    "latest_year": 2025,
+    "production": 130.0,
+    "prev": 129.0,
+    "yoy_pct": 0.8,
+    "share_world_pct": 3.9,
+    "reserves": 2200.0,
+    "series": [
+     [
+      2020,
+      101.0
+     ],
+     [
+      2021,
+      100.0
+     ],
+     [
+      2022,
+      104.0
+     ],
+     [
+      2023,
+      120.0
+     ],
+     [
+      2024,
+      129.0
+     ],
+     [
+      2025,
+      130.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 110.0,
+    "prev": 108.0,
+    "yoy_pct": 1.9,
+    "share_world_pct": 3.3,
+    "reserves": 2200.0,
+    "series": [
+     [
+      2020,
+      87.0
+     ],
+     [
+      2021,
+      97.0
+     ],
+     [
+      2022,
+      97.0
+     ],
+     [
+      2023,
+      100.0
+     ],
+     [
+      2024,
+      108.0
+     ],
+     [
+      2025,
+      110.0
+     ]
+    ]
+   },
+   {
+    "country": "Indonesia",
+    "latest_year": 2025,
+    "production": 90.0,
+    "prev": 94.0,
+    "yoy_pct": -4.3,
+    "share_world_pct": 2.7,
+    "reserves": 3600.0,
+    "series": [
+     [
+      2020,
+      86.0
+     ],
+     [
+      2021,
+      66.0
+     ],
+     [
+      2022,
+      105.0
+     ],
+     [
+      2023,
+      100.0
+     ],
+     [
+      2024,
+      94.0
+     ],
+     [
+      2025,
+      90.0
+     ]
+    ]
+   },
+   {
+    "country": "South Africa",
+    "latest_year": 2025,
+    "production": 90.0,
+    "prev": 90.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 2.7,
+    "reserves": 5000.0,
+    "series": [
+     [
+      2020,
+      96.0
+     ],
+     [
+      2021,
+      107.0
+     ],
+     [
+      2022,
+      89.0
+     ],
+     [
+      2023,
+      104.0
+     ],
+     [
+      2024,
+      90.0
+     ],
+     [
+      2025,
+      90.0
+     ]
+    ]
+   },
+   {
+    "country": "Brazil",
+    "latest_year": 2025,
+    "production": 80.0,
+    "prev": 82.0,
+    "yoy_pct": -2.4,
+    "share_world_pct": 2.4,
+    "reserves": 2500.0,
+    "series": [
+     [
+      2020,
+      78.0
+     ],
+     [
+      2021,
+      61.0
+     ],
+     [
+      2022,
+      61.0
+     ],
+     [
+      2023,
+      71.0
+     ],
+     [
+      2024,
+      82.0
+     ],
+     [
+      2025,
+      80.0
+     ]
+    ]
+   },
+   {
+    "country": "Argentina",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      59.0
+     ]
+    ]
+   },
+   {
+    "country": "Burkina Faso",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      58.0
+     ],
+     [
+      2021,
+      67.0
+     ],
+     [
+      2022,
+      58.0
+     ],
+     [
+      2023,
+      57.0
+     ]
+    ]
+   },
+   {
+    "country": "Colombia",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      48.0
+     ],
+     [
+      2021,
+      55.0
+     ],
+     [
+      2023,
+      61.0
+     ]
+    ]
+   },
+   {
+    "country": "Mali",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2021,
+      51.0
+     ],
+     [
+      2022,
+      64.0
+     ],
+     [
+      2023,
+      67.0
+     ]
+    ]
+   },
+   {
+    "country": "Papua New Guinea",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      54.0
+     ],
+     [
+      2021,
+      54.0
+     ]
+    ]
+   },
+   {
+    "country": "Sudan",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      90.0
+     ],
+     [
+      2021,
+      50.0
+     ]
+    ]
+   },
+   {
+    "country": "Tanzania",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      47.0
+     ],
+     [
+      2021,
+      60.0
+     ],
+     [
+      2022,
+      57.0
+     ],
+     [
+      2023,
+      55.0
+     ]
+    ]
+   }
+  ]
+ },
+ "lead_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 4500000.0,
+    "prev": 4600000.0,
+    "yoy_pct": -2.2,
+    "share_world_pct": null,
+    "reserves": 95000000.0,
+    "series": [
+     [
+      2020,
+      4380000.0
+     ],
+     [
+      2021,
+      4550000.0
+     ],
+     [
+      2022,
+      4460000.0
+     ],
+     [
+      2023,
+      4370000.0
+     ],
+     [
+      2024,
+      4600000.0
+     ],
+     [
+      2025,
+      4500000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 1900000.0,
+    "prev": 1940000.0,
+    "yoy_pct": -2.1,
+    "share_world_pct": 42.2,
+    "reserves": 22000000.0,
+    "series": [
+     [
+      2020,
+      1900000.0
+     ],
+     [
+      2021,
+      1960000.0
+     ],
+     [
+      2022,
+      1950000.0
+     ],
+     [
+      2023,
+      1960000.0
+     ],
+     [
+      2024,
+      1940000.0
+     ],
+     [
+      2025,
+      1900000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 500000.0,
+    "prev": 498000.0,
+    "yoy_pct": 0.4,
+    "share_world_pct": 11.1,
+    "reserves": 5900000.0,
+    "series": [
+     [
+      2020,
+      490000.0
+     ],
+     [
+      2021,
+      510000.0
+     ],
+     [
+      2022,
+      507000.0
+     ],
+     [
+      2023,
+      511000.0
+     ],
+     [
+      2024,
+      498000.0
+     ],
+     [
+      2025,
+      500000.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 480000.0,
+    "prev": 481000.0,
+    "yoy_pct": -0.2,
+    "share_world_pct": 10.7,
+    "reserves": 34000000.0,
+    "series": [
+     [
+      2020,
+      494000.0
+     ],
+     [
+      2021,
+      485000.0
+     ],
+     [
+      2022,
+      435000.0
+     ],
+     [
+      2023,
+      430000.0
+     ],
+     [
+      2024,
+      481000.0
+     ],
+     [
+      2025,
+      480000.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 290000.0,
+    "prev": 291000.0,
+    "yoy_pct": -0.3,
+    "share_world_pct": 6.4,
+    "reserves": 5000000.0,
+    "series": [
+     [
+      2020,
+      242000.0
+     ],
+     [
+      2021,
+      264000.0
+     ],
+     [
+      2022,
+      255000.0
+     ],
+     [
+      2023,
+      273000.0
+     ],
+     [
+      2024,
+      291000.0
+     ],
+     [
+      2025,
+      290000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 280000.0,
+    "prev": 304000.0,
+    "yoy_pct": -7.9,
+    "share_world_pct": 6.2,
+    "reserves": 4600000.0,
+    "series": [
+     [
+      2020,
+      306000.0
+     ],
+     [
+      2021,
+      294000.0
+     ],
+     [
+      2022,
+      273000.0
+     ],
+     [
+      2023,
+      270000.0
+     ],
+     [
+      2024,
+      304000.0
+     ],
+     [
+      2025,
+      280000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 260000.0,
+    "prev": 260000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 5.8,
+    "reserves": 8900000.0,
+    "series": [
+     [
+      2020,
+      210000.0
+     ],
+     [
+      2021,
+      200000.0
+     ],
+     [
+      2022,
+      210000.0
+     ],
+     [
+      2023,
+      218000.0
+     ],
+     [
+      2024,
+      260000.0
+     ],
+     [
+      2025,
+      260000.0
+     ]
+    ]
+   },
+   {
+    "country": "India",
+    "latest_year": 2025,
+    "production": 220000.0,
+    "prev": 226000.0,
+    "yoy_pct": -2.7,
+    "share_world_pct": 4.9,
+    "reserves": 1900000.0,
+    "series": [
+     [
+      2020,
+      204000.0
+     ],
+     [
+      2021,
+      215000.0
+     ],
+     [
+      2022,
+      220000.0
+     ],
+     [
+      2023,
+      226000.0
+     ],
+     [
+      2024,
+      226000.0
+     ],
+     [
+      2025,
+      220000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 200000.0,
+    "prev": 240000.0,
+    "yoy_pct": -16.7,
+    "share_world_pct": 4.4,
+    "reserves": 5600000.0,
+    "series": [
+     [
+      2020,
+      260000.0
+     ],
+     [
+      2021,
+      272000.0
+     ],
+     [
+      2022,
+      273000.0
+     ],
+     [
+      2023,
+      183000.0
+     ],
+     [
+      2024,
+      240000.0
+     ],
+     [
+      2025,
+      200000.0
+     ]
+    ]
+   },
+   {
+    "country": "Bolivia",
+    "latest_year": 2025,
+    "production": 100000.0,
+    "prev": 110000.0,
+    "yoy_pct": -9.1,
+    "share_world_pct": 2.2,
+    "reserves": 1600000.0,
+    "series": [
+     [
+      2020,
+      65000.0
+     ],
+     [
+      2021,
+      93000.0
+     ],
+     [
+      2022,
+      90000.0
+     ],
+     [
+      2023,
+      60000.0
+     ],
+     [
+      2024,
+      110000.0
+     ],
+     [
+      2025,
+      100000.0
+     ]
+    ]
+   },
+   {
+    "country": "Iran",
+    "latest_year": 2025,
+    "production": 70000.0,
+    "prev": 70000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 1.6,
+    "reserves": 2000000.0,
+    "series": [
+     [
+      2021,
+      50000.0
+     ],
+     [
+      2022,
+      52000.0
+     ],
+     [
+      2023,
+      60000.0
+     ],
+     [
+      2024,
+      70000.0
+     ],
+     [
+      2025,
+      70000.0
+     ]
+    ]
+   },
+   {
+    "country": "Sweden",
+    "latest_year": 2025,
+    "production": 70000.0,
+    "prev": 75000.0,
+    "yoy_pct": -6.7,
+    "share_world_pct": 1.6,
+    "reserves": 1700000.0,
+    "series": [
+     [
+      2020,
+      70000.0
+     ],
+     [
+      2021,
+      65000.0
+     ],
+     [
+      2022,
+      75000.0
+     ],
+     [
+      2023,
+      72000.0
+     ],
+     [
+      2024,
+      75000.0
+     ],
+     [
+      2025,
+      70000.0
+     ]
+    ]
+   },
+   {
+    "country": "Turkey",
+    "latest_year": 2025,
+    "production": 70000.0,
+    "prev": 66000.0,
+    "yoy_pct": 6.1,
+    "share_world_pct": 1.6,
+    "reserves": 1600000.0,
+    "series": [
+     [
+      2020,
+      63000.0
+     ],
+     [
+      2021,
+      75000.0
+     ],
+     [
+      2022,
+      67000.0
+     ],
+     [
+      2023,
+      68000.0
+     ],
+     [
+      2024,
+      66000.0
+     ],
+     [
+      2025,
+      70000.0
+     ]
+    ]
+   },
+   {
+    "country": "Tajikistan",
+    "latest_year": 2025,
+    "production": 40000.0,
+    "prev": 39000.0,
+    "yoy_pct": 2.6,
+    "share_world_pct": 0.9,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      46000.0
+     ],
+     [
+      2021,
+      56000.0
+     ],
+     [
+      2022,
+      53000.0
+     ],
+     [
+      2023,
+      39000.0
+     ],
+     [
+      2024,
+      39000.0
+     ],
+     [
+      2025,
+      40000.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      30000.0
+     ]
+    ]
+   }
+  ]
+ },
+ "molybdenum_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 260000.0,
+    "prev": 256000.0,
+    "yoy_pct": 1.6,
+    "share_world_pct": null,
+    "reserves": 17000000.0,
+    "series": [
+     [
+      2020,
+      298000.0
+     ],
+     [
+      2021,
+      255000.0
+     ],
+     [
+      2022,
+      253000.0
+     ],
+     [
+      2023,
+      248000.0
+     ],
+     [
+      2024,
+      256000.0
+     ],
+     [
+      2025,
+      260000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 97000.0,
+    "prev": 100000.0,
+    "yoy_pct": -3.0,
+    "share_world_pct": 37.3,
+    "reserves": 7800000.0,
+    "series": [
+     [
+      2020,
+      120000.0
+     ],
+     [
+      2021,
+      95300.0
+     ],
+     [
+      2022,
+      106000.0
+     ],
+     [
+      2023,
+      96000.0
+     ],
+     [
+      2024,
+      100000.0
+     ],
+     [
+      2025,
+      97000.0
+     ]
+    ]
+   },
+   {
+    "country": "Chile",
+    "latest_year": 2025,
+    "production": 42000.0,
+    "prev": 38500.0,
+    "yoy_pct": 9.1,
+    "share_world_pct": 16.2,
+    "reserves": 2600000.0,
+    "series": [
+     [
+      2020,
+      59400.0
+     ],
+     [
+      2021,
+      49400.0
+     ],
+     [
+      2022,
+      45600.0
+     ],
+     [
+      2023,
+      44100.0
+     ],
+     [
+      2024,
+      38500.0
+     ],
+     [
+      2025,
+      42000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 40000.0,
+    "prev": 34000.0,
+    "yoy_pct": 17.6,
+    "share_world_pct": 15.4,
+    "reserves": 3500000.0,
+    "series": [
+     [
+      2020,
+      51100.0
+     ],
+     [
+      2021,
+      41100.0
+     ],
+     [
+      2022,
+      34600.0
+     ],
+     [
+      2023,
+      34000.0
+     ],
+     [
+      2024,
+      34000.0
+     ],
+     [
+      2025,
+      40000.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 39000.0,
+    "prev": 41900.0,
+    "yoy_pct": -6.9,
+    "share_world_pct": 15.0,
+    "reserves": 1000000.0,
+    "series": [
+     [
+      2020,
+      32200.0
+     ],
+     [
+      2021,
+      34100.0
+     ],
+     [
+      2022,
+      31600.0
+     ],
+     [
+      2023,
+      33500.0
+     ],
+     [
+      2024,
+      41900.0
+     ],
+     [
+      2025,
+      39000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 17000.0,
+    "prev": 16200.0,
+    "yoy_pct": 4.9,
+    "share_world_pct": 6.5,
+    "reserves": 130000.0,
+    "series": [
+     [
+      2020,
+      16600.0
+     ],
+     [
+      2021,
+      16300.0
+     ],
+     [
+      2022,
+      15500.0
+     ],
+     [
+      2023,
+      17500.0
+     ],
+     [
+      2024,
+      16200.0
+     ],
+     [
+      2025,
+      17000.0
+     ]
+    ]
+   },
+   {
+    "country": "Armenia",
+    "latest_year": 2025,
+    "production": 5300.0,
+    "prev": 8200.0,
+    "yoy_pct": -35.4,
+    "share_world_pct": 2.0,
+    "reserves": 150000.0,
+    "series": [
+     [
+      2020,
+      8700.0
+     ],
+     [
+      2021,
+      7760.0
+     ],
+     [
+      2022,
+      7800.0
+     ],
+     [
+      2023,
+      7600.0
+     ],
+     [
+      2024,
+      8200.0
+     ],
+     [
+      2025,
+      5300.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 4300.0,
+    "prev": 4080.0,
+    "yoy_pct": 5.4,
+    "share_world_pct": 1.7,
+    "reserves": 7000.0,
+    "series": [
+     [
+      2023,
+      3730.0
+     ],
+     [
+      2024,
+      4080.0
+     ],
+     [
+      2025,
+      4300.0
+     ]
+    ]
+   },
+   {
+    "country": "Mongolia",
+    "latest_year": 2025,
+    "production": 4200.0,
+    "prev": 3110.0,
+    "yoy_pct": 35.0,
+    "share_world_pct": 1.6,
+    "reserves": 10000.0,
+    "series": [
+     [
+      2020,
+      2890.0
+     ],
+     [
+      2021,
+      2970.0
+     ],
+     [
+      2022,
+      3000.0
+     ],
+     [
+      2023,
+      3160.0
+     ],
+     [
+      2024,
+      3110.0
+     ],
+     [
+      2025,
+      4200.0
+     ]
+    ]
+   },
+   {
+    "country": "Iran",
+    "latest_year": 2025,
+    "production": 3300.0,
+    "prev": 2900.0,
+    "yoy_pct": 13.8,
+    "share_world_pct": 1.3,
+    "reserves": 43000.0,
+    "series": [
+     [
+      2020,
+      1400.0
+     ],
+     [
+      2021,
+      3100.0
+     ],
+     [
+      2022,
+      3700.0
+     ],
+     [
+      2023,
+      2500.0
+     ],
+     [
+      2024,
+      2900.0
+     ],
+     [
+      2025,
+      3300.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 2200.0,
+    "prev": 1540.0,
+    "yoy_pct": 42.9,
+    "share_world_pct": 0.8,
+    "reserves": 64000.0,
+    "series": [
+     [
+      2020,
+      2530.0
+     ],
+     [
+      2021,
+      1390.0
+     ],
+     [
+      2022,
+      952.0
+     ],
+     [
+      2023,
+      1150.0
+     ],
+     [
+      2024,
+      1540.0
+     ],
+     [
+      2025,
+      2200.0
+     ]
+    ]
+   },
+   {
+    "country": "Uzbekistan",
+    "latest_year": 2025,
+    "production": 2000.0,
+    "prev": 2100.0,
+    "yoy_pct": -4.8,
+    "share_world_pct": 0.8,
+    "reserves": 21000.0,
+    "series": [
+     [
+      2020,
+      200.0
+     ],
+     [
+      2021,
+      1600.0
+     ],
+     [
+      2022,
+      1700.0
+     ],
+     [
+      2023,
+      1700.0
+     ],
+     [
+      2024,
+      2100.0
+     ],
+     [
+      2025,
+      2000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 1300.0,
+    "prev": 1500.0,
+    "yoy_pct": -13.3,
+    "share_world_pct": 0.5,
+    "reserves": 1100000.0,
+    "series": [
+     [
+      2020,
+      2700.0
+     ],
+     [
+      2021,
+      1700.0
+     ],
+     [
+      2022,
+      1700.0
+     ],
+     [
+      2023,
+      1700.0
+     ],
+     [
+      2024,
+      1500.0
+     ],
+     [
+      2025,
+      1300.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 1000.0,
+    "prev": 600.0,
+    "yoy_pct": 66.7,
+    "share_world_pct": 0.4,
+    "reserves": 760000.0,
+    "series": [
+     [
+      2022,
+      277.0
+     ],
+     [
+      2023,
+      660.0
+     ],
+     [
+      2024,
+      600.0
+     ],
+     [
+      2025,
+      1000.0
+     ]
+    ]
+   },
+   {
+    "country": "North Korea",
+    "latest_year": 2025,
+    "production": 800.0,
+    "prev": 800.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 0.3,
+    "reserves": 78000.0,
+    "series": [
+     [
+      2022,
+      700.0
+     ],
+     [
+      2023,
+      400.0
+     ],
+     [
+      2024,
+      800.0
+     ],
+     [
+      2025,
+      800.0
+     ]
+    ]
+   },
+   {
+    "country": "South Korea",
+    "latest_year": 2025,
+    "production": 500.0,
+    "prev": 340.0,
+    "yoy_pct": 47.1,
+    "share_world_pct": 0.2,
+    "reserves": 8000.0,
+    "series": [
+     [
+      2020,
+      411.0
+     ],
+     [
+      2021,
+      408.0
+     ],
+     [
+      2022,
+      367.0
+     ],
+     [
+      2023,
+      339.0
+     ],
+     [
+      2024,
+      340.0
+     ],
+     [
+      2025,
+      500.0
+     ]
+    ]
+   },
+   {
+    "country": "Argentina",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   },
+   {
+    "country": "Turkey",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   }
+  ]
+ },
+ "nickel_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 3900000.0,
+    "prev": 3710000.0,
+    "yoy_pct": 5.1,
+    "share_world_pct": null,
+    "reserves": 140000000.0,
+    "series": [
+     [
+      2020,
+      2510000.0
+     ],
+     [
+      2021,
+      2730000.0
+     ],
+     [
+      2022,
+      3270000.0
+     ],
+     [
+      2023,
+      3750000.0
+     ],
+     [
+      2024,
+      3710000.0
+     ],
+     [
+      2025,
+      3900000.0
+     ]
+    ]
+   },
+   {
+    "country": "Indonesia",
+    "latest_year": 2025,
+    "production": 2600000.0,
+    "prev": 2310000.0,
+    "yoy_pct": 12.6,
+    "share_world_pct": 66.7,
+    "reserves": 62000000.0,
+    "series": [
+     [
+      2020,
+      771000.0
+     ],
+     [
+      2021,
+      1040000.0
+     ],
+     [
+      2022,
+      1580000.0
+     ],
+     [
+      2023,
+      2030000.0
+     ],
+     [
+      2024,
+      2310000.0
+     ],
+     [
+      2025,
+      2600000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 290000.0,
+    "prev": 308000.0,
+    "yoy_pct": -5.8,
+    "share_world_pct": 7.4,
+    "reserves": 9100000.0,
+    "series": [
+     [
+      2020,
+      373000.0
+     ],
+     [
+      2021,
+      429000.0
+     ],
+     [
+      2022,
+      404000.0
+     ],
+     [
+      2023,
+      340000.0
+     ],
+     [
+      2024,
+      308000.0
+     ],
+     [
+      2025,
+      290000.0
+     ]
+    ]
+   },
+   {
+    "country": "Philippines",
+    "latest_year": 2025,
+    "production": 270000.0,
+    "prev": 354000.0,
+    "yoy_pct": -23.7,
+    "share_world_pct": 6.9,
+    "reserves": 4800000.0,
+    "series": [
+     [
+      2020,
+      334000.0
+     ],
+     [
+      2021,
+      387000.0
+     ],
+     [
+      2022,
+      345000.0
+     ],
+     [
+      2023,
+      413000.0
+     ],
+     [
+      2024,
+      354000.0
+     ],
+     [
+      2025,
+      270000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 200000.0,
+    "prev": 205000.0,
+    "yoy_pct": -2.4,
+    "share_world_pct": 5.1,
+    "reserves": 8300000.0,
+    "series": [
+     [
+      2020,
+      283000.0
+     ],
+     [
+      2021,
+      205000.0
+     ],
+     [
+      2022,
+      222000.0
+     ],
+     [
+      2023,
+      210000.0
+     ],
+     [
+      2024,
+      205000.0
+     ],
+     [
+      2025,
+      200000.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 140000.0,
+    "prev": 125000.0,
+    "yoy_pct": 12.0,
+    "share_world_pct": 3.6,
+    "reserves": 2200000.0,
+    "series": [
+     [
+      2020,
+      167000.0
+     ],
+     [
+      2021,
+      134000.0
+     ],
+     [
+      2022,
+      143000.0
+     ],
+     [
+      2023,
+      159000.0
+     ],
+     [
+      2024,
+      125000.0
+     ],
+     [
+      2025,
+      140000.0
+     ]
+    ]
+   },
+   {
+    "country": "New Caledonia",
+    "latest_year": 2025,
+    "production": 140000.0,
+    "prev": 116000.0,
+    "yoy_pct": 20.7,
+    "share_world_pct": 3.6,
+    "reserves": 7100000.0,
+    "series": [
+     [
+      2020,
+      200000.0
+     ],
+     [
+      2021,
+      186000.0
+     ],
+     [
+      2022,
+      200000.0
+     ],
+     [
+      2023,
+      231000.0
+     ],
+     [
+      2024,
+      116000.0
+     ],
+     [
+      2025,
+      140000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 120000.0,
+    "prev": 115000.0,
+    "yoy_pct": 4.3,
+    "share_world_pct": 3.1,
+    "reserves": 4400000.0,
+    "series": [
+     [
+      2020,
+      120000.0
+     ],
+     [
+      2021,
+      109000.0
+     ],
+     [
+      2022,
+      114000.0
+     ],
+     [
+      2023,
+      117000.0
+     ],
+     [
+      2024,
+      115000.0
+     ],
+     [
+      2025,
+      120000.0
+     ]
+    ]
+   },
+   {
+    "country": "Brazil",
+    "latest_year": 2025,
+    "production": 70000.0,
+    "prev": 67500.0,
+    "yoy_pct": 3.7,
+    "share_world_pct": 1.8,
+    "reserves": 16000000.0,
+    "series": [
+     [
+      2020,
+      77100.0
+     ],
+     [
+      2021,
+      76000.0
+     ],
+     [
+      2022,
+      88500.0
+     ],
+     [
+      2023,
+      82700.0
+     ],
+     [
+      2024,
+      67500.0
+     ],
+     [
+      2025,
+      70000.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 45000.0,
+    "prev": 98000.0,
+    "yoy_pct": -54.1,
+    "share_world_pct": 1.2,
+    "reserves": 25000000.0,
+    "series": [
+     [
+      2020,
+      169000.0
+     ],
+     [
+      2021,
+      151000.0
+     ],
+     [
+      2022,
+      155000.0
+     ],
+     [
+      2023,
+      149000.0
+     ],
+     [
+      2024,
+      98000.0
+     ],
+     [
+      2025,
+      45000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 10000.0,
+    "prev": 7490.0,
+    "yoy_pct": 33.5,
+    "share_world_pct": 0.3,
+    "reserves": 340000.0,
+    "series": [
+     [
+      2020,
+      16700.0
+     ],
+     [
+      2021,
+      18400.0
+     ],
+     [
+      2022,
+      17500.0
+     ],
+     [
+      2023,
+      16400.0
+     ],
+     [
+      2024,
+      7490.0
+     ],
+     [
+      2025,
+      10000.0
+     ]
+    ]
+   }
+  ]
+ },
+ "silver_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 26000.0,
+    "prev": 25300.0,
+    "yoy_pct": 2.8,
+    "share_world_pct": null,
+    "reserves": 610000.0,
+    "series": [
+     [
+      2020,
+      23500.0
+     ],
+     [
+      2021,
+      25000.0
+     ],
+     [
+      2022,
+      25600.0
+     ],
+     [
+      2023,
+      25476.0
+     ],
+     [
+      2024,
+      25300.0
+     ],
+     [
+      2025,
+      26000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 6300.0,
+    "prev": 5780.0,
+    "yoy_pct": 9.0,
+    "share_world_pct": 24.2,
+    "reserves": 37000.0,
+    "series": [
+     [
+      2020,
+      5540.0
+     ],
+     [
+      2021,
+      6110.0
+     ],
+     [
+      2022,
+      6195.0
+     ],
+     [
+      2023,
+      6290.0
+     ],
+     [
+      2024,
+      5780.0
+     ],
+     [
+      2025,
+      6300.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 3600.0,
+    "prev": 3510.0,
+    "yoy_pct": 2.6,
+    "share_world_pct": 13.8,
+    "reserves": 110000.0,
+    "series": [
+     [
+      2020,
+      2770.0
+     ],
+     [
+      2021,
+      3310.0
+     ],
+     [
+      2022,
+      3079.0
+     ],
+     [
+      2023,
+      3200.0
+     ],
+     [
+      2024,
+      3510.0
+     ],
+     [
+      2025,
+      3600.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 3400.0,
+    "prev": 3430.0,
+    "yoy_pct": -0.9,
+    "share_world_pct": 13.1,
+    "reserves": 67000.0,
+    "series": [
+     [
+      2020,
+      3380.0
+     ],
+     [
+      2021,
+      3500.0
+     ],
+     [
+      2022,
+      3480.0
+     ],
+     [
+      2023,
+      3400.0
+     ],
+     [
+      2024,
+      3430.0
+     ],
+     [
+      2025,
+      3400.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 2100.0,
+    "prev": 2110.0,
+    "yoy_pct": -0.5,
+    "share_world_pct": 8.1,
+    "reserves": 57000.0,
+    "series": [
+     [
+      2020,
+      3230.0
+     ],
+     [
+      2021,
+      3200.0
+     ],
+     [
+      2022,
+      2940.0
+     ],
+     [
+      2023,
+      2050.0
+     ],
+     [
+      2024,
+      2110.0
+     ],
+     [
+      2025,
+      2100.0
+     ]
+    ]
+   },
+   {
+    "country": "Bolivia",
+    "latest_year": 2025,
+    "production": 1500.0,
+    "prev": 1490.0,
+    "yoy_pct": 0.7,
+    "share_world_pct": 5.8,
+    "reserves": 22000.0,
+    "series": [
+     [
+      2020,
+      930.0
+     ],
+     [
+      2021,
+      1290.0
+     ],
+     [
+      2022,
+      1214.0
+     ],
+     [
+      2023,
+      1350.0
+     ],
+     [
+      2024,
+      1490.0
+     ],
+     [
+      2025,
+      1500.0
+     ]
+    ]
+   },
+   {
+    "country": "Chile",
+    "latest_year": 2025,
+    "production": 1400.0,
+    "prev": 1200.0,
+    "yoy_pct": 16.7,
+    "share_world_pct": 5.4,
+    "reserves": 33000.0,
+    "series": [
+     [
+      2020,
+      1580.0
+     ],
+     [
+      2021,
+      1280.0
+     ],
+     [
+      2022,
+      1274.0
+     ],
+     [
+      2023,
+      1260.0
+     ],
+     [
+      2024,
+      1200.0
+     ],
+     [
+      2025,
+      1400.0
+     ]
+    ]
+   },
+   {
+    "country": "Poland",
+    "latest_year": 2025,
+    "production": 1300.0,
+    "prev": 1320.0,
+    "yoy_pct": -1.5,
+    "share_world_pct": 5.0,
+    "reserves": 59000.0,
+    "series": [
+     [
+      2020,
+      1250.0
+     ],
+     [
+      2021,
+      1300.0
+     ],
+     [
+      2022,
+      1316.0
+     ],
+     [
+      2023,
+      1320.0
+     ],
+     [
+      2024,
+      1320.0
+     ],
+     [
+      2025,
+      1300.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 1200.0,
+    "prev": 1280.0,
+    "yoy_pct": -6.2,
+    "share_world_pct": 4.6,
+    "reserves": 92000.0,
+    "series": [
+     [
+      2020,
+      1320.0
+     ],
+     [
+      2021,
+      1320.0
+     ],
+     [
+      2022,
+      1280.0
+     ],
+     [
+      2023,
+      1240.0
+     ],
+     [
+      2024,
+      1280.0
+     ],
+     [
+      2025,
+      1200.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 1100.0,
+    "prev": 1050.0,
+    "yoy_pct": 4.8,
+    "share_world_pct": 4.2,
+    "reserves": 23000.0,
+    "series": [
+     [
+      2020,
+      1030.0
+     ],
+     [
+      2021,
+      1020.0
+     ],
+     [
+      2022,
+      1010.0
+     ],
+     [
+      2023,
+      1020.0
+     ],
+     [
+      2024,
+      1050.0
+     ],
+     [
+      2025,
+      1100.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 1000.0,
+    "prev": 1050.0,
+    "yoy_pct": -4.8,
+    "share_world_pct": 3.8,
+    "reserves": 91000.0,
+    "series": [
+     [
+      2020,
+      1340.0
+     ],
+     [
+      2021,
+      1360.0
+     ],
+     [
+      2022,
+      1167.0
+     ],
+     [
+      2023,
+      1030.0
+     ],
+     [
+      2024,
+      1050.0
+     ],
+     [
+      2025,
+      1000.0
+     ]
+    ]
+   },
+   {
+    "country": "Argentina",
+    "latest_year": 2025,
+    "production": 800.0,
+    "prev": 774.0,
+    "yoy_pct": 3.4,
+    "share_world_pct": 3.1,
+    "reserves": 6500.0,
+    "series": [
+     [
+      2020,
+      710.0
+     ],
+     [
+      2021,
+      720.0
+     ],
+     [
+      2022,
+      913.0
+     ],
+     [
+      2023,
+      808.0
+     ],
+     [
+      2024,
+      774.0
+     ],
+     [
+      2025,
+      800.0
+     ]
+    ]
+   },
+   {
+    "country": "India",
+    "latest_year": 2025,
+    "production": 800.0,
+    "prev": 700.0,
+    "yoy_pct": 14.3,
+    "share_world_pct": 3.1,
+    "reserves": 8000.0,
+    "series": [
+     [
+      2021,
+      610.0
+     ],
+     [
+      2022,
+      694.0
+     ],
+     [
+      2023,
+      813.0
+     ],
+     [
+      2024,
+      700.0
+     ],
+     [
+      2025,
+      800.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 630.0,
+    "prev": 850.0,
+    "yoy_pct": -25.9,
+    "share_world_pct": 2.4,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      435.0
+     ],
+     [
+      2022,
+      1053.0
+     ],
+     [
+      2023,
+      985.0
+     ],
+     [
+      2024,
+      850.0
+     ],
+     [
+      2025,
+      630.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": 400.0,
+    "prev": 366.0,
+    "yoy_pct": 9.3,
+    "share_world_pct": 1.5,
+    "reserves": 4900.0,
+    "series": [
+     [
+      2023,
+      306.0
+     ],
+     [
+      2024,
+      366.0
+     ],
+     [
+      2025,
+      400.0
+     ]
+    ]
+   },
+   {
+    "country": "Sweden",
+    "latest_year": 2025,
+    "production": 400.0,
+    "prev": 432.0,
+    "yoy_pct": -7.4,
+    "share_world_pct": 1.5,
+    "reserves": null,
+    "series": [
+     [
+      2023,
+      404.0
+     ],
+     [
+      2024,
+      432.0
+     ],
+     [
+      2025,
+      400.0
+     ]
+    ]
+   }
+  ]
+ },
+ "tungsten_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 85000.0,
+    "prev": 82000.0,
+    "yoy_pct": 3.7,
+    "share_world_pct": null,
+    "reserves": 4700000.0,
+    "series": [
+     [
+      2020,
+      78400.0
+     ],
+     [
+      2021,
+      83800.0
+     ],
+     [
+      2022,
+      79800.0
+     ],
+     [
+      2023,
+      79500.0
+     ],
+     [
+      2024,
+      82000.0
+     ],
+     [
+      2025,
+      85000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 67000.0,
+    "prev": 67000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 78.8,
+    "reserves": 2500000.0,
+    "series": [
+     [
+      2020,
+      66000.0
+     ],
+     [
+      2021,
+      71000.0
+     ],
+     [
+      2022,
+      66000.0
+     ],
+     [
+      2023,
+      66000.0
+     ],
+     [
+      2024,
+      67000.0
+     ],
+     [
+      2025,
+      67000.0
+     ]
+    ]
+   },
+   {
+    "country": "Vietnam",
+    "latest_year": 2025,
+    "production": 3000.0,
+    "prev": 3400.0,
+    "yoy_pct": -11.8,
+    "share_world_pct": 3.5,
+    "reserves": 170000.0,
+    "series": [
+     [
+      2020,
+      4500.0
+     ],
+     [
+      2021,
+      4800.0
+     ],
+     [
+      2022,
+      4000.0
+     ],
+     [
+      2023,
+      3500.0
+     ],
+     [
+      2024,
+      3400.0
+     ],
+     [
+      2025,
+      3000.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 2400.0,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": 2.8,
+    "reserves": null,
+    "series": [
+     [
+      2025,
+      2400.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 2400.0,
+    "prev": 1700.0,
+    "yoy_pct": 41.2,
+    "share_world_pct": 2.8,
+    "reserves": 950000.0,
+    "series": [
+     [
+      2020,
+      960.0
+     ],
+     [
+      2021,
+      973.0
+     ],
+     [
+      2022,
+      1080.0
+     ],
+     [
+      2023,
+      1320.0
+     ],
+     [
+      2024,
+      1700.0
+     ],
+     [
+      2025,
+      2400.0
+     ]
+    ]
+   },
+   {
+    "country": "North Korea",
+    "latest_year": 2025,
+    "production": 2000.0,
+    "prev": 1900.0,
+    "yoy_pct": 5.3,
+    "share_world_pct": 2.4,
+    "reserves": 29000.0,
+    "series": [
+     [
+      2020,
+      410.0
+     ],
+     [
+      2022,
+      1520.0
+     ],
+     [
+      2023,
+      1600.0
+     ],
+     [
+      2024,
+      1900.0
+     ],
+     [
+      2025,
+      2000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 2000.0,
+    "prev": 1500.0,
+    "yoy_pct": 33.3,
+    "share_world_pct": 2.4,
+    "reserves": 400000.0,
+    "series": [
+     [
+      2020,
+      2400.0
+     ],
+     [
+      2021,
+      2300.0
+     ],
+     [
+      2022,
+      2000.0
+     ],
+     [
+      2023,
+      2000.0
+     ],
+     [
+      2024,
+      1500.0
+     ],
+     [
+      2025,
+      2000.0
+     ]
+    ]
+   },
+   {
+    "country": "Bolivia",
+    "latest_year": 2025,
+    "production": 1700.0,
+    "prev": 1700.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 2.0,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      1350.0
+     ],
+     [
+      2021,
+      1563.0
+     ],
+     [
+      2022,
+      1360.0
+     ],
+     [
+      2023,
+      1500.0
+     ],
+     [
+      2024,
+      1700.0
+     ],
+     [
+      2025,
+      1700.0
+     ]
+    ]
+   },
+   {
+    "country": "Rwanda",
+    "latest_year": 2025,
+    "production": 1300.0,
+    "prev": 1300.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 1.5,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      860.0
+     ],
+     [
+      2021,
+      1340.0
+     ],
+     [
+      2022,
+      1400.0
+     ],
+     [
+      2023,
+      1200.0
+     ],
+     [
+      2024,
+      1300.0
+     ],
+     [
+      2025,
+      1300.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 1000.0,
+    "prev": 920.0,
+    "yoy_pct": 8.7,
+    "share_world_pct": 1.2,
+    "reserves": 570000.0,
+    "series": [
+     [
+      2022,
+      200.0
+     ],
+     [
+      2023,
+      430.0
+     ],
+     [
+      2024,
+      920.0
+     ],
+     [
+      2025,
+      1000.0
+     ]
+    ]
+   },
+   {
+    "country": "Austria",
+    "latest_year": 2025,
+    "production": 840.0,
+    "prev": 840.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 1.0,
+    "reserves": 10000.0,
+    "series": [
+     [
+      2020,
+      890.0
+     ],
+     [
+      2021,
+      900.0
+     ],
+     [
+      2022,
+      910.0
+     ],
+     [
+      2023,
+      850.0
+     ],
+     [
+      2024,
+      840.0
+     ],
+     [
+      2025,
+      840.0
+     ]
+    ]
+   },
+   {
+    "country": "Spain",
+    "latest_year": 2025,
+    "production": 800.0,
+    "prev": 700.0,
+    "yoy_pct": 14.3,
+    "share_world_pct": 0.9,
+    "reserves": 66000.0,
+    "series": [
+     [
+      2020,
+      500.0
+     ],
+     [
+      2021,
+      400.0
+     ],
+     [
+      2022,
+      800.0
+     ],
+     [
+      2023,
+      650.0
+     ],
+     [
+      2024,
+      700.0
+     ],
+     [
+      2025,
+      800.0
+     ]
+    ]
+   },
+   {
+    "country": "Portugal",
+    "latest_year": 2025,
+    "production": 700.0,
+    "prev": 650.0,
+    "yoy_pct": 7.7,
+    "share_world_pct": 0.8,
+    "reserves": 3400.0,
+    "series": [
+     [
+      2020,
+      550.0
+     ],
+     [
+      2021,
+      502.0
+     ],
+     [
+      2022,
+      500.0
+     ],
+     [
+      2023,
+      450.0
+     ],
+     [
+      2024,
+      650.0
+     ],
+     [
+      2025,
+      700.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      0.0
+     ],
+     [
+      2021,
+      0.0
+     ],
+     [
+      2022,
+      0.0
+     ]
+    ]
+   }
+  ]
+ },
+ "zinc_mine": {
+  "unit": "tonnes",
+  "unit_reserves": "tonnes",
+  "rows": [
+   {
+    "country": "World",
+    "latest_year": 2025,
+    "production": 13000000.0,
+    "prev": 11900000.0,
+    "yoy_pct": 9.2,
+    "share_world_pct": null,
+    "reserves": 240000000.0,
+    "series": [
+     [
+      2020,
+      12000000.0
+     ],
+     [
+      2021,
+      12700000.0
+     ],
+     [
+      2022,
+      12500000.0
+     ],
+     [
+      2023,
+      12100000.0
+     ],
+     [
+      2024,
+      11900000.0
+     ],
+     [
+      2025,
+      13000000.0
+     ]
+    ]
+   },
+   {
+    "country": "China",
+    "latest_year": 2025,
+    "production": 4100000.0,
+    "prev": 4000000.0,
+    "yoy_pct": 2.5,
+    "share_world_pct": 31.5,
+    "reserves": 60000000.0,
+    "series": [
+     [
+      2020,
+      4060000.0
+     ],
+     [
+      2021,
+      4140000.0
+     ],
+     [
+      2022,
+      4040000.0
+     ],
+     [
+      2023,
+      4060000.0
+     ],
+     [
+      2024,
+      4000000.0
+     ],
+     [
+      2025,
+      4100000.0
+     ]
+    ]
+   },
+   {
+    "country": "Other",
+    "latest_year": 2025,
+    "production": 2000000.0,
+    "prev": 1730000.0,
+    "yoy_pct": 15.6,
+    "share_world_pct": 15.4,
+    "reserves": 25000000.0,
+    "series": [
+     [
+      2020,
+      1950000.0
+     ],
+     [
+      2021,
+      1960000.0
+     ],
+     [
+      2022,
+      1940000.0
+     ],
+     [
+      2023,
+      1690000.0
+     ],
+     [
+      2024,
+      1730000.0
+     ],
+     [
+      2025,
+      2000000.0
+     ]
+    ]
+   },
+   {
+    "country": "Peru",
+    "latest_year": 2025,
+    "production": 1500000.0,
+    "prev": 1270000.0,
+    "yoy_pct": 18.1,
+    "share_world_pct": 11.5,
+    "reserves": 18000000.0,
+    "series": [
+     [
+      2020,
+      1330000.0
+     ],
+     [
+      2021,
+      1530000.0
+     ],
+     [
+      2022,
+      1370000.0
+     ],
+     [
+      2023,
+      1470000.0
+     ],
+     [
+      2024,
+      1270000.0
+     ],
+     [
+      2025,
+      1500000.0
+     ]
+    ]
+   },
+   {
+    "country": "Australia",
+    "latest_year": 2025,
+    "production": 1100000.0,
+    "prev": 1100000.0,
+    "yoy_pct": 0.0,
+    "share_world_pct": 8.5,
+    "reserves": 64000000.0,
+    "series": [
+     [
+      2020,
+      1310000.0
+     ],
+     [
+      2021,
+      1320000.0
+     ],
+     [
+      2022,
+      1240000.0
+     ],
+     [
+      2023,
+      1090000.0
+     ],
+     [
+      2024,
+      1100000.0
+     ],
+     [
+      2025,
+      1100000.0
+     ]
+    ]
+   },
+   {
+    "country": "India",
+    "latest_year": 2025,
+    "production": 870000.0,
+    "prev": 866000.0,
+    "yoy_pct": 0.5,
+    "share_world_pct": 6.7,
+    "reserves": 10000000.0,
+    "series": [
+     [
+      2020,
+      720000.0
+     ],
+     [
+      2021,
+      777000.0
+     ],
+     [
+      2022,
+      840000.0
+     ],
+     [
+      2023,
+      854000.0
+     ],
+     [
+      2024,
+      866000.0
+     ],
+     [
+      2025,
+      870000.0
+     ]
+    ]
+   },
+   {
+    "country": "Mexico",
+    "latest_year": 2025,
+    "production": 780000.0,
+    "prev": 773000.0,
+    "yoy_pct": 0.9,
+    "share_world_pct": 6.0,
+    "reserves": 14000000.0,
+    "series": [
+     [
+      2020,
+      638000.0
+     ],
+     [
+      2021,
+      724000.0
+     ],
+     [
+      2022,
+      744000.0
+     ],
+     [
+      2023,
+      584000.0
+     ],
+     [
+      2024,
+      773000.0
+     ],
+     [
+      2025,
+      780000.0
+     ]
+    ]
+   },
+   {
+    "country": "United States",
+    "latest_year": 2025,
+    "production": 670000.0,
+    "prev": 759000.0,
+    "yoy_pct": -11.7,
+    "share_world_pct": 5.2,
+    "reserves": 9300000.0,
+    "series": [
+     [
+      2020,
+      718000.0
+     ],
+     [
+      2021,
+      704000.0
+     ],
+     [
+      2022,
+      761000.0
+     ],
+     [
+      2023,
+      767000.0
+     ],
+     [
+      2024,
+      759000.0
+     ],
+     [
+      2025,
+      670000.0
+     ]
+    ]
+   },
+   {
+    "country": "Bolivia",
+    "latest_year": 2025,
+    "production": 500000.0,
+    "prev": 512000.0,
+    "yoy_pct": -2.3,
+    "share_world_pct": 3.8,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      360000.0
+     ],
+     [
+      2021,
+      500000.0
+     ],
+     [
+      2022,
+      518000.0
+     ],
+     [
+      2023,
+      492000.0
+     ],
+     [
+      2024,
+      512000.0
+     ],
+     [
+      2025,
+      500000.0
+     ]
+    ]
+   },
+   {
+    "country": "Russia",
+    "latest_year": 2025,
+    "production": 430000.0,
+    "prev": 310000.0,
+    "yoy_pct": 38.7,
+    "share_world_pct": 3.3,
+    "reserves": 29000000.0,
+    "series": [
+     [
+      2020,
+      280000.0
+     ],
+     [
+      2021,
+      280000.0
+     ],
+     [
+      2022,
+      300000.0
+     ],
+     [
+      2023,
+      300000.0
+     ],
+     [
+      2024,
+      310000.0
+     ],
+     [
+      2025,
+      430000.0
+     ]
+    ]
+   },
+   {
+    "country": "Kazakhstan",
+    "latest_year": 2025,
+    "production": 360000.0,
+    "prev": 375000.0,
+    "yoy_pct": -4.0,
+    "share_world_pct": 2.8,
+    "reserves": 7400000.0,
+    "series": [
+     [
+      2020,
+      222000.0
+     ],
+     [
+      2021,
+      194000.0
+     ],
+     [
+      2022,
+      312000.0
+     ],
+     [
+      2023,
+      340000.0
+     ],
+     [
+      2024,
+      375000.0
+     ],
+     [
+      2025,
+      360000.0
+     ]
+    ]
+   },
+   {
+    "country": "Sweden",
+    "latest_year": 2025,
+    "production": 230000.0,
+    "prev": 239000.0,
+    "yoy_pct": -3.8,
+    "share_world_pct": 1.8,
+    "reserves": 4100000.0,
+    "series": [
+     [
+      2020,
+      232000.0
+     ],
+     [
+      2021,
+      234000.0
+     ],
+     [
+      2022,
+      234000.0
+     ],
+     [
+      2023,
+      218000.0
+     ],
+     [
+      2024,
+      239000.0
+     ],
+     [
+      2025,
+      230000.0
+     ]
+    ]
+   },
+   {
+    "country": "Canada",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2020,
+      211000.0
+     ],
+     [
+      2021,
+      310000.0
+     ]
+    ]
+   },
+   {
+    "country": "South Africa",
+    "latest_year": 2025,
+    "production": null,
+    "prev": null,
+    "yoy_pct": null,
+    "share_world_pct": null,
+    "reserves": null,
+    "series": [
+     [
+      2022,
+      238000.0
+     ],
+     [
+      2023,
+      198000.0
+     ]
+    ]
+   }
+  ]
+ }
+}
