@@ -308,6 +308,12 @@ def seasonal_normal(s,y0,y1):
     return b.groupby(b.index.strftime('%m-%d')).mean()
 
 def month_series(s):
+    """Mean of the daily values in each calendar month.
+
+    Not Nord Pool's Monthly Aggregate: a clock-change day is one number here,
+    whatever its period count. Published monthlies go through price_monthlies.
+    Pre-2024 months still use this only where the public Nord Pool API returns HTTP 401.
+    """
     s=s.dropna().copy();s.index=pd.to_datetime(s.index)
     if s.empty:return pd.Series(dtype=float)
     return s.groupby(s.index.to_period('M')).mean()
@@ -380,7 +386,7 @@ def prices():
          'baseline':list(PRICE_BASELINE),'baseline_label':label,
          'history_start':str(PRICE_HISTORY_START),'normal_method':method,
          'regions':{}}
-    normals={};monthly_months=None;monthly={};monthly_normal={}
+    normals={}
     period_end=None
     for code in ['NO1','NO2','NO3','NO4','NO5','SE1','SE2','SE3','SE4','FI','DK1','DK2','Nordic','SE','NO','DK']:
         s=history.get(code)
@@ -404,35 +410,7 @@ def prices():
         if end_t in ma.index and end_t in n30.index:
             rec['summary']=summary(ma.loc[end_t],n30.loc[end_t],'EUR/MWh')
         out['regions'][code]=rec
-        ms=month_series(s)
-        if len(ms):
-            months=[str(p) for p in ms.index]
-            monthly[code]=[None if pd.isna(v) else float(v) for v in ms.values]
-            if monthly_months is None:monthly_months=months
-            elif months!=monthly_months:
-                # Align later; stash with its own index
-                monthly[code]=(months,monthly[code])
-            by={}
-            for p,v in ms.items():
-                if p.year<y0 or p.year>y1:continue
-                if p.year==TODAY.year:continue
-                by.setdefault(p.month,[]).append(float(v))
-            monthly_normal[code]={f'{m:02d}':{'normal':(sum(vs)/len(vs) if vs else None),'min':(min(vs) if vs else None),
-                                              'max':(max(vs) if vs else None),'n_years':len(vs)} for m,vs in by.items()}
         period_end=as_of if period_end is None else max(period_end,as_of)
-    # Harmonise monthly arrays onto a shared month index.
-    if monthly:
-        all_months=sorted({m for v in monthly.values() for m in (v[0] if isinstance(v,tuple) else monthly_months or [])})
-        if not all_months:
-            all_months=monthly_months or []
-        aligned={}
-        for code,v in monthly.items():
-            if isinstance(v,tuple):
-                d=dict(zip(*v))
-            else:
-                d=dict(zip(monthly_months,v))
-            aligned[code]=[d.get(m) for m in all_months]
-        monthly,monthly_months=aligned,all_months
     out['as_of']=max((r['as_of'] for r in out['regions'].values()),default=None)
     eex=safe('EEX futures',bp.build_eex)
     out['futures']={}
@@ -442,17 +420,22 @@ def prices():
             out['futures'][lab]={'as_of':eex['asof'],'contract':contract,'unit':'EUR/MWh','regions':{z:v.get(contract) for z,v in eex['zones'].items() if z in ['Nordic',*ZONES]}}
     write('prices.json',out)
     md=sorted({k for n in normals.values() for k in n.index})
-    # Compact: one month-day index, then a value array per region. Feb 29 is kept for leap years.
-    notes=[]
-    nord=history.get('Nordic')
-    if nord is not None and len(nord) and nord.index.min().date()>PRICE_HISTORY_START:
-        notes.append('Nordic (official Nord Pool system price) history starts '+str(nord.index.min().date())+'; Nord Pool AggregatePrices returns HTTP 401 for SYS years before 2024. Bidding-zone normals use 2021–2025. Nordic uses the years actually on file, currently 2024–2025.')
+    # Monthly figures are Nord Pool's period-weighted Monthly Aggregate.
+    # month_series (mean of daily averages) mis-weights CET clock-change days.
+    import price_monthlies
+    legacy={}
+    for code,s in history.items():
+        ms=month_series(s)
+        if not len(ms):continue
+        legacy[code]={str(p):(None if pd.isna(v) else float(v)) for p,v in ms.items()}
+    pack=price_monthlies.build_price_monthlies(today=TODAY,baseline=(y0,y1),legacy=legacy,cache_dir=CACHE/'nordpool')
+    price_monthlies._check_known_october(pack)
     write('prices_normals.json',{'as_of':f'{y1}-12-31','baseline':list(PRICE_BASELINE),'baseline_label':label,
-          'history_start':str(PRICE_HISTORY_START),'history_end':str(period_end or TODAY),
-          'units':'EUR/MWh','source':out['source'],'method':method,'notes':notes,
+          'history_start':str(PRICE_HISTORY_START),'history_end':pack['history_end'] or str(period_end or TODAY),
+          'units':'EUR/MWh','source':pack['source'],'method':pack['method'],'notes':pack['notes'],
           'month_days':md,
           'normal':{code:[None if k not in n.index or pd.isna(n.loc[k]) else float(n.loc[k]) for k in md] for code,n in normals.items()},
-          'months':monthly_months or [],'monthly':monthly,'monthly_normal':monthly_normal,
+          'months':pack['months'],'monthly':pack['monthly'],'monthly_normal':pack['monthly_normal'],
           'columns':{'normal':['month_days','normal[region]'],'monthly':['months','monthly[region]'],
                      'monthly_normal':'monthly_normal[region][MM] with normal, min, max, n_years'}})
     return series
