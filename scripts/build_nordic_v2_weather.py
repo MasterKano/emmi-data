@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Refresh nordic-v2 weather.json and monthly_climate.json from Open-Meteo ERA5.
+"""Refresh nordic-v2 weather.json and monthly_climate.json from Open-Meteo.
 
 The Energy weather charts read these files from main. This script is the daily
-GitHub Actions updater; it uses the same archive API, 72-point grid, country
-masks and 2006–2025 baseline as the box Nordic v2 builder. Only complete UTC
-days (all required points, 24 hourly wind observations) are kept. Missing days
-stay missing: nothing is invented or carried forward. ERA5 usually lags about
-five days, so "as of" will trail the calendar.
+GitHub Actions updater; it uses the same 72-point grid, country masks and
+2006–2025 baseline as the box Nordic v2 builder. Complete UTC ERA5 days are
+the history: all required points, 24 hourly wind observations. ERA5 usually
+lags about five days, so days after the last complete ERA5 day are filled
+from the Open-Meteo forecast API (best match) on the same grid, again only
+when a UTC day is complete. Forecast days are replaced by ERA5 when the
+archive catches up. Nothing is interpolated or carried forward.
 
 Exit 0 when a published file changed, 3 when the latest complete day is
 already published (the workflow then skips the commit).
@@ -30,7 +32,10 @@ NORDIC = ROOT / "nordic-v2"
 VARS = ["wind100", "temp", "rain"]
 UNITS = {"wind100": "m/s at 100m", "temp": "degC at 2m", "rain": "mm/day"}
 OM_URL = "https://archive-api.open-meteo.com/v1/archive"
-SOURCE = "https://archive-api.open-meteo.com/v1/archive?models=era5"
+FC_URL = "https://api.open-meteo.com/v1/forecast"
+ERA5_SOURCE = "https://archive-api.open-meteo.com/v1/archive?models=era5"
+FORECAST_SOURCE = "https://api.open-meteo.com/v1/forecast (best match)"
+SOURCE = ERA5_SOURCE
 BASELINE = (2006, 2025)
 WINDOW_DAYS = 122
 MONTHLY_START = pd.Timestamp("2021-01-01")
@@ -71,6 +76,9 @@ def load_history(path: Path) -> pd.DataFrame:
     d = pd.read_csv(path, parse_dates=["date"])
     if not set(["date", *VARS, "region"]).issubset(d.columns):
         raise SystemExit(f"{path} missing required columns")
+    if "source" not in d.columns:
+        d["source"] = "era5"
+    d["source"] = d["source"].fillna("era5")
     return d.sort_values(["region", "date"])
 
 
@@ -150,6 +158,96 @@ def fetch_era5(start: dt.date, end: dt.date, lats, lons, cache_dir: Path | None)
     return pd.concat(frames, ignore_index=True)
 
 
+
+def fetch_forecast(start: dt.date, end: dt.date, lats, lons, cache_dir: Path | None) -> pd.DataFrame:
+    """Same variables and UTC-day rule as ERA5, from the Open-Meteo forecast API.
+
+    Only complete UTC days are kept (24 finite 100 m wind hours and daily
+    temperature and rain). Incomplete days, including an in-progress today, are dropped.
+    """
+    if end < start:
+        return pd.DataFrame(columns=["date", "temp", "rain", "wind100", "lat", "lon"])
+    today = dt.date.today()
+    past_days = (today - start).days
+    forecast_days = max(1, (end - today).days + 1)
+    if past_days < 0:
+        past_days = 0
+    pts = [(la, lo) for la in lats for lo in lons]
+    frames = []
+    if cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    for batch in range(0, len(pts), 12):
+        sub = pts[batch:batch + 12]
+        cache = (cache_dir / f"forecast_{start}_{end}_b{batch:02d}.json") if cache_dir else None
+        if cache and cache.exists():
+            locations = json.loads(cache.read_text())
+        else:
+            params = {
+                "latitude": ",".join(str(x[0]) for x in sub),
+                "longitude": ",".join(str(x[1]) for x in sub),
+                "past_days": past_days,
+                "forecast_days": forecast_days,
+                "hourly": "wind_speed_100m",
+                "daily": "temperature_2m_mean,precipitation_sum",
+                "wind_speed_unit": "ms",
+                "timezone": "GMT",
+            }
+            for attempt in range(12):
+                r = requests.get(FC_URL, params=params, timeout=240)
+                if r.status_code == 429:
+                    wait = max(65 * (attempt + 1), float(r.headers.get("Retry-After", 0) or 0))
+                    log(f"Open-Meteo forecast 429; backoff {wait}s")
+                    time.sleep(wait)
+                    continue
+                if r.status_code >= 500:
+                    time.sleep(min(120, 5 * 2**attempt))
+                    continue
+                r.raise_for_status()
+                try:
+                    locations = r.json()
+                except requests.exceptions.JSONDecodeError:
+                    body = r.text[:160]
+                    log(f"Forecast returned non-JSON (status {r.status_code}): {body!r}")
+                    if attempt >= 2:
+                        raise
+                    time.sleep(5 * (attempt + 1))
+                    continue
+                break
+            else:
+                raise RuntimeError("Open-Meteo forecast retries exhausted")
+            if not isinstance(locations, list) or len(locations) != len(sub):
+                raise RuntimeError("Open-Meteo forecast coordinate batch mismatch")
+            if cache:
+                cache.write_text(json.dumps(locations, separators=(",", ":")))
+            log(f"forecast {start}..{end}: points {batch+1}-{batch+len(sub)} fetched")
+        for (lat, lon), loc in zip(sub, locations):
+            h = loc["hourly"]
+            hourly = pd.DataFrame({"time": pd.to_datetime(h["time"]), "wind100": h["wind_speed_100m"]})
+            hourly["date"] = hourly["time"].dt.strftime("%Y-%m-%d")
+            grouped = hourly.groupby("date")["wind100"].agg(["mean", "count"])
+            grouped.loc[grouped["count"] != 24, "mean"] = np.nan
+            dly = loc["daily"]
+            frame = pd.DataFrame({"date": dly["time"], "temp": dly["temperature_2m_mean"], "rain": dly["precipitation_sum"]})
+            frame["wind100"] = frame["date"].map(grouped["mean"])
+            frame["date"] = pd.to_datetime(frame["date"])
+            frame = frame[(frame["date"].dt.date >= start) & (frame["date"].dt.date <= end)]
+            frame = frame.dropna(subset=VARS)
+            frame["lat"], frame["lon"] = loc.get("latitude", lat), loc.get("longitude", lon)
+            frames.append(frame)
+    if not frames:
+        return pd.DataFrame(columns=["date", "temp", "rain", "wind100", "lat", "lon"])
+    return pd.concat(frames, ignore_index=True)
+
+
+def source_for(era5_through, forecast_end):
+    if era5_through and forecast_end and forecast_end > era5_through:
+        return (
+            f"{ERA5_SOURCE} through {era5_through}; "
+            f"{FORECAST_SOURCE} {era5_through + dt.timedelta(days=1)} to {forecast_end}"
+        )
+    return ERA5_SOURCE
+
+
 def regional_means(points: pd.DataFrame, grid) -> pd.DataFrame:
     lats, lons = grid["lats"], grid["lons"]
     d = points.copy()
@@ -194,20 +292,22 @@ def summary(v, n, unit):
     )
 
 
-def build_weather(d: pd.DataFrame, grid) -> dict:
+def build_weather(d: pd.DataFrame, grid, source=None, coverage=None) -> dict:
     result = {
         "schema_version": 1,
         "as_of": str(d.date.max().date()),
         "baseline": list(BASELINE),
         "history_start": grid["history_start"],
         "units": UNITS,
-        "source": SOURCE,
+        "source": source or SOURCE,
         "method": grid["method"],
         "grid": grid["grid"],
         "point_counts": grid["point_counts"],
         "columns": ["date", "value", "ma30", "normal", "normal_ma30"],
         "regions": {},
     }
+    if coverage:
+        result["coverage"] = coverage
     for c, g in d.groupby("region"):
         g = g.sort_values("date").set_index("date")
         idx = pd.date_range(g.index.min(), g.index.max())
@@ -236,14 +336,14 @@ def build_weather(d: pd.DataFrame, grid) -> dict:
     return result
 
 
-def build_monthly_climate(d: pd.DataFrame, grid) -> dict:
+def build_monthly_climate(d: pd.DataFrame, grid, source=None, coverage=None) -> dict:
     result = {
         "schema_version": 1,
         "as_of": str(d.date.max().date()),
         "baseline": list(BASELINE),
         "history_start": "2021-01",
         "units": UNITS,
-        "source": SOURCE,
+        "source": source or SOURCE,
         "method": grid["method"],
         "grid": grid["grid"],
         "point_counts": grid["point_counts"],
@@ -251,6 +351,8 @@ def build_monthly_climate(d: pd.DataFrame, grid) -> dict:
         "columns": ["month", "value", "normal", "min", "max", "difference", "difference_pct", "days_covered", "days_in_month", "partial"],
         "regions": {},
     }
+    if coverage:
+        result["coverage"] = coverage
     for c, g in d.groupby("region"):
         g = g.sort_values("date").set_index("date")
         end = g[VARS].dropna(how="all").index.max()
@@ -331,12 +433,46 @@ def main():
                     fresh["_k"] = fresh.date.dt.strftime("%Y-%m-%d") + "|" + fresh.region
                     replaced = set(fresh["_k"])
                     keep = old[~old["_k"].isin(replaced)].drop(columns="_k")
-                    history = pd.concat([keep, fresh.drop(columns="_k")], ignore_index=True).sort_values(["region", "date"])
+                    added_fresh = fresh.drop(columns="_k").copy()
+                    added_fresh["source"] = "era5"
+                    history = pd.concat([keep, added_fresh], ignore_index=True).sort_values(["region", "date"])
                     added = sorted(set(fresh.date.dt.date) - set(before.date.dt.date))
                     log("new complete days: " + (", ".join(str(x) for x in added) if added else "none (overlap only)"))
     last = history.date.max().date()
-    weather = build_weather(history, grid)
-    monthly = build_monthly_climate(history, grid)
+    era5_through = last
+    # The forecast API fills the rest of today with forecast hours, which would
+    # look like a complete UTC day. Only keep through yesterday in Europe/Zurich.
+    cutoff = today - dt.timedelta(days=1)
+    if not args.no_fetch and last < cutoff:
+        fc_start = last + dt.timedelta(days=1)
+        log(f"ERA5 through {era5_through}; fetching forecast {fc_start}..{cutoff}")
+        fc_points = fetch_forecast(fc_start, cutoff, grid["lats"], grid["lons"], args.cache_dir)
+        fc = regional_means(fc_points, grid)
+        if not fc.empty:
+            fc = fc.dropna(subset=VARS, how="any")
+            old = history.copy()
+            old["_k"] = old.date.dt.strftime("%Y-%m-%d") + "|" + old.region
+            fc = fc.copy()
+            fc["_k"] = fc.date.dt.strftime("%Y-%m-%d") + "|" + fc.region
+            # Forecast must not overwrite a complete ERA5 day.
+            fc = fc[~fc["_k"].isin(set(old["_k"]))]
+            fc_add = fc.drop(columns="_k").copy()
+            fc_add["source"] = "forecast"
+            history = pd.concat([old.drop(columns="_k"), fc_add], ignore_index=True).sort_values(["region", "date"])
+            added = sorted(set(fc.date.dt.date))
+            log("forecast complete days: " + (", ".join(str(x) for x in added) if added else "none"))
+        last = history.date.max().date()
+    era5_dates = history.loc[history.get("source", "era5") == "era5", "date"]
+    if len(era5_dates):
+        era5_through = era5_dates.max().date()
+    last = history.date.max().date()
+    coverage = {"era5_through": str(era5_through)}
+    if last > era5_through:
+        coverage["forecast_from"] = str(era5_through + dt.timedelta(days=1))
+        coverage["forecast_through"] = str(last)
+    source = source_for(era5_through, last if last > era5_through else None)
+    weather = build_weather(history, grid, source=source, coverage=coverage)
+    monthly = build_monthly_climate(history, grid, source=source, coverage=coverage)
     args.out.mkdir(parents=True, exist_ok=True)
     wx_path, mo_path = args.out / "weather.json", args.out / "monthly_climate.json"
     prev_wx = wx_path.read_bytes() if wx_path.exists() else b""

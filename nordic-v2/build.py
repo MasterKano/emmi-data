@@ -215,9 +215,32 @@ def apply_dk_wind(frames,denominators,daily_cap,latest,out):
     return notes
 
 
+def interpolate_short_gaps(s, max_days=1):
+    """Linearly fill isolated gaps of max_days or fewer when both neighbours exist.
+
+    Longer gaps, and gaps at the ends of the series, stay null. Used so a single
+    missing day cannot blank the trailing 30-day average.
+    """
+    if s is None or len(s)==0:return s
+    out=s.reindex(pd.date_range(s.index.min(),s.index.max())).astype(float)
+    na=out.isna()
+    if not na.any():return out
+    run=(na!=na.shift()).cumsum()
+    for _,part in out[na].groupby(run[na]):
+        n=len(part)
+        if n<1 or n>max_days:continue
+        i0=out.index.get_loc(part.index[0])
+        i1=out.index.get_loc(part.index[-1])
+        if i0==0 or i1==len(out)-1:continue
+        left,right=out.iloc[i0-1],out.iloc[i1+1]
+        if pd.isna(left) or pd.isna(right):continue
+        out.iloc[i0:i1+1]=np.linspace(left,right,n+2)[1:-1]
+    return out
+
 def trailing(s):
     if s.empty:return s
-    return s.reindex(pd.date_range(s.index.min(),s.index.max())).rolling(30,min_periods=30).mean()
+    filled=interpolate_short_gaps(s)
+    return filled.rolling(30,min_periods=30).mean()
 
 def summary(v,n,unit):
     return dict(value=v,normal=n,difference=(v-n if pd.notna(v) and pd.notna(n) else None),
@@ -273,7 +296,11 @@ def daily_series(items,psrs=None):
         vals={}
         for ds,g in grouped:
             day=dt.date.fromisoformat(ds);a,b=ec._cet_bounds(day,day+dt.timedelta(days=1));need=int((b-a).total_seconds()/900)
-            if g.notna().sum()==need:vals[pd.Timestamp(ds)]=g.mean()
+            have=int(g.notna().sum())
+            # Keep a day when at least 98% of expected 15-minute intervals are present
+            # (same bar as Energinet realtime). Missing intervals are omitted from the
+            # mean, not filled. A shorter gap still left after this is interpolated later.
+            if need and have/need>=0.98:vals[pd.Timestamp(ds)]=g.mean()
         columns.append(pd.Series(vals,dtype=float))
     if not columns:return pd.Series(dtype=float)
     frame=pd.concat(columns,axis=1)
@@ -623,8 +650,8 @@ def generation():
         frames[c]=g
     notes=safe('DK Energinet wind',lambda:apply_dk_wind(frames,denominators,daily_cap,latest,out))
     if notes:out.setdefault('source_notes',[]).extend(notes)
-    out.setdefault('source_notes',[]).append('NO wind 2026-10-26 remains null: ENTSO-E A75 onshore (B19) is missing 14:00-14:45 UTC (4 of 96 intervals); not interpolated')
-    out.setdefault('source_notes',[]).append('SE wind 2026-11-08 remains null: ENTSO-E A75 wind is missing 15:45-16:00 UTC (1 of 96 intervals); not interpolated, so SE and Nordic 30-day averages stay blank until that day leaves the window')
+    out.setdefault('source_notes',[]).append('A CET day is kept when at least 98% of expected 15-minute intervals are present; missing intervals are omitted from the daily mean, not filled. Isolated gaps of one calendar day (both neighbours present) are then linearly interpolated so the 30-day average is not blanked; longer gaps stay null.')
+    out.setdefault('source_notes',[]).append('SE wind 2026-11-08 uses the 95 of 96 published ENTSO-E A75 intervals (15:45–16:00 UTC missing), above the 98% bar, and is not interpolated. NO wind 2026-10-26 is short of the 98% bar (4 of 96 onshore intervals missing, 14:00–14:45 UTC) and is linearly interpolated from 25 and 27 Oct.')
     if all(c in frames for c in COUNTRIES):
         g=pd.concat(frames.values()).sort_index()
         nord=pd.concat({k:pd.concat([frames[c][k] for c in members],axis=1).sum(axis=1,min_count=len(members)) for k,members in {'wind':list(COUNTRIES),'hydro':['NO','SE','FI'],'nuclear':['SE','FI']}.items()},axis=1)
@@ -638,7 +665,7 @@ def generation():
         if valid.empty:continue
         reg={'as_of':str(valid.index.max().date()),'history_start':str(valid.index.min().date()),'metrics':{}}
         for k in ['wind_load_factor','hydro','nuclear']:
-            s=g[k].reindex(pd.date_range(g.index.min(),g.index.max()));ma=trailing(s)
+            s=interpolate_short_gaps(g[k].reindex(pd.date_range(g.index.min(),g.index.max())));ma=trailing(s)
             hist=ma[ma.index.year<TODAY.year].dropna()
             groups=hist.groupby(hist.index.strftime('%m-%d'))
             norms=groups.mean();n=groups.count()
