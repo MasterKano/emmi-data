@@ -1,10 +1,11 @@
-name: Nordic v2 weather (ERA5)
+name: Nordic v2 weather (ERA5 + forecast)
 
 # Energy weather charts read nordic-v2/weather.json and monthly_climate.json from main
-# (not live-data). This job is the daily updater: Open-Meteo ERA5, keyless, same 72-point
-# country masks and 2006–2025 baseline as the box Nordic v2 builder. Only complete UTC days
-# are published; ERA5 usually lags about five days, so a run that finds no new complete day
-# commits nothing. 06:15 and 18:15 UTC catch the archive's once-a-day update.
+# (not live-data). This job is the daily updater: Open-Meteo ERA5 for complete archive days,
+# then the Open-Meteo forecast API (best match) on the same 72-point country masks to fill
+# the ERA5 lag, 2006–2025 baseline unchanged. Only complete UTC days are published. A run
+# that finds no new complete day commits nothing. 06:15 and 18:15 UTC catch the archive
+# update and keep the forecast days current.
 on:
   schedule:
     - cron: "15 6 * * *"

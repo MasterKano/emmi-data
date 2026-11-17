@@ -479,6 +479,14 @@ def apply_to_document(doc, pack):
     doc['months'] = pack['months']
     doc['monthly'] = pack['monthly']
     doc['monthly_normal'] = pack['monthly_normal']
+    span = {}
+    for ym, meta in (pack.get('period_meta') or {}).items():
+        span[ym] = {
+            'start': meta['start'],
+            'end': meta['end'],
+            'complete': meta['end'] == meta['official_end'],
+        }
+    doc['monthly_span'] = span
     return doc
 
 
