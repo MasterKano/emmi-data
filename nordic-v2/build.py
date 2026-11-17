@@ -1,5 +1,5 @@
 #!/workspace/brief/.venv/bin/python
-"""Box-only Nordic v2 data build. Never modifies EMMI, Pulse, masters or routines."""
+"""Nordic v2 data build. Writes under --out (default nordic-v2/output). Never modifies Pulse, masters or routines."""
 from __future__ import annotations
 import argparse, calendar, datetime as dt, hashlib, json, math, os, sys, time
 from pathlib import Path
@@ -9,16 +9,53 @@ import pandas as pd
 import requests
 
 BASE=Path(__file__).resolve().parent
+ROOT=BASE.parent
 CACHE=BASE/'cache'
 OUT=BASE/'output'
-CLIMATE=Path('/home/box/data/nordic-climate')
-SCRIPTS=Path('/workspace/emmi-data/scripts')
+HISTORY=BASE/'history'
+CLIMATE=Path(os.environ.get('NORDIC_CLIMATE','/home/box/data/nordic-climate'))
+
+def _scripts_dir():
+    env=os.environ.get('EMMI_SCRIPTS')
+    candidates=[]
+    if env:candidates.append(Path(env))
+    candidates.append(ROOT/'scripts')
+    candidates.append(Path('/workspace/emmi-data/scripts'))
+    for p in candidates:
+        if (p/'entsoe_client.py').exists():return p
+    return candidates[0]
+
+SCRIPTS=_scripts_dir()
 sys.path.insert(0,str(SCRIPTS))
 import entsoe_client as ec
 import build_power as bp
 import dk_wind
-sys.path.insert(0,str(CLIMATE))
-import daily_products as climate
+climate=None
+
+def load_climate():
+    global climate
+    if climate is not None:return climate
+    if not (CLIMATE/'daily_products.py').exists():
+        raise FileNotFoundError(f'Nordic climate module not found at {CLIMATE}')
+    sys.path.insert(0,str(CLIMATE))
+    import daily_products as climate_mod
+    climate=climate_mod
+    return climate
+
+def seed_cache():
+    """Copy completed-year daily series and capacity files into cache if missing."""
+    if not HISTORY.exists():return
+    CACHE.mkdir(parents=True,exist_ok=True)
+    n=0
+    for src in HISTORY.rglob('*'):
+        if not src.is_file():continue
+        rel=src.relative_to(HISTORY)
+        dest=CACHE/rel if rel.parts[0]=='nordpool' else CACHE/src.name
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        if dest.exists():continue
+        dest.write_bytes(src.read_bytes())
+        n+=1
+    if n:log(f'seeded {n} completed-year cache files from history/')
 COUNTRIES={'SE':'10YSE-1--------K','NO':'10YNO-0--------C','FI':'10YFI-1--------U','DK':'10Y1001A1001A65H'}
 ZONES={k:v for k,v in ec.ENTSOE_EIC.items() if k[:2] in COUNTRIES}
 REGIONS=['Nordic','SE','NO','FI','DK']
@@ -39,7 +76,8 @@ def clean(v):
     return v
 
 def write(name,obj):
-    obj={'schema_version':1,**obj}
+    now=dt.datetime.now(ec.CET).isoformat(timespec='seconds')
+    obj={'schema_version':1,**obj,'built_at':now}
     text=json.dumps(clean(obj),separators=(',',':'),ensure_ascii=False,allow_nan=False)
     tmp=OUT/(name+'.tmp');tmp.write_text(text);tmp.replace(OUT/name)
     log(f'{name}: {len(text):,} bytes')
@@ -248,6 +286,7 @@ def summary(v,n,unit):
                 difference_pct=((v/n-1)*100 if unit!='degC' and pd.notna(v) and pd.notna(n) and n!=0 else None))
 
 def weather():
+    load_climate()
     log('weather: loading sole daily_products country builder')
     boundaries=CACHE/'countries.geojson'
     if not boundaries.exists():
@@ -826,6 +865,10 @@ def tomorrow(price_series,normals,meta):
         res['residual_load']=[l-w-s if all(pd.notna(v) for v in [l,w,s]) else None for l,w,s in zip(res['load_fc'],res['wind_fc'],res['solar_fc'])]
         res['complete']={k:all(pd.notna(v) for v in res[k]) for k in ['price','wind_fc','solar_fc','load_fc','residual_load']}
     # Temperature and 100m wind speed use the same fractional-country grid weights as historical normals.
+    if not (meta and meta.get('weights') and normals):
+        log('tomorrow: climate weights unavailable; temperature and 100m wind left empty')
+        write('tomorrow.json',out)
+        return out
     pts=sorted({(x,y) for c in COUNTRIES for x,y,w in meta['weights'][c]})
     js=safe('weather forecast',lambda:get_json('https://api.open-meteo.com/v1/forecast',params=dict(latitude=','.join(str(p[0]) for p in pts),longitude=','.join(str(p[1]) for p in pts),hourly='temperature_2m,wind_speed_100m',timezone='GMT',start_date=str(a.date()),end_date=str(b.date()),models='ecmwf_ifs025',wind_speed_unit='ms'),cache_key=f'metfc_utc_{TODAY}',max_age=21600))
     if js:
@@ -864,6 +907,7 @@ def monthly():
 
 def monthly_climate():
     """Monthly climate on the same raw 100m / country-mask geography as weather.json, 2006-2025 baseline."""
+    load_climate()
     d,meta=climate.regional_raw_daily(CACHE/'countries.geojson',CACHE/'regional_daily.csv')
     units={'wind100':'m/s at 100m','temp':'degC at 2m','rain':'mm/day'}
     result={'as_of':str(d.date.max().date()),'baseline':list(BASELINE),'history_start':'2021-01',
@@ -917,6 +961,7 @@ def main():
     except BlockingIOError:raise SystemExit('Another Nordic v2 builder is already running; no concurrent cache/output writes allowed')
     ap=argparse.ArgumentParser();ap.add_argument('--baseline',default='2006:2025');ap.add_argument('--out',type=Path,default=OUT);ap.add_argument('--only',default='all');args=ap.parse_args()
     BASELINE=tuple(map(int,args.baseline.split(':')));OUT=args.out;OUT.mkdir(parents=True,exist_ok=True);CACHE.mkdir(parents=True,exist_ok=True)
+    seed_cache()
     if len(BASELINE)!=2 or BASELINE[0]>BASELINE[1] or BASELINE[1]>=TODAY.year:raise ValueError('baseline must contain two completed years')
     log(f'Nordic v2 build {TODAY} Europe/Zurich; baseline {BASELINE}')
     selected=lambda s:args.only=='all' or s in args.only.split(',')
@@ -926,7 +971,11 @@ def main():
     if selected('generation'):generation()
     if selected('hydrology'):safe('hydrology',hydrology)
     if selected('tomorrow'):
-        if normals is None:normals,meta=weather()
+        if normals is None:
+            try:normals,meta=weather()
+            except Exception as e:
+                safe('weather for tomorrow',lambda e=e:(_ for _ in ()).throw(e))
+                normals,meta=None,None
         if px is None:px=prices()
         tomorrow(px,normals,meta)
     if selected('monthly'):monthly()
