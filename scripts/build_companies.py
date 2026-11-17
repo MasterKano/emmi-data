@@ -27,6 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from universe import GROUPS  # noqa: E402
 import build_data as BD  # noqa: E402
+import overrides as OV  # noqa: E402
 from build_data import SESSION, MAJOR, yahoo_crumb, build_fx_table, log, balance_from_ts, calc_ev, minor_unit_cap  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
@@ -366,6 +367,13 @@ def shape(sym, spec, qs, ts, ts_ccy, divs, fx, now):
     t12 = ttm_row(ts, quarterly) or {}
 
     bal = balance_from_ts(ts)               # shared with build_data.py so Table EV == panel EV
+    # new listings Yahoo does not cover yet: sourced share count / net debt (share_overrides.json, same as build_data.py)
+    mcap, cap_ov = OV.fill_cap(sym, mcap, px, pccy, shares, log=log)
+    if cap_ov:
+        shares = float(OV.share_override(sym)["shares"])
+        bal, _ = OV.fill_balance(sym, bal)
+        if not fd.get("financialCurrency") and not ts_ccy:
+            fccy = OV.share_override(sym).get("ccy") or fccy
     nd = bal["nd"]
     eq = next((r["eq"] for r in reversed(quarterly + annual) if r.get("eq") is not None), None)
     if quarterly and annual and quarterly[-1]["d"] < annual[-1]["d"]:
@@ -401,6 +409,8 @@ def shape(sym, spec, qs, ts, ts_ccy, divs, fx, now):
         neg_ebitda=bool(t12.get("ebitda") is not None and t12["ebitda"] < 0),
         nd=sig(nd), shares=sig(shares, 6),
     )
+    if cap_ov:
+        val["cap_src"] = "share_overrides.json: " + OV.share_override(sym).get("source", "")[:200]
     for k in ("pe", "pe_fwd"):            # Yahoo sometimes emits nonsense multiples (currency mix-ups)
         if val[k] is not None and not (0 < val[k] < 1000):
             val[k] = None
@@ -581,6 +591,7 @@ def shape(sym, spec, qs, ts, ts_ccy, divs, fx, now):
         ratios=dict(annual=ratios_a, ttm=ratios_t),
         divs=dv,
     )
+    OV.fill_profile(sym, detail)            # new listings: hand-sourced profile until Yahoo has one
     return clean(index), clean(detail)
 
 

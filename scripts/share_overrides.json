@@ -1,0 +1,47 @@
+{
+  "note": "Share counts for new listings that Yahoo does not cover yet. Used only while Yahoo has no market cap or share count (and net_debt only while Yahoo has no balance sheet); see overrides.py. Remove an entry once Yahoo reports the count (the build logs it).",
+  "symbols": {
+    "VALX.V": {
+      "shares": 43371756,
+      "net_debt": -2000000,
+      "ccy": "CAD",
+      "as_of": "2026-11-12",
+      "source": "NGEx closing release, 12 Nov 2026: 43,371,756 Valiente shares issued and outstanding at completion. Net debt = minus about C$2.0 million working capital at completion (NGEx management information circular, 25 Sep 2026, Available Funds).",
+      "url": "https://ngexminerals.mediaroom.com/2026-11-12-NGEx-Announces-Closing-of-Spin-out-of-Valiente-Resources-Valiente-Receives-Final-Approval-to-List-on-the-TSXV-with-Trading-to-Commence-November-16,-2026",
+      "profile": {
+        "summary": "Valiente Resources is a Lundin Group copper-gold exploration company spun out of NGEx Minerals on 12 November 2026. It holds the 100%-owned Valle Ancho project, which straddles the Argentina-Chile border with the Argentine claims in Catamarca Province, and plans to add copper, gold and silver exploration assets in Argentina and Chile through selective acquisitions. Head office is in Vancouver, shared with NGEx Minerals.",
+        "web": "https://valienteresources.com",
+        "city": "Vancouver",
+        "state": "BC",
+        "country": "Canada",
+        "officers": [
+          {
+            "n": "Wojtek Wodzicki",
+            "t": "Chairman, President and Chief Executive Officer"
+          },
+          {
+            "n": "Alex Tong",
+            "t": "Chief Financial Officer"
+          },
+          {
+            "n": "Heidi Chik",
+            "t": "Corporate Secretary"
+          },
+          {
+            "n": "Robert Carmichael",
+            "t": "Director"
+          },
+          {
+            "n": "Joyce Ngo",
+            "t": "Director"
+          },
+          {
+            "n": "Nathan Monash",
+            "t": "Director"
+          }
+        ],
+        "source": "NGEx Minerals management information circular for the Valiente arrangement and the NGEx closing release, 12 Nov 2026 (used until Yahoo lists a profile)"
+      }
+    }
+  }
+}

@@ -88,7 +88,7 @@ GROUPS = [
             R("ITH.L", "Ithaca Energy", "LSE:ITH"),
             R("HBR.L", "Harbour Energy", "LSE:HBR"),
             R("ENOG.L", "Energean", "LSE:ENOG"),
-            R("SQZ.L", "Serica Energy", "LSE:SQZ"),
+            R("SER.L", "Serica Energy", "LSE:SER", note="LSE TIDM is SER. The old SQZ code is retired."),
             R("DEC.L", "Diversified Energy", "LSE:DEC", note="Also listed on the NYSE (DEC)."),
             R("RKH.L", "Rockhopper Exploration", "LSE:RKH"),
             R("ENQ.L", "EnQuest", "LSE:ENQ"),
@@ -110,6 +110,11 @@ GROUPS = [
             R("STAR.L", "Star Energy Group", "LSE:STAR"),
             R("PXEN.L", "Prospex Energy", "LSE:PXEN"),
             R("EOG.L", "Europa Oil & Gas", "LSE:EOG"),
+        ]),
+        dict(label="Tel Aviv-listed E&Ps",
+             note="Primary Tel Aviv listing (Yahoo NVPT.TA, prices in ILA). There is a thin US OTC line (NVPTF) that is not used.",
+             rows=[
+            R("NVPT.TA", "Navitas Petroleum", "TASE:NVPT", note="Israeli exploration and production company (Shenandoah, Sea Lion Falklands); Eco Atlantic partner on Orinduik option and Block 1 CBK. Also a thin US OTC line (NVPTF)."),
         ]),
     ]),
     dict(id="lundin", label="Lundin Group", sections=[dict(label=None, rows=[
@@ -200,3 +205,63 @@ GROUPS = [
         ]),
     ]),
 ]
+
+# Oil & gas tiles, 33 names. Serica = SER.L (the old SQZ.L code is retired and is not a fallback).
+# ShaMaran = SNM-SDB.ST (Sweden). Meren = MER.ST (ex-Africa Oil). Orrön excluded. Navitas = NVPT.TA (Tel Aviv).
+# These tickers were absent from the October market file, so the tiles showed n/a until the quote build carried them.
+OIL_TILE_GAPS = (
+    "SER.L", "IPCO.ST", "AEC.ST", "MER.ST",
+    "DNO.OL", "BNOR.OL", "BWE.OL", "OKEA.OL", "PEN.OL", "PNOR.OL", "QEC.OL", "IOX.OL",
+    "SNM-SDB.ST",
+    "NVPT.TA",
+)
+OIL_GAS_V2 = dict(id="oilgas_v2", label="Oil & gas", sections=[
+    dict(label="London", rows=[
+        R("TLW.L", "Tullow Oil plc", "LSE:TLW"),
+        R("CNE.L", "Capricorn Energy PLC", "LSE:CNE"),
+        R("GENL.L", "Genel Energy plc", "LSE:GENL"),
+        R("ECO.L", "Eco (Atlantic) Oil & Gas Ltd.", "LSE:ECO"),
+        R("ITH.L", "Ithaca Energy plc", "LSE:ITH"),
+        R("AET.L", "Afentra plc", "LSE:AET"),
+        R("KIST.L", "Kistos Holdings Plc", "LSE:KIST"),
+        R("JSE.L", "Jadestone Energy plc", "LSE:JSE"),
+        R("CHAR.L", "Chariot Limited", "LSE:CHAR"),
+        R("TXP.L", "Touchstone Exploration Inc.", "LSE:TXP"),
+        R("GKP.L", "Gulf Keystone Petroleum Limited", "LSE:GKP"),
+        R("SER.L", "Serica Energy plc", "LSE:SER"),
+        R("ENOG.L", "Energean plc", "LSE:ENOG"),
+        R("SEPL.L", "Seplat Energy Plc", "LSE:SEPL"),
+        R("RKH.L", "Rockhopper Exploration plc", "LSE:RKH"),
+        R("ENQ.L", "EnQuest PLC", "LSE:ENQ"),
+        R("PHAR.L", "Pharos Energy plc", "LSE:PHAR"),
+    ]),
+    dict(label="Sweden", rows=[
+        R("IPCO.ST", "International Petroleum Corp", "OMXSTO:IPCO"),
+        R("SNM-SDB.ST", "ShaMaran Petroleum", "OMXSTO:SNM_SDB"),
+        R("AEC.ST", "Africa Energy Corp", "OMXSTO:AEC"),
+        R("MER.ST", "Meren Energy", "OMXSTO:MER"),
+    ]),
+    dict(label="Norway", rows=[
+        R("EQNR.OL", "Equinor ASA", "OSL:EQNR"),
+        R("AKRBP.OL", "Aker BP ASA", "OSL:AKRBP"),
+        R("VAR.OL", "Vår Energi ASA", "OSL:VAR"),
+        R("DNO.OL", "DNO ASA", "OSL:DNO"),
+        R("BNOR.OL", "BlueNord ASA", "OSL:BNOR"),
+        R("BWE.OL", "BW Energy Limited", "OSL:BWE"),
+        R("OKEA.OL", "OKEA ASA", "OSL:OKEA"),
+        R("PEN.OL", "Panoro Energy ASA", "OSL:PEN"),
+        R("PNOR.OL", "PetroNor E&P ASA", "OSL:PNOR"),
+        R("QEC.OL", "Questerre Energy Corporation", "OSL:QEC"),
+        R("IOX.OL", "Interoil Exploration and Production ASA", "OSL:IOX"),
+    ]),
+    dict(label="Tel Aviv", rows=[
+        R("NVPT.TA", "Navitas Petroleum, Limited Partnership", "TASE:NVPT"),
+    ]),
+])
+# Stockholm quotes for the mining tiles. Only lines that trade in Stockholm.
+# LUC.ST is Nasdaq First North Growth Market, Stockholm (Yahoo still uses .ST, currency SEK).
+LUNDIN_MINING_V2 = dict(id="lundin_mining_v2", label="Mining (Lundin Group)", sections=[dict(label=None, rows=[
+    R("LUMI.ST", "Lundin Mining", "OMXSTO:LUMI"),
+    R("LUG.ST", "Lundin Gold", "OMXSTO:LUG"),
+    R("LUC.ST", "Lucara Diamond", "OMXSTO:LUC", note="Nasdaq First North Growth Market, Stockholm."),
+])])

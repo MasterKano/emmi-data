@@ -131,7 +131,7 @@ CURATED = [
     ("Afentra", "LSE:AET", "Stock"),
     ("Seplat Energy", "LSE:SEPL", "Stock"),
     ("Diversified Energy", "LSE:DEC", "Stock"),
-    ("Serica Energy", "LSE:SQZ", "Stock"),
+    ("Serica Energy", "LSE:SER", "Stock"),
     ("Kistos Holdings", "LSE:KIST", "Stock"),
     ("Shell", "LSE:SHEL", "Stock"),
     ("BP", "LSE:BP", "Stock"),

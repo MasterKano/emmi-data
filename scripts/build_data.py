@@ -20,6 +20,7 @@ import pandas as pd
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from universe import GROUPS  # noqa: E402
+import overrides as OV  # noqa: E402
 import contracts  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
@@ -758,6 +759,8 @@ def analyse(spec, df, meta, src, now, fund=None, fx_table=None):
     rmp, rcp = meta.get("regularMarketPrice"), meta.get("regularMarketChangePercent")
     if spec.get("kind", "equity") in ("equity", "etf") and isinstance(rmp, (int, float)) and isinstance(rcp, (int, float)) and rcp > -100 and abs(px - rmp) <= 1e-6 * abs(rmp):
         q_prev = rmp / (1 + rcp / 100)
+        if last_date.strftime("%Y-%m-%d") in (meta.get("_adjusted") or []):
+            q_prev = prev          # ex-date session: Yahoo's quote change is against the unadjusted close; use the adjusted bar
         if prev is None or abs(q_prev / prev - 1) > 0.002:
             prev = q_prev
     out["prev_close"] = rnd(prev, 6)
@@ -942,6 +945,9 @@ def main():
                 raise RuntimeError("no valid closes")
             if sym in contracts.ROOTS:
                 df, meta, src = fetch_contract(sym, df, meta, src, now, futx)
+            df, adj = OV.adjust_history(sym, df, log)      # spin-outs Yahoo has not adjusted (price_adjustments.json)
+            if adj:
+                meta = dict(meta, _adjusted=adj)
             cache[sym] = (df, meta, src)
             log(f"[{i+1}/{len(syms)}] {sym}: {len(df)} bars to {df.index[-1].date()} via {src}")
         except Exception as e:
@@ -966,6 +972,7 @@ def main():
             log(f"intraday: no base market.json ({e})")
     crumb = None if a.intraday else yahoo_crumb(SESSION)
     funds = {}
+    cap_override = set()
     fund_kinds = {"equity", "etf"}
     fund_syms = [s for s in syms if specs[s].get("kind", "equity") in fund_kinds and s in cache and not a.intraday]
     for i, sym in enumerate(fund_syms):
@@ -978,6 +985,15 @@ def main():
                     fccy = ts_ccy or fccy
                 except Exception as e:
                     log(f"  balance {sym}: {e}")
+            # new listings Yahoo does not cover yet: sourced share count / net debt (share_overrides.json)
+            m = cache[sym][1] or {}
+            mcap, cap_ov = OV.fill_cap(sym, mcap, m.get("regularMarketPrice") or float(cache[sym][0]["close"].dropna().iloc[-1]),
+                                       ccy or m.get("currency"), log=log)
+            if cap_ov:
+                bal, _ = OV.fill_balance(sym, bal)
+                ccy = ccy or m.get("currency")
+                fccy = fccy or (OV.share_override(sym) or {}).get("ccy") or ccy
+                cap_override.add(sym)
             funds[sym] = (mcap, ev, ccy, fccy, bal)
             log(f"  fund [{i+1}/{len(fund_syms)}] {sym}: mcap={mcap} ev_yahoo={ev} {ccy}/{fccy} nd={bal and bal.get('nd')}")
         except Exception as e:
@@ -1016,6 +1032,11 @@ def main():
                         row = analyse(spec, df, meta, src, now, fund=funds.get(spec['sym']), fx_table=fx_table)
                         if spec["sym"] in futx:
                             apply_contract(row, spec, futx[spec["sym"]], now)
+                        if spec["sym"] in cap_override:
+                            row["mcap_src"] = "share_overrides.json: " + (OV.share_override(spec["sym"]) or {}).get("source", "")[:160]
+                        if meta.get("_adjusted"):
+                            row["adjusted"] = [dict(ex_date=e["ex_date"], factor=e["factor"], reason=e.get("reason"))
+                                               for e in OV.ADJUST.get(spec["sym"], []) if e["ex_date"] in meta["_adjusted"]]
                         if spec["sym"] in offx:
                             row.update(offx[spec["sym"]])
                         b = base_rows.get(spec["sym"]) or {}

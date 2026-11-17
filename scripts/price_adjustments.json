@@ -1,0 +1,23 @@
+{
+  "note": "Back-adjustments for capital events Yahoo has not adjusted. Prices before ex_date are multiplied by factor; applied only while Yahoo's close on the last day before ex_date equals prev_close (so it never double-adjusts). See overrides.py.",
+  "symbols": {
+    "NGEX.TO": [
+      {
+        "ex_date": "2026-11-16",
+        "factor": 0.965265,
+        "prev_close": 20.21,
+        "reason": "Valiente Resources spin-out: 1/5 VALX share per NGEx share. Spin value per NGEx share = 3.51 / 5 = C$0.702 (VALX first close, 16 Nov 2026); factor = 1 - 0.702 / 20.21 (NGEX close, 13 Nov 2026) = 0.965265. Standard spin-off price adjustment (same method as a special dividend).",
+        "source": "https://ngexminerals.mediaroom.com/2026-11-12-NGEx-Announces-Closing-of-Spin-out-of-Valiente-Resources-Valiente-Receives-Final-Approval-to-List-on-the-TSXV-with-Trading-to-Commence-November-16,-2026"
+      }
+    ],
+    "NVPT.TA": [
+      {
+        "ex_date": "2026-05-18",
+        "factor": 100,
+        "prev_close": 132.8,
+        "reason": "Yahoo history unit switch: closes before 18 May 2026 are in shekels, later ones in agorot (ILA, 1/100 shekel), so earlier closes are scaled x100. Not a corporate action.",
+        "source": "Yahoo chart data for NVPT.TA (close 132.8 on 15 May 2026, 13,060 on 18 May 2026)"
+      }
+    ]
+  }
+}
