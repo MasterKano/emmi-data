@@ -16,6 +16,7 @@ SCRIPTS=Path('/workspace/emmi-data/scripts')
 sys.path.insert(0,str(SCRIPTS))
 import entsoe_client as ec
 import build_power as bp
+import dk_wind
 sys.path.insert(0,str(CLIMATE))
 import daily_products as climate
 COUNTRIES={'SE':'10YSE-1--------K','NO':'10YNO-0--------C','FI':'10YFI-1--------U','DK':'10Y1001A1001A65H'}
@@ -141,35 +142,52 @@ def energinet_forecast(idx,target):
         out[z]=res
     return out
 
-def fill_dk_wind(frames,denominators,daily_cap,latest,out):
+# Danish wind: Energinet is primary, ENTSO-E A75 is the fallback (shared logic in scripts/dk_wind.py).
+# Load-factor capacity is unchanged (Danish Energy Agency register / A68).
+
+def raw_entsoe_dk_wind():
+    """ENTSO-E A75 daily MW from the box cache, never the merged current-year CSV (that file may already contain Energinet days)."""
+    parts=[]
+    for y in range(2015,TODAY.year):
+        path=CACHE/f'gen_daily_v2_DK_{y}.csv'
+        if not path.exists():continue
+        s=pd.read_csv(path,parse_dates=['date']).set_index('date')['wind']
+        s.index=pd.to_datetime(s.index).tz_localize(None);parts.append(s)
+    xml=CACHE/f'gen_DK_{TODAY.year}.xml'
+    if xml.exists():
+        s=daily_series(ec.entsoe_parse(xml.read_text()),['B18','B19'])
+        s.index=pd.to_datetime(s.index).tz_localize(None);parts.append(s)
+    if not parts:return pd.Series(dtype=float)
+    out=pd.concat(parts);return out[~out.index.duplicated(keep='last')].sort_index()
+
+def apply_dk_wind(frames,denominators,daily_cap,latest,out):
+    """Replace DK wind with Energinet (settlement, then 5-minute) and fall back to ENTSO-E per day."""
     if 'DK' not in frames:return []
-    g=frames['DK'];last=g['wind'].dropna().index.max() if 'wind' in g and g['wind'].notna().any() else None
-    if last is not None and last.date()>=TODAY-dt.timedelta(days=1):return []
-    start=(last.date()+dt.timedelta(days=1)) if last is not None else TODAY-dt.timedelta(days=14)
-    a,_=ec._cet_bounds(start,start+dt.timedelta(days=1));_,b=ec._cet_bounds(TODAY,TODAY+dt.timedelta(days=1))
-    act=bp._eds('ElectricityProdex5MinRealtime',a,min(pd.Timestamp(dt.datetime.now(dt.timezone.utc)),pd.Timestamp(b)),
-                {'PriceArea':['DK1','DK2']},['Minutes5UTC','PriceArea','OffshoreWindPower','OnshoreWindPower'])
-    if act is None or act.empty:return ['DK wind after ENTSO-E cutoff: Energinet returned no actuals']
-    act=act.assign(t=pd.to_datetime(act['Minutes5UTC'],utc=True))
-    act['wind']=act[['OffshoreWindPower','OnshoreWindPower']].astype(float).sum(axis=1,min_count=1)
-    p=act.pivot_table(index='t',columns='PriceArea',values='wind',aggfunc='last')
-    if not {'DK1','DK2'}.issubset(p.columns):return ['DK wind after ENTSO-E cutoff: Energinet missing a bidding zone']
-    tot=p[['DK1','DK2']].sum(axis=1,min_count=2).sort_index()
-    added=[]
-    for day,s in tot.groupby(tot.index.tz_convert(ec.CET).strftime('%Y-%m-%d')):
-        d=dt.date.fromisoformat(day);lo,hi=ec._cet_bounds(d,d+dt.timedelta(days=1))
-        need=int((hi-lo).total_seconds()/300)
-        part=s.loc[(s.index>=lo)&(s.index<hi)]
-        if part.notna().sum()!=need:continue
-        ts=pd.Timestamp(d)
-        if ts not in g.index:g.loc[ts,g.columns]=np.nan
-        if pd.isna(g.loc[ts,'wind']):
-            g.loc[ts,'wind']=float(part.mean());added.append(str(d))
-    g.sort_index(inplace=True)
+    g=frames['DK']
+    ent=g['wind'] if 'wind' in g else pd.Series(dtype=float)
+    hist_start=dt.date(2015,1,1)
+    if len(ent):
+        first=pd.Timestamp(ent.index.min()).date()
+        if first<hist_start:hist_start=first
+    end=TODAY  # exclusive of today: today is still incomplete
+    sett=safe('DK Energinet settlement wind',lambda:dk_wind.fetch_energinet_settlement_wind(hist_start,end,cache_dir=CACHE,today=TODAY))
+    if sett is None:sett=pd.Series(dtype=float)
+    rt_start=max(hist_start,end-dt.timedelta(days=90))
+    realtime=safe('DK Energinet 5-minute wind',lambda:dk_wind.fetch_energinet_realtime_wind(rt_start,end+dt.timedelta(days=1)))
+    if realtime is None:realtime=pd.Series(dtype=float)
+    realtime=realtime[realtime.index<pd.Timestamp(TODAY)] if len(realtime) else realtime
+    merged,sources=dk_wind.merge_dk_wind(entsoe=ent,settlement=sett,realtime=realtime)
+    if not len(merged.dropna()):
+        return ['DK wind: Energinet returned no usable days; left ENTSO-E A75 in place']
+    extra=[ts for ts in merged.dropna().index if ts not in g.index]
+    if extra:
+        add=pd.DataFrame(np.nan,index=pd.DatetimeIndex(extra),columns=g.columns)
+        g=pd.concat([g,add]).sort_index()
+        g=g[~g.index.duplicated(keep='last')]
+    g.loc[merged.dropna().index,'wind']=merged.dropna()
     frames['DK']=g
     path=CACHE/f'gen_daily_v2_DK_{TODAY.year}.csv'
-    g[['wind','hydro','nuclear']].rename_axis('date').to_csv(path)
-    if not added:return ['DK wind after ENTSO-E cutoff: Energinet actuals had no complete extra delivery days']
+    g.loc[g.index.year==TODAY.year,['wind','hydro','nuclear']].rename_axis('date').to_csv(path)
     cap=denominators['DK']
     if 'DK' in daily_cap:
         cap=daily_cap['DK'].reindex(g.index).combine_first(cap.reindex(g.index))
@@ -180,8 +198,22 @@ def fill_dk_wind(frames,denominators,daily_cap,latest,out):
     g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
     frames['DK']=g
     out['capacity_daily']['DK']={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))],'latest_source':latest['DK']}
-    out['source']='ENTSO-E A75 actual generation; A68 annual installed capacity; Energinet ElectricityProdex5MinRealtime for recent DK wind where A75 is incomplete'
-    return [f"DK wind {added[0]}..{added[-1]} from Energinet ElectricityProdex5MinRealtime (DK1+DK2); ENTSO-E A75 currently ends 2026-11-04 07:45Z"]
+    out['source']='Energinet ProductionConsumptionSettlement (official hourly, DK1+DK2 onshore and offshore) where published; Energinet ElectricityProdex5MinRealtime for days not yet settled; ENTSO-E A75 as fallback; A68 / Danish Energy Agency register for installed capacity'
+    counts=sources.dropna().value_counts().to_dict()
+    last={k:(sources[sources==k].index.max().date().isoformat() if (sources==k).any() else None) for k in ('energinet_settlement','energinet_realtime','entsoe_a75')}
+    notes=[
+        f"DK wind primary Energinet (settlement {counts.get('energinet_settlement',0)} days, last {last['energinet_settlement']}; 5-minute {counts.get('energinet_realtime',0)} days, last {last['energinet_realtime']}); ENTSO-E A75 fallback {counts.get('entsoe_a75',0)} days, last {last['entsoe_a75']}"
+    ]
+    chk=dk_wind.overlap_pct(realtime,sett)
+    if chk:
+        notes.append(f"DK wind cross-check, overlapping days: 5-minute vs official settlement {chk['start']}..{chk['end']} n={chk['n']}, mean {chk['mean_pct']}% (median {chk['median_pct']}%, max abs {chk['max_abs_pct']}%)")
+    raw=safe('DK raw ENTSO-E wind for cross-check',raw_entsoe_dk_wind)
+    if raw is None:raw=pd.Series(dtype=float)
+    chk2=dk_wind.overlap_pct(sett,raw)
+    if chk2:
+        notes.append(f"DK wind cross-check, overlapping days: official settlement vs raw ENTSO-E A75 {chk2['start']}..{chk2['end']} n={chk2['n']}, mean {chk2['mean_pct']}% (median {chk2['median_pct']}%, max abs {chk2['max_abs_pct']}%)")
+    return notes
+
 
 def trailing(s):
     if s.empty:return s
@@ -589,7 +621,7 @@ def generation():
         # Reporting/capacity mismatches are not silently clipped.
         g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
         frames[c]=g
-    notes=safe('DK Energinet generation fill',lambda:fill_dk_wind(frames,denominators,daily_cap,latest,out))
+    notes=safe('DK Energinet wind',lambda:apply_dk_wind(frames,denominators,daily_cap,latest,out))
     if notes:out.setdefault('source_notes',[]).extend(notes)
     out.setdefault('source_notes',[]).append('NO wind 2026-10-26 remains null: ENTSO-E A75 onshore (B19) is missing 14:00-14:45 UTC (4 of 96 intervals); not interpolated')
     out.setdefault('source_notes',[]).append('SE wind 2026-11-08 remains null: ENTSO-E A75 wind is missing 15:45-16:00 UTC (1 of 96 intervals); not interpolated, so SE and Nordic 30-day averages stay blank until that day leaves the window')

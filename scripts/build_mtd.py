@@ -2,13 +2,15 @@
 last complete CET day, plus daily weather per country. The browser sums zones into countries and the Nordic total and
 compares the current month with the same days of the previous month.
 Sources: ENTSO-E Transparency (needs ENTSOE_API_TOKEN, never printed): A75 actual generation per type (hydro = run-of-river + reservoir; pumped storage B10 is
-excluded), A65 actual load. Open-Meteo (CC BY 4.0): daily mean temperature (main load centres), precipitation and mean 10 m wind speed
+excluded), A65 actual load. Danish bidding-zone wind (DK1, DK2) uses Energinet first (ProductionConsumptionSettlement,
+then ElectricityProdex5MinRealtime when at least 98% of 5-minute intervals are present, then ENTSO-E A75). Open-Meteo (CC BY 4.0): daily mean temperature (main load centres), precipitation and mean 10 m wind speed
 (fixed points per country). Daily GWh = mean of the available hourly MW values x hours in the CET day; a day with
 less than 90% of its hours reported is left empty (n/a). Writes data/nordic_mtd.json."""
 import datetime as dt, os, sys, time
 import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_power as bp
+import dk_wind
 from common import openmeteo, write_json  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,6 +85,22 @@ def main():
     with ThreadPoolExecutor(max_workers=6) as ex:
         for z, rec in ex.map(one, ZONES):
             Z[z] = rec
+    # Danish wind: Energinet first, per bidding zone. Keep ENTSO-E where Energinet has no complete day.
+    try:
+        # Do not pass ENTSO-E daily GWh into the MW merge (units differ). Blank Energinet
+        # days keep the ENTSO-E GWh already in rec, below.
+        mw, sources = dk_wind.merged_dk_wind_zones(d0, today)
+        for z in dk_wind.DK_ZONES:
+            gwh = dk_wind.daily_gwh_list(mw.get(z), days)
+            if any(x is not None for x in gwh):
+                # Prefer Energinet; fall back to the ENTSO-E value already in rec for a blank day.
+                prev = (Z.get(z) or {}).get("wind") or [None] * len(days)
+                Z.setdefault(z, {})["wind"] = [g if g is not None else p for g, p in zip(gwh, prev)]
+                counts = sources[z].dropna().value_counts().to_dict() if z in sources and len(sources[z]) else {}
+                print(f"mtd {z} wind Energinet-first {counts}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        gaps.append(f"DK Energinet wind: {bp._redact(e)[:60]}")
+        print(gaps[-1], flush=True)
     iso = [d.isoformat() for d in days]
     wx = {}
     for key, var, P, nd in WX:
@@ -115,7 +133,7 @@ def main():
     out = dict(generated_utc=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), start=iso[0], days=iso,
                zones=Z, types=TYPES + ["load"], wx=wx,
                wx_pts={k: {c: len(v) for c, v in P.items()} for k, _, P, _ in WX},
-               src=dict(entsoe="https://transparency.entsoe.eu", openmeteo="https://open-meteo.com"),
+               src=dict(entsoe="https://transparency.entsoe.eu", openmeteo="https://open-meteo.com", dk_wind="https://www.energidataservice.dk (ProductionConsumptionSettlement, ElectricityProdex5MinRealtime) for DK1/DK2 wind; ENTSO-E A75 fallback"),
                gaps=gaps, build_s=round(time.time() - t0))
     write_json(OUT, out)
     print(f"mtd: {len(iso)} days {iso[0]}..{iso[-1]}, {os.path.getsize(OUT)} B, {out['build_s']} s, gaps {gaps}")

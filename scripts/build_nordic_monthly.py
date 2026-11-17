@@ -1,7 +1,9 @@
 """Nordic monthly overview: what drove Nordic power last month. Monthly; skips if data/nordic_monthly.json is < 20 days
 old and already covers the last complete month (use --force to rebuild).
 Sources (official, ENTSO-E needs ENTSOE_API_TOKEN, never printed):
-  * ENTSO-E Transparency A75 actual generation per production type, countries NO, SE, FI, DK (monthly TWh, CET months)
+  * ENTSO-E Transparency A75 actual generation per production type, countries NO, SE, FI, DK (monthly TWh, CET months).
+    Danish wind from August 2026 uses Energinet first (ProductionConsumptionSettlement, then ElectricityProdex5MinRealtime
+    when at least 98% of 5-minute intervals are present, then ENTSO-E A75). Earlier DK wind months stay on A75.
   * ENTSO-E Transparency A44 day-ahead prices, bidding zones (monthly time-weighted mean, EUR/MWh)
   * Hydro energy inflow (derived): change in reservoir energy (NVE magasinstatistikk for Norway, ENTSO-E A72 for Sweden)
     plus hydro generation (A75) in the month. Normal = average of the same month over AVG_YEARS.
@@ -14,6 +16,7 @@ from common import age_days, write_json  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_power as bp            # HTTP + ENTSO-E helpers (token redacted in all messages)
 import build_hydro_nordic as hn     # NVE + A72 weekly reservoir series
+import dk_wind                     # Energinet-first Danish wind (shared with Nordic v2 and MTD)
 
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "nordic_monthly.json")
 CTRY = {"NO": "10YNO-0--------C", "SE": "10YSE-1--------K", "FI": "10YFI-1--------U", "DK": "10Y1001A1001A65H"}
@@ -111,6 +114,21 @@ def main():
             except Exception as e:  # noqa: BLE001
                 gaps.append(f"A75 {c} {y}: {bp._redact(e)[:80]}"); print(gaps[-1])
         gen[c] = {k: [r2(acc.get(m, {}).get(k)) if m in acc else None for m in months] for k in TYPES}
+    # Danish wind from DK_WIND_MONTHLY_FROM: Energinet official settlement, then 5-minute, then A75.
+    try:
+        first = dt.date.fromisoformat(dk_wind.DK_WIND_MONTHLY_FROM + "-01")
+        merged, sources = dk_wind.merged_dk_wind(first, end)
+        revised = dk_wind.monthly_twh(merged)
+        n_rev = 0
+        for i, m in enumerate(months):
+            if m >= dk_wind.DK_WIND_MONTHLY_FROM and m in revised:
+                gen["DK"]["wind"][i] = r2(revised[m])
+                n_rev += 1
+        if n_rev:
+            src_from = (sources.dropna().value_counts().to_dict() if len(sources) else {})
+            print(f"nordic_monthly: DK wind revised for {n_rev} month(s) from {dk_wind.DK_WIND_MONTHLY_FROM} (Energinet-first; {src_from})")
+    except Exception as e:  # noqa: BLE001
+        gaps.append(f"DK Energinet wind: {bp._redact(e)[:80]}"); print(gaps[-1])
     gen["Nordic"] = {k: [r2(sum(gen[c][k][i] or 0 for c in CTRY)) if all(m_ok(gen[c], i) for c in CTRY) else None
                          for i in range(len(months))] for k in TYPES}
     # prices: last 25 months
@@ -148,7 +166,7 @@ def main():
     out = dict(generated_utc=dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), last=lm, months=months,
                types=TYPES, avg_years=[Y0, Y0 + 4], gen=gen, price_zones=PZ, price_months=months[-25:], prices=prices,
                inflow=infl, gaps=gaps, build_s=round(time.time() - t0),
-               src=dict(gen="https://transparency.entsoe.eu/generation/r2/actualGenerationPerProductionType/show",
+               src=dict(gen="https://transparency.entsoe.eu/generation/r2/actualGenerationPerProductionType/show", dk_wind="https://www.energidataservice.dk (ProductionConsumptionSettlement, ElectricityProdex5MinRealtime) for DK wind from 2026-08; ENTSO-E A75 fallback and earlier months",
                         price="https://transparency.entsoe.eu/transmission-domain/r2/dayAheadPrices/show",
                         nve="https://www.nve.no/energi/analyser-og-statistikk/magasinstatistikk/",
                         a72="https://transparency.entsoe.eu/generation/r2/waterReservoirsAndHydroStoragePlants/show"))
