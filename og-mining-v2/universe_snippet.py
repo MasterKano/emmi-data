@@ -46,7 +46,8 @@ OIL_GAS_V2 = dict(id="oilgas_v2", label="Oil & gas", sections=[
 LUNDIN_MINING_V2 = dict(id="lundin_mining_v2", label="Mining (Lundin Group)", sections=[dict(label=None, rows=[
     R("LUN.TO", "Lundin Mining", "TSX:LUN", note="Copper (+gold, nickel, zinc): Chile (Candelaria, Caserones), Brazil (Chapada), Argentina (Vicuña JV with BHP); 2025 output ~331kt Cu (company site)."),
     R("LUG.TO", "Lundin Gold", "TSX:LUG", note="Gold: Fruta del Norte, Ecuador; 2025 output 498,315 oz (Lundin Group 2025 review)."),
-    R("NGEX.TO", "NGEx Minerals", "TSX:NGEX", note="Copper-gold explorer: Lunahuasi (Argentina). Valiente Resources spin-out effective 12 Nov 2026 (ex-date 12 Nov): expect a price step."),
+    R("NGEX.TO", "NGEx Minerals", "TSX:NGEX", note="Copper-gold explorer: Lunahuasi (Argentina) and Los Helados (Chile). Valle Ancho spun out into Valiente Resources (effective 12 Nov 2026); new NGEx shares trade from 16 Nov 2026, so the price steps that day."),
+    R("VALX.V", "Valiente Resources", "TSXV:VALX", note="Copper-gold explorer: Valle Ancho (Catamarca, Argentina, plus Region III, Chile). NGEx spin-out, first traded 16 Nov 2026. No Stockholm line."),
     R("LUC.TO", "Lucara Diamond", "TSX:LUC", note="Diamonds: Karowe mine, Botswana (underground expansion)."),
     R("MAU.TO", "Montage Gold", "TSX:MAU", note="Gold developer: Koné, Côte d'Ivoire. Aug 2026 deck: first gold Q4 2026 via oxide circuit; 3 Nov 2026 release headline says the plant is already operating above nameplate. Expect a developer-to-producer re-rating window."),
     R("LUNR.TO", "LunR Royalties", "TSX:LUNR", note="Royalties (Cu/Au/Ag): Listed 19 Dec 2025; NSR royalties on Los Helados and Lunahuasi. Not Nasdaq LUNR (Intuitive Machines)."),

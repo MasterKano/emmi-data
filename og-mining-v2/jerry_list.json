@@ -1,6 +1,6 @@
 {
   "as_of": "2026-11-12",
-  "source": "Jerry, 12 Nov 2026 02:06 Zurich (t1171u), tighter O&G list; Navitas added 12 Nov 2026 23:04 Zurich (t585u). Mining unchanged: Lundin mining only.",
+  "source": "Jerry, 12 Nov 2026 02:06 Zurich (t1171u), tighter O&G list; Navitas added 12 Nov 2026 23:04 Zurich (t585u). Mining: Lundin mining only; Valiente Resources added 17 Nov 2026 05:56 Zurich (Jerry).",
   "rule": {
     "london": "Only the 17 names Jerry listed. No other LSE/AIM oil companies.",
     "sweden": "International Petroleum, ShaMaran (Swedish SDB line), and all other Swedish-listed oil companies (Meren, Africa Energy). Orrön stays out (renewable power). Keo stays out.",
@@ -15,7 +15,7 @@
     "sweden": 4,
     "norway": 11,
     "oil_gas_total": 33,
-    "mining_lundin": 6,
+    "mining_lundin": 7,
     "tel_aviv": 1
   },
   "oil_gas": {
@@ -632,8 +632,23 @@
       "commodity": "Copper-gold explorer",
       "mcap": "4807759360",
       "ccy": "CAD",
-      "note": "Lunahuasi (Argentina). Valiente Resources spin-out effective 12 Nov 2026 (ex-date 12 Nov): expect a price step.",
+      "note": "Lunahuasi (Argentina) and Los Helados (Chile, about 69.1%). Valle Ancho spun out into Valiente Resources (effective 12 Nov 2026, 1/5 Valiente share per NGEx share); new NGEx shares trade from 16 Nov 2026, so the price steps that day.",
       "as_of": "2026-11-12"
+    },
+    {
+      "yahoo": "VALX.V",
+      "short": "Valiente Resources",
+      "company": "Valiente Resources",
+      "bucket": "core",
+      "primary_venue": "TSX Venture",
+      "exchange_ticker": "VALX",
+      "tradingview": "TSXV:VALX",
+      "other_lines": null,
+      "commodity": "Copper-gold explorer",
+      "mcap": "152234864",
+      "ccy": "CAD",
+      "note": "NGEx spin-out holding the 100%-owned Valle Ancho copper-gold project (Catamarca, Argentina, plus Region III, Chile claims). First traded 16 Nov 2026; 43,371,756 shares at spin-out. No Stockholm line.",
+      "as_of": "2026-11-16"
     },
     {
       "yahoo": "LUC.TO",
