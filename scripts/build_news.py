@@ -53,7 +53,7 @@ TABS = {
     "lundin": dict(
         google=[G('"Lundin Mining"', r"lundin", 21), G('"Lundin Gold"', r"lundin", 21), G('"International Petroleum Corp"', r"international petroleum|ipc", 30),
                 G('"NGEx Minerals"', r"ngex", 30), G('"Lucara Diamond"', r"lucara", 30), G('"Montage Gold"', r"montage", 30),
-                G('"ShaMaran"', r"shamaran", 45), G('"LunR Royalties"', r"lunr", 60)],
+                G('"ShaMaran"', r"shamaran", 45), G('"LunR Royalties"', r"lunr", 60), G('"Valiente Resources"', r"valiente", 60)],
         newsweb=["SNM"], nasdaq=["International Petroleum Corporation", "Lundin Mining Corporation", "Lundin Gold Inc.",
                                   "Lucara Diamond Corp", "Orrön Energy AB"]),
     "metals": dict(

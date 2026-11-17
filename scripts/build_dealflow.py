@@ -45,7 +45,8 @@ YAHOO_Q = {"RWE.DE": "RWE AG", "EDPR.LS": "EDP Renovaveis", "ANE.MC": "Acciona E
            "GRE.MC": "Grenergy", "ERG.MI": "ERG SpA", "VLTSA.PA": "Voltalia", "NDX1.DE": "Nordex", "VER.VI": "Verbund",
            "TTE.PA": "TotalEnergies", "BEP": "Brookfield Renewable", "KKR": "KKR", "XOM": "Exxon Mobil", "COP": "ConocoPhillips",
            "CNQ.TO": "Canadian Natural Resources", "TOU.TO": "Tourmaline Oil", "NGEX.TO": "NGEx Minerals",
-           "MAU.TO": "Montage Gold", "LUNR.TO": "LunR Royalties"}
+           "MAU.TO": "Montage Gold", "LUNR.TO": "LunR Royalties",
+           "VALX.V": "Valiente Resources"}
 YAHOO_NAME = {"XOM": "Exxon", "EDPR.LS": "EDP", "CNQ.TO": "Canadian Natural"}
 
 
