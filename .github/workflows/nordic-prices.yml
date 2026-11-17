@@ -1,0 +1,78 @@
+name: Nordic v2 prices and generation
+
+# Energy price, MTD and generation charts read prices.json, prices_normals.json,
+# tomorrow.json and generation.json from main (not live-data). This job keeps them
+# current: ENTSO-E / Nord Pool day-ahead, official monthlies, tomorrow's auction,
+# and daily generation. Cron is UTC; the times below hit 05:00, 13:30 and 14:30
+# Europe/Zurich in both CET and CEST, with one extra catch-up in each season.
+# 13:30 and 14:30 Zurich are after the ~13:00 CET/CEST day-ahead auction.
+on:
+  schedule:
+    - cron: "0 3,4 * * *"
+    - cron: "30 11,12,13 * * *"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "commit the result to main (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nordic-v2-prices
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+      FINGRID_API_KEY: ${{ secrets.FINGRID_API_KEY }}
+      FINGRID_API_KEY_SECONDARY: ${{ secrets.FINGRID_API_KEY_SECONDARY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q pandas numpy requests curl_cffi
+      - name: Restore current-year cache
+        uses: actions/cache@v4
+        with:
+          path: nordic-v2/cache
+          key: nordic-v2-power-${{ github.run_id }}
+          restore-keys: |
+            nordic-v2-power-
+      - name: Build prices, monthlies, tomorrow and generation
+        id: b
+        run: |
+          set -euo pipefail
+          python nordic-v2/build.py --only prices,generation,tomorrow --out nordic-v2
+          echo "asof=$(python -c 'import json; print(json.load(open("nordic-v2/prices.json"))["as_of"])')" >> "$GITHUB_OUTPUT"
+          echo "delivery=$(python -c 'import json; print(json.load(open("nordic-v2/tomorrow.json")).get("delivery_date",""))')" >> "$GITHUB_OUTPUT"
+      - name: Publish to main
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git add nordic-v2/prices.json nordic-v2/prices_normals.json nordic-v2/tomorrow.json nordic-v2/generation.json nordic-v2/manifest.json
+          asof="${{ steps.b.outputs.asof }}"
+          delivery="${{ steps.b.outputs.delivery }}"
+          msg="Nordic prices as of ${asof}"
+          if [ -n "$delivery" ]; then msg="$msg (tomorrow ${delivery})"; fi
+          git commit -m "$msg" || { echo "no change"; exit 0; }
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved underneath us, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
