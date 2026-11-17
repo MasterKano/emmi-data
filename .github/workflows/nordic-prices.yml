@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -q pandas numpy requests curl_cffi
+        run: pip install -q pandas numpy requests curl_cffi beautifulsoup4 openpyxl
       - name: Restore current-year cache
         uses: actions/cache@v4
         with:
