@@ -34,7 +34,7 @@ on:
 
 env:
   # data files published to the live-data branch (not committed to main)
-  LIVE_PATHS: "data/mr.json data/nordic_mtd.json data/nordic_drivers.json data/market.json data/news.json data/power.json data/symbols.json data/companies.json data/co data/dealflow.json data/griddc.json data/griddc_state.json data/balancing.json data/mastr_de.json data/griddc_events.json data/hydro_nordic.json data/us_valuation.json data/fi_wind.json data/nordic_monthly.json data/nordic_precip.json data/nordic_dash.json data/gas.json data/gas data/tracker_uk.json data/tracker_de.json data/tracker_de_wind.json"
+  LIVE_PATHS: "data/index_detail.json data/mr.json data/nordic_mtd.json data/nordic_drivers.json data/market.json data/news.json data/power.json data/symbols.json data/companies.json data/co data/dealflow.json data/griddc.json data/griddc_state.json data/balancing.json data/mastr_de.json data/griddc_events.json data/hydro_nordic.json data/us_valuation.json data/fi_wind.json data/nordic_monthly.json data/nordic_precip.json data/nordic_dash.json data/gas.json data/gas data/tracker_uk.json data/tracker_de.json data/tracker_de_wind.json"
 
 permissions:
   contents: write
@@ -95,6 +95,12 @@ jobs:
       - name: Market data (Yahoo)
         if: env.MODE != 'power'
         run: python scripts/build_data.py
+      - name: Index detail (sector performance and largest members, Live Pulse tiles)
+        id: index_detail
+        if: env.MODE != 'power'
+        run: python scripts/build_index_detail.py
+        timeout-minutes: 6
+        continue-on-error: true
       - name: Company fundamentals (Yahoo, company panel)
         id: company_fundamentals
         # ~1 min (4 threads); index data/companies.json + per-company data/co/*.json; not on power-only runs
