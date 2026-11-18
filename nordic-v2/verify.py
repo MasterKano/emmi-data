@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import shape,box
 import build
+PUBLISH_ROWS=build.PUBLISH_DAYS+1
 ROOT=Path(__file__).resolve().parent
 OUT=Path(sys.argv[1]) if len(sys.argv)>1 and not sys.argv[1].startswith('-') else ROOT/'output'
 if len(sys.argv)>1 and not sys.argv[1].startswith('-'):sys.argv.pop(1)
@@ -32,17 +33,22 @@ class Contract(unittest.TestCase):
             j=json.loads(p.read_text(),parse_constant=lambda x:(_ for _ in ()).throw(ValueError(x)))
             self.assertEqual(j['schema_version'],1)
             if j['as_of']:dt.date.fromisoformat(j['as_of'])
-            self.assertLess(p.stat().st_size,200000);total+=p.stat().st_size
-        self.assertLess(total,650000)  # room for prices_normals after the 2021-2025 price backfill
+            self.assertLess(p.stat().st_size,2_000_000);total+=p.stat().st_size
+        self.assertLess(total,4_000_000)  # 800-day published windows for 1Y price, generation and weather charts
+    def test_weather_script_uses_the_same_publish_window(self):
+        text=(ROOT.parent/'scripts'/'build_nordic_v2_weather.py').read_text()
+        self.assertIn(f'WINDOW_DAYS = {build.PUBLISH_DAYS}', text)
+
     def test_20_year_weather_baseline_and_all_regions(self):
+
         w=read('weather');self.assertEqual(w['baseline'],[2006,2025]);self.assertEqual(w['history_start'],'1940-01-01')
         self.assertEqual(set(w['regions']),{'Nordic','SE','NO','FI','DK'})
         self.assertEqual(w['units']['wind100'],'m/s at 100m')
         for c,r in w['regions'].items():
             self.assertGreaterEqual(w['point_counts'][c],5)
             for k,m in r['metrics'].items():
-                rows=m['rows'];self.assertEqual(len(rows),123)
-                self.assertEqual(len(set(x[0] for x in rows)),123)
+                rows=m['rows'];self.assertEqual(len(rows),PUBLISH_ROWS)
+                self.assertEqual(len(set(x[0] for x in rows)),PUBLISH_ROWS)
                 self.assertAlmostEqual(sum(x[1] for x in rows[-30:])/30,rows[-1][2],delta=.001)
                 self.assertAlmostEqual(sum(x[3] for x in rows[-30:])/30,rows[-1][4],delta=.001)
                 self.assertAlmostEqual(m['summary']['difference'],m['summary']['value']-m['summary']['normal'],delta=.002)
@@ -89,9 +95,9 @@ class Contract(unittest.TestCase):
             self.assertEqual(r['coverage']['gap_count'],0)
             self.assertEqual(r['coverage']['gaps'],[])
             rows=r['rows']
-            self.assertEqual(len(rows),123)
-            self.assertEqual(len(set(x[0] for x in rows)),123)
-            self.assertEqual([len(x) for x in rows],[3]*123)
+            self.assertEqual(len(rows),PUBLISH_ROWS)
+            self.assertEqual(len(set(x[0] for x in rows)),PUBLISH_ROWS)
+            self.assertEqual([len(x) for x in rows],[3]*PUBLISH_ROWS)
         nord=p['regions']['Nordic']
         self.assertEqual(nord['history_start'],'2024-01-01')
         self.assertEqual(nord['baseline_label'],'2024–2025')
