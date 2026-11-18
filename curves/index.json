@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-17T21:44:16Z",
+  "generated": "2026-11-18T09:42:34Z",
   "curves": {
     "nordic-sys": {
       "title": "Nordic system-price futures",
@@ -30,8 +30,8 @@
       "currency": "USD",
       "unit": "USD/bbl",
       "earliest": "2026-11-11",
-      "latest": "2026-11-17",
-      "date_count": 5,
+      "latest": "2026-11-18",
+      "date_count": 6,
       "weekday_gaps": [],
       "sources": [
         "tradingview_scanner"
@@ -42,8 +42,8 @@
       "currency": "USD",
       "unit": "USD/gal",
       "earliest": "2026-10-27",
-      "latest": "2026-11-17",
-      "date_count": 18,
+      "latest": "2026-11-18",
+      "date_count": 19,
       "weekday_gaps": [],
       "sources": [
         "tradingview_scanner",
