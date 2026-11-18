@@ -1,0 +1,47 @@
+{
+  "_note": "Latest published supply/demand balances, typed in from the publisher's own release (static; update when a new edition is out). Gold (WGC Gold Demand Trends) and copper (ICSG) are read from og-mining-v2/outlooks.json, not repeated here.",
+  "silver": {
+    "src": "The Silver Institute / Metals Focus, interim 2026 market review", "issued": "2026-11-12",
+    "url": "https://silverinstitute.org/silver-market-set-for-sixth-consecutive-annual-deficit-in-2026/",
+    "unit": "Moz", "year": "2026F",
+    "lines": [
+      {"item": "Total demand", "v": 1081, "yoy_pct": -5},
+      {"item": "Industrial demand", "v": 640, "yoy_pct": -3},
+      {"item": "Industrial excl. photovoltaics", "v": 492, "yoy_pct": 4.5},
+      {"item": "Bar and coin", "v": 215, "yoy_pct": -2},
+      {"item": "Mine supply", "v": 834, "yoy_pct": -0.5},
+      {"item": "Total supply", "v": 1045, "yoy_pct": null},
+      {"item": "Market balance", "v": -35, "yoy_pct": null}
+    ],
+    "facts": ["Sixth consecutive annual deficit; 2025 was 40.3 Moz (World Silver Survey 2026, April).",
+              "Global silver ETP holdings 1.25 bn oz on 3 Nov, 55 Moz lower since the start of the year; Metals Focus forecasts 45 Moz of net outflows for 2026.",
+              "Recycling forecast up 6%; jewellery −22% and silverware −17% on high prices."]
+  },
+  "platinum": {
+    "src": "World Platinum Investment Council, Platinum Quarterly Q3 2026 (Metals Focus data)", "issued": "2026-11-18",
+    "url": "https://platinuminvestment.com/supply-and-demand/platinum-quarterly",
+    "unit": "koz", "year": "2026F",
+    "lines": [
+      {"item": "Total supply", "v": 7366, "yoy_pct": 2},
+      {"item": "Total demand", "v": 6898, "yoy_pct": -21},
+      {"item": "Automotive", "v": 2964, "yoy_pct": -3},
+      {"item": "Industrial", "v": 2561, "yoy_pct": null},
+      {"item": "Jewellery", "v": 1771, "yoy_pct": -20},
+      {"item": "Investment", "v": -398, "yoy_pct": null},
+      {"item": "Market balance", "v": 468, "yoy_pct": null}
+    ],
+    "facts": ["Q3 2026 alone was a 110 koz deficit (supply 1,693 koz, demand 1,803 koz).",
+              "First 2027 forecast: back to a 279 koz deficit as investment demand recovers.",
+              "Above-ground stocks cover just over 3½ months of demand at end-2026; the 2025 deficit is now put at 1.5 Moz."]
+  },
+  "central_banks": {
+    "src": "World Gold Council, Central Bank Gold Statistics: September 2026", "issued": "2026-11-04",
+    "url": "https://www.gold.org/goldhub/gold-focus/2026/11/central-bank-gold-statistics-september-2026",
+    "facts": ["Reported net purchases of 61 t in September, the highest month of 2026; Poland and China led.",
+              "Reported purchases year to date 228 t, 7% below the same period of 2025.",
+              "Including unreported buying, WGC puts Q3 central bank demand at 321 t (Gold Demand Trends Q3 2026)."]
+  },
+  "omitted": ["Palladium: no free, current global balance found (WPIC covers platinum only).",
+              "LME warehouse stocks: LME data are licensed, so EMMi shows COMEX stocks only.",
+              "SHFE weekly stocks: the exchange file was not reachable from EMMi's builders."]
+}

@@ -1,0 +1,72 @@
+name: Metals and positioning
+
+# scripts/build_metals.py -> data/cot.json (CFTC + ICE Commitments of Traders, weekly) and data/metals.json
+# (COMEX warehouse stocks, GLD/IAU/SLV holdings, IMF official gold reserves, cited supply/demand balances).
+# Schedules (UTC; Zurich is UTC+1 in winter, UTC+2 in summer):
+#   Fri 21:11  after the CFTC release (15:30 New York = 20:30/19:30 UTC); ICE Futures Europe publishes the same day.
+#   Sat 09:11  catch-up for a late CFTC or ICE file.
+#   Mon-Fri 23:23  daily: CME posts the depository reports for the prior day's activity in the US afternoon; ETF
+#              holdings update after the US close; the IMF reserves file (monthly) is cheap, so it is re-read daily.
+# Every run rebuilds everything from the last published copy (live-data), so a missed run is harmless and a
+# failed source keeps its previous section (listed in "errors"). Off-quarter minutes on purpose.
+# Publishing: plain (non-force) push on top of the current live-data tip, retried from a fresh fetch if it moved.
+on:
+  schedule:
+    - cron: "11 21 * * 5"
+    - cron: "11 9 * * 6"
+    - cron: "23 23 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "publish the result to live-data (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: metals
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+      - name: Install
+        run: pip install -r scripts/requirements.txt
+      - name: Base = last published cot.json / metals.json (live-data)
+        run: |
+          mkdir -p "$RUNNER_TEMP/base"
+          if git fetch -q --depth 1 origin live-data; then
+            for f in cot.json metals.json; do git show "FETCH_HEAD:data/$f" > "$RUNNER_TEMP/base/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/base/$f"; done
+          fi
+          ls -la "$RUNNER_TEMP/base"
+      - name: Build
+        run: python scripts/build_metals.py --out "$RUNNER_TEMP/out" --base "$RUNNER_TEMP/base"
+      - name: Publish to live-data (data/cot.json + data/metals.json)
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          w="$RUNNER_TEMP/live"
+          for i in 1 2 3 4 5 6; do
+            rm -rf "$w"; mkdir -p "$w"; cd "$w"; git init -q -b live-data
+            git config user.name "github-actions[bot]"; git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+            git fetch -q --depth 1 "$url" live-data; git checkout -q -B live-data FETCH_HEAD
+            mkdir -p data; cp "$RUNNER_TEMP/out/cot.json" "$RUNNER_TEMP/out/metals.json" data/
+            git add data/cot.json data/metals.json
+            git commit -q -m "metals and positioning $(date -u +'%Y-%m-%d %H:%M') UTC" || { echo "no change"; exit 0; }
+            if git push -q "$url" HEAD:live-data 2>/dev/null; then echo "published on try $i"; exit 0; fi
+            echo "live-data moved underneath us, retrying ($i)"; sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
