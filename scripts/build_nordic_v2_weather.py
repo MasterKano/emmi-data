@@ -37,7 +37,10 @@ ERA5_SOURCE = "https://archive-api.open-meteo.com/v1/archive?models=era5"
 FORECAST_SOURCE = "https://api.open-meteo.com/v1/forecast (best match)"
 SOURCE = ERA5_SOURCE
 BASELINE = (2006, 2025)
-WINDOW_DAYS = 122
+# Same window as nordic-v2/build.py PUBLISH_DAYS: 1Y charts plus margin,
+# including 1 Jan 2025 as of late 2026. The scheduled weather job must use
+# this, or a refresh would shrink weather.json back to four months.
+WINDOW_DAYS = 800
 MONTHLY_START = pd.Timestamp("2021-01-01")
 
 

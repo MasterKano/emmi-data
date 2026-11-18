@@ -42,8 +42,21 @@ def load_climate():
     climate=climate_mod
     return climate
 
+def _completed_gen_history(src):
+    """True for a completed-year gen_daily_v2_CC_YYYY.csv in history/."""
+    name=src.name
+    if not (name.startswith('gen_daily_v2_') and name.endswith('.csv')):return False
+    try:y=int(name.rsplit('_',1)[1].split('.')[0])
+    except ValueError:return False
+    return y<TODAY.year
+
 def seed_cache():
-    """Copy completed-year daily series and capacity files into cache if missing."""
+    """Copy completed-year daily series and capacity files into cache if missing.
+
+    Completed-year generation CSVs in history/ are the source of truth and
+    replace any older cache copy, so a history backfill is not masked by a
+    GitHub Actions cache from before the fill.
+    """
     if not HISTORY.exists():return
     CACHE.mkdir(parents=True,exist_ok=True)
     n=0
@@ -52,7 +65,9 @@ def seed_cache():
         rel=src.relative_to(HISTORY)
         dest=CACHE/rel if rel.parts[0]=='nordpool' else CACHE/src.name
         dest.parent.mkdir(parents=True,exist_ok=True)
-        if dest.exists():continue
+        overwrite=_completed_gen_history(src)
+        if dest.exists() and not overwrite:continue
+        if dest.exists() and dest.read_bytes()==src.read_bytes():continue
         dest.write_bytes(src.read_bytes())
         n+=1
     if n:log(f'seeded {n} completed-year cache files from history/')
@@ -65,6 +80,16 @@ BASELINE=(2006,2025)
 PRICE_HISTORY_START=dt.date(2021,1,1)
 PRICE_BASELINE=(2021,2025)
 PRICE_MTU_SWITCH=dt.date(2025,10,1)  # first 15-minute SDAC delivery day
+# Daily rows in the published JSON. 122 days only covered about four months, so
+# the 1Y charts had to say the published series started in mid-July. 800 days
+# covers a full year with margin and, as of late 2026, includes 1 Jan 2025.
+PUBLISH_DAYS=800
+
+def publish_cutoff(end=None):
+    """First timestamp included in published daily rows (inclusive)."""
+    if end is None:end=TODAY
+    if isinstance(end,pd.Timestamp):return end-pd.Timedelta(days=PUBLISH_DAYS)
+    return pd.Timestamp(end-dt.timedelta(days=PUBLISH_DAYS))
 
 def log(s): print(ec._redact(s),flush=True)
 def clean(v):
@@ -235,7 +260,7 @@ def apply_dk_wind(frames,denominators,daily_cap,latest,out):
     g['wind_load_factor']=100*g.wind/cap
     g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
     frames['DK']=g
-    out['capacity_daily']['DK']={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))],'latest_source':latest['DK']}
+    out['capacity_daily']['DK']={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=publish_cutoff()],'latest_source':latest['DK']}
     out['source']='Energinet ProductionConsumptionSettlement (official hourly, DK1+DK2 onshore and offshore) where published; Energinet ElectricityProdex5MinRealtime for days not yet settled; ENTSO-E A75 as fallback; A68 / Danish Energy Agency register for installed capacity'
     counts=sources.dropna().value_counts().to_dict()
     last={k:(sources[sources==k].index.max().date().isoformat() if (sources==k).any() else None) for k in ('energinet_settlement','energinet_realtime','entsoe_a75')}
@@ -309,7 +334,7 @@ def weather():
         for k in climate.u.VARS:
             s=g[k];n=pd.Series([norm.loc[t.strftime('%m-%d'),k] for t in idx],index=idx)
             v30,n30=trailing(s),trailing(n)
-            end=s.dropna().index.max();start=end-pd.Timedelta(days=122)
+            end=s.dropna().index.max();start=end-pd.Timedelta(days=PUBLISH_DAYS)
             dates=idx[(idx>=start)&(idx<=end)]
             reg['metrics'][k]={'as_of':str(end.date()),'history_start':str(s.dropna().index.min().date()),'summary':summary(v30.loc[end],n30.loc[end],result['units'][k]),
                                'rows':[[str(t.date()),s.loc[t],v30.loc[t],n.loc[t],n30.loc[t]] for t in dates]}
@@ -503,7 +528,7 @@ def prices():
         rec={'as_of':str(as_of),'history_start':str(start),'baseline':[b0,b1],'baseline_label':f'{b0}–{b1}',
              'coverage':{'days':int(s[s.index>=pd.Timestamp(PRICE_HISTORY_START)].shape[0]),
                          'gap_count':len(gaps),'gaps':gaps},
-             'rows':[[str(t.date()),s.loc[t],ma.get(t)] for t in s.index[s.index>=pd.Timestamp(TODAY-dt.timedelta(days=122))]]}
+             'rows':[[str(t.date()),s.loc[t],ma.get(t)] for t in s.index[s.index>=publish_cutoff()]]}
         if code in definitions:rec['definition']=definitions[code]
         if end_t in ma.index and end_t in n30.index:
             rec['summary']=summary(ma.loc[end_t],n30.loc[end_t],'EUR/MWh')
@@ -634,9 +659,14 @@ def generation():
         c,y=job
         a=dt.date(y,1,1);b=min(dt.date(y+1,1,1),TODAY)
         path=CACHE/f'gen_daily_v2_{c}_{y}.csv'
+        frame=None
         if path.exists() and (y<TODAY.year or time.time()-path.stat().st_mtime<21600):
             frame=pd.read_csv(path,parse_dates=['date']).set_index('date')
-        else:
+            # A current-year cache that starts after 1 Jan would republish a
+            # short series. Re-fetch the year rather than trust the prefix-less file.
+            if y==TODAY.year and (frame.empty or frame.index.min().date()>a):
+                frame=None
+        if frame is None:
             text=query(dict(documentType='A75',processType='A16',in_Domain=COUNTRIES[c],**ec._period(a,b)),f'gen_{c}_{y}',y<TODAY.year)
             items=ec.entsoe_parse(text)
             frame=pd.concat({k:daily_series(items,p) for k,p in {'wind':['B18','B19'],'hydro':['B11','B12'],'nuclear':['B14']}.items()},axis=1)
@@ -682,7 +712,7 @@ def generation():
         if c not in latest:
             record=caps[c].get(TODAY.year)
             latest[c]=dict(record,status='annual ENTSO-E, not a current turbine census') if record else dict(caps[c].get(max(caps[c]),{}),status='last available annual observation only; not used for current load factor. National Swedish PxWeb failed TLS verification; not bypassed')
-        out['capacity_daily'][c]={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=pd.Timestamp(TODAY-dt.timedelta(days=122))],'latest_source':latest[c]}
+        out['capacity_daily'][c]={'columns':['date','wind_mw'],'rows':[[str(t.date()),v] for t,v in cap.items() if t>=publish_cutoff()],'latest_source':latest[c]}
         g['wind_load_factor']=100*g.wind/cap
         # Reporting/capacity mismatches are not silently clipped.
         g.loc[(g.wind_load_factor<0)|(g.wind_load_factor>110),'wind_load_factor']=np.nan
@@ -708,7 +738,11 @@ def generation():
             hist=ma[ma.index.year<TODAY.year].dropna()
             groups=hist.groupby(hist.index.strftime('%m-%d'))
             norms=groups.mean();n=groups.count()
-            dates=s.index[s.index>=pd.Timestamp(TODAY-dt.timedelta(days=122))]
+            dates=s.index[s.index>=publish_cutoff()]
+            # Don't let a later, empty day (e.g. Nordic hydro on a DK-only date)
+            # become the last published row.
+            last_v=s.dropna().index.max() if s.notna().any() else None
+            if last_v is not None:dates=dates[dates<=last_v]
             rows=[]
             for t in dates:
                 md=t.strftime('%m-%d');ny=int(n.get(md,0));nv=norms.get(md,np.nan) if ny>=3 else np.nan
