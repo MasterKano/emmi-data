@@ -204,6 +204,35 @@ GROUPS = [
             R("EURSEK=X", "EUR/SEK", "OANDA:EURSEK", "fx"),
         ]),
     ]),
+    # Live Pulse metals and softs (IG's lists, the parts with a free Yahoo futures quote). Continuous front month
+    # (no contract-month resolution in contracts.py), so a roll day can show a jump. Gold, silver, platinum and
+    # COMEX copper are already in "commodities". Not sourced: LME copper, zinc, lead, nickel, iron ore (Yahoo ZNC=F
+    # and TIO=F are stale), and the London softs (ICE Europe cocoa, robusta, feed wheat, white sugar No.5).
+    dict(id="commodities_more", label="Metals and soft commodities", sections=[
+        dict(label="Precious metals", rows=[
+            R("PA=F", "Palladium", "NYMEX:PA1!", "future", note="NYMEX palladium, USD/oz. Continuous front month."),
+        ]),
+        dict(label="Base metals", rows=[
+            R("ALI=F", "Aluminium (COMEX)", "COMEX:ALI1!", "future", note="COMEX aluminum, USD/t. Thin volume; continuous front month."),
+        ]),
+        dict(label="Soft commodities", rows=[
+            R("KC=F", "Coffee NY (Arabica)", "ICEUS:KC1!", "future", note="ICE US coffee C, US cents/lb. Continuous front month."),
+            R("CC=F", "Cocoa NY", "ICEUS:CC1!", "future", note="ICE US cocoa, USD/t. Continuous front month."),
+            R("ZW=F", "Wheat Chicago", "CBOT:ZW1!", "future", note="CBOT SRW wheat, US cents/bu. Continuous front month."),
+            R("ZC=F", "Corn", "CBOT:ZC1!", "future", note="CBOT corn, US cents/bu. Continuous front month."),
+            R("ZS=F", "Soybeans", "CBOT:ZS1!", "future", note="CBOT soybeans, US cents/bu. Continuous front month."),
+            R("SB=F", "Sugar NY No.11", "ICEUS:SB1!", "future", note="ICE US sugar No.11, US cents/lb. Continuous front month."),
+            R("HE=F", "Lean Hogs", "CME:HE1!", "future", note="CME lean hogs, US cents/lb. Continuous front month."),
+            R("CT=F", "Cotton", "ICEUS:CT1!", "future", note="ICE US cotton No.2, US cents/lb. Continuous front month."),
+            R("ZL=F", "Soybean Oil", "CBOT:ZL1!", "future", note="CBOT soybean oil, US cents/lb. Continuous front month."),
+            R("ZO=F", "Oats", "CBOT:ZO1!", "future", note="CBOT oats, US cents/bu. Continuous front month."),
+            R("LE=F", "Live Cattle", "CME:LE1!", "future", note="CME live cattle, US cents/lb. Continuous front month."),
+            R("ZR=F", "Rough Rice", "CBOT:ZR1!", "future", note="CBOT rough rice, USD/cwt. Continuous front month."),
+            R("ZM=F", "Soybean Meal", "CBOT:ZM1!", "future", note="CBOT soybean meal, USD/short ton. Continuous front month."),
+            R("OJ=F", "Orange Juice", "ICEUS:OJ1!", "future", note="ICE US FCOJ-A, US cents/lb. Continuous front month."),
+            R("LBR=F", "Lumber", "CME:LBR1!", "future", note="CME lumber, USD per 1,000 board feet. Continuous front month."),
+        ]),
+    ]),
 ]
 
 # Oil & gas tiles, 33 names. Serica = SER.L (the old SQZ.L code is retired and is not a fallback).
