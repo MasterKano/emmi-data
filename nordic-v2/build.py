@@ -739,6 +739,10 @@ def generation():
             groups=hist.groupby(hist.index.strftime('%m-%d'))
             norms=groups.mean();n=groups.count()
             dates=s.index[s.index>=publish_cutoff()]
+            # Don't let a later, empty day (e.g. Nordic hydro on a DK-only date)
+            # become the last published row.
+            last_v=s.dropna().index.max() if s.notna().any() else None
+            if last_v is not None:dates=dates[dates<=last_v]
             rows=[]
             for t in dates:
                 md=t.strftime('%m-%d');ny=int(n.get(md,0));nv=norms.get(md,np.nan) if ny>=3 else np.nan

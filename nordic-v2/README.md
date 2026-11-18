@@ -21,6 +21,8 @@ Every JSON has `schema_version: 1` and `as_of` (`YYYY-MM-DD`, or null). `as_of` 
 
 Daily `rows` in `prices.json`, `generation.json`, `weather.json` and `capacity_daily` cover the last 800 days, enough for the 1Y charts. `history_start` and the files under `history/` still run from the original starts (prices 2021, generation 2015, weather 1940). The scheduled jobs use the same window, so a refresh does not shrink the series back to four months.
 
+A few ENTSO-E days in that generation window stay null: Norway 2025-04-01 to 2025-04-10 (all fuels) and Norway wind 2025-08-01 to 2025-08-25, which are below the 98% completeness bar. Isolated missing days (Norway 2025-03-22, Sweden 2025-12-01) are linearly interpolated so the 30-day average is not blanked, as already documented. Denmark's April 2025 ENTSO-E gaps are filled from Energinet settlement at build time. Longer gaps are not interpolated.
+
 
 ## Files and fields
 
