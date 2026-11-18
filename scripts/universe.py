@@ -177,6 +177,7 @@ GROUPS = [
         R("^OMXH25", "OMX Helsinki 25", "OMXHEX:OMXH25", "index"),
         R("^N225", "Nikkei 225", "OANDA:JP225USD", "index"),
         R("^HSI", "Hang Seng", "OANDA:HK33HKD", "index"),
+        R("000300.SS", "CSI 300", "SSE:000300", "index", "Shanghai and Shenzhen 300 largest A-shares (Yahoo 000300.SS)."),
         R("^VIX", "CBOE VIX", "TVC:VIX", "index"),
     ])]),
     dict(id="rates", label="Rates & FX", sections=[
@@ -192,6 +193,15 @@ GROUPS = [
             R("CNBC:GB10Y-GB", "UK 10Y gilt yield", "TVC:GB10Y", "yield", "Closes: Bank of England IADB IUDMNPY (10y par yield). Live move: CNBC"),
             R("CNBC:FR10Y-FR", "French 10Y OAT yield", "TVC:FR10Y", "yield", "Closes: CNBC (fallback: no keyless official daily series). Official reference: ECB monthly long-term rate"),
             R("CNBC:CH10Y-CH", "Swiss 10Y Confederation yield", "TVC:CH10Y", "yield", "Closes: SNB data portal (rendoblid 10y); CNBC fallback while the SNB series lags. Live move: CNBC"),
+        ]),
+        dict(label="Short and policy rates (%)", rows=[
+            R("UST:2Y", "US 2Y yield", "TVC:US02Y", "yield", "Closes: US Treasury daily par yield curve (2 Yr). Live move: CNBC"),
+            R("NYFED:SOFR", "SOFR", None, "yield", "Official: Federal Reserve Bank of New York, published the next business day."),
+            R("NB:TBIL3M", "NIBOR 3m (proxy)", None, "yield", "Norges Bank 3-month Treasury bill yield, a free proxy: official NIBOR fixings are not free to republish."),
+            R("PBOC:LPR1Y", "China 1Y loan prime rate", None, "yield", "PBoC loan prime rate, fixed monthly on the 20th; published by the National Interbank Funding Center."),
+        ]),
+        dict(label="10Y government yields, Asia (%)", rows=[
+            R("CNBC:JP10Y-JP", "Japan 10Y JGB yield", "TVC:JP10Y", "yield", "Closes: Japan Ministry of Finance (JGB constant maturity 10Y). Live move: CNBC"),
         ]),
         dict(label="FX", rows=[
             R("DX-Y.NYB", "US Dollar Index", "TVC:DXY", "fx"),

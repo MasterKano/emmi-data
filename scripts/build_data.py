@@ -253,6 +253,17 @@ OFFICIAL = {
                           url="https://webstat.banque-france.fr/en/catalog/fm/FM.M.FR.EUR.FR2.BB.FRMOYTEC10.HSTA"),
     "CNBC:CH10Y-CH": dict(cnbc="CH10Y-CH", id="snb", name="Swiss National Bank", series="data.snb.ch cube rendoblid, Confederation spot rate 10 years",
                           url="https://data.snb.ch/en/topics/ziredev/cube/rendoblid"),
+    # Live Pulse rates row (t1405u/t1407u): short rates and policy rates. cnbc=None -> no intraday quote and no CNBC fallback.
+    "UST:2Y": dict(cnbc="US2Y", id="ust", col="2 Yr", name="US Treasury", series="Daily Treasury Par Yield Curve, 2 Yr",
+                   url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value={y}"),
+    "CNBC:JP10Y-JP": dict(cnbc="JP10Y-JP", id="mof", name="Japan Ministry of Finance", series="JGB interest rate (constant maturity), 10Y",
+                          url="https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/index.htm"),
+    "NYFED:SOFR": dict(cnbc=None, id="nyfed", name="Federal Reserve Bank of New York", series="Secured Overnight Financing Rate (SOFR)",
+                       url="https://www.newyorkfed.org/markets/reference-rates/sofr"),
+    "NB:TBIL3M": dict(cnbc=None, id="nb", name="Norges Bank", series="GOVT_GENERIC_RATES B.3M.TBIL: 3-month Treasury bill yield (NIBOR 3m proxy; NIBOR fixings are not free to republish)",
+                      url="https://data.norges-bank.no/api/data/GOVT_GENERIC_RATES/B.3M.TBIL?format=csv&locale=en"),
+    "PBOC:LPR1Y": dict(cnbc=None, id="lpr", max_lag=40, name="PBoC / National Interbank Funding Center", series="Loan Prime Rate, 1 year (fixed on the 20th of each month; history at month ends)",
+                       url="https://www.chinamoney.com.cn/english/bmklpr/"),
 }
 
 
@@ -262,7 +273,7 @@ def _series(pairs):
                         index=pd.DatetimeIndex([d for d, _ in pairs]))
 
 
-def off_ust(start):
+def off_ust(start, col="10 Yr"):
     rows = []
     for y in range(start.year, dt.date.today().year + 1):
         r = SESSION.get("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
@@ -271,7 +282,7 @@ def off_ust(start):
             raise IOError(f"Treasury {y}: HTTP {r.status_code}")
         rd = csv.DictReader(io.StringIO(r.text))
         for x in rd:
-            v = (x.get("10 Yr") or "").strip()
+            v = (x.get(col) or "").strip()
             if v:
                 rows.append((dt.datetime.strptime(x["Date"], "%m/%d/%Y"), v))
         time.sleep(0.3)
@@ -319,7 +330,56 @@ def off_snb(start):
     return out
 
 
-OFF_FETCH = dict(ust=off_ust, bbk=off_bbk, boe=off_boe, bdf=off_bdf, snb=off_snb)
+def off_mof(start):
+    """Japan MoF JGB constant-maturity yields: history file (to last month end) + current month file."""
+    out = {}
+    for u in ("https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv",
+              "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/jgbcme.csv"):
+        r = SESSION.get(u, timeout=60)
+        if r.status_code != 200:
+            raise IOError(f"MoF HTTP {r.status_code}")
+        for ln in r.content.decode("latin-1").splitlines():
+            p = ln.strip().split(",")
+            if len(p) > 10 and re.match(r"^\d{4}/\d{1,2}/\d{1,2}$", p[0]) and re.match(r"^-?[\d.]+$", p[10]):
+                d = dt.datetime.strptime(p[0], "%Y/%m/%d")
+                if d.date() >= start:
+                    out[d] = p[10]
+    return list(out.items())
+
+
+def off_nyfed(start):
+    r = SESSION.get("https://markets.newyorkfed.org/api/rates/secured/sofr/search.json",
+                    params=dict(startDate=start.strftime("%Y-%m-%d"), endDate=dt.date.today().strftime("%Y-%m-%d")), timeout=60)
+    if r.status_code != 200:
+        raise IOError(f"NY Fed HTTP {r.status_code}")
+    return [(x["effectiveDate"], x["percentRate"]) for x in r.json().get("refRates", []) if x.get("percentRate") is not None]
+
+
+def off_nb(start):
+    r = SESSION.get("https://data.norges-bank.no/api/data/GOVT_GENERIC_RATES/B.3M.TBIL",
+                    params=dict(format="csv", startPeriod=start.strftime("%Y-%m-%d"), locale="en"), timeout=60)
+    if r.status_code != 200:
+        raise IOError(f"Norges Bank HTTP {r.status_code}")
+    rd = csv.DictReader(io.StringIO(r.text), delimiter=";")
+    return [(x["TIME_PERIOD"], x["OBS_VALUE"].replace(",", ".")) for x in rd if x.get("OBS_VALUE")]
+
+
+def off_lpr(start):
+    """NIFC (chinamoney.com.cn) LPR chart data: the latest fixing date plus month-end values back in time."""
+    r = SESSION.post("https://www.chinamoney.com.cn/ags/ms/cm-u-bk-currency/LprChrtCSV",
+                     params=dict(lang="EN", startDate=start.strftime("%Y-%m-%d"), endDate=dt.date.today().strftime("%Y-%m-%d")),
+                     headers={"Referer": "https://www.chinamoney.com.cn/english/bmklpr/"}, timeout=60)
+    if r.status_code != 200:
+        raise IOError(f"NIFC HTTP {r.status_code}")
+    out = []
+    for ln in ((r.json().get("data") or {}).get("csv") or "").splitlines():
+        p = ln.split(",")
+        if len(p) >= 8 and re.match(r"^\d{4}-\d{2}-\d{2}$", p[0]) and p[6]:
+            out.append((p[0], p[6]))
+    return out
+
+
+OFF_FETCH = dict(ust=off_ust, mof=off_mof, nyfed=off_nyfed, nb=off_nb, lpr=off_lpr, bbk=off_bbk, boe=off_boe, bdf=off_bdf, snb=off_snb)
 
 
 def ecb_fr_monthly():
@@ -337,6 +397,8 @@ def ecb_fr_monthly():
 
 def cnbc_live(code):
     """CNBC last quote for the intraday move only (not used for closes, changes or spreads of official rows)."""
+    if not code:
+        return None
     try:
         q = SESSION.get(CNBC_QUOTE, params=dict(symbols=code, requestMethod="itv", noform=1, partnerId=2, fund=1, exthrs=1, output="json"),
                         timeout=20).json()["FormattedQuoteResult"]["FormattedQuote"][0]
@@ -357,24 +419,54 @@ def fetch_official(sym):
     if o["id"] == "bdf":
         extra["official_ref"] = ecb_fr_monthly()
     try:
-        rows = OFF_FETCH[o["id"]](start)
+        rows = OFF_FETCH[o["id"]](start, o["col"]) if o.get("col") else OFF_FETCH[o["id"]](start)
         if not rows:
             raise LookupError("no observations")
         df = _series(rows)
         lag = (pd.Timestamp(dt.date.today()) - df.index[-1]).days
         extra["official"]["asof"] = df.index[-1].strftime("%Y-%m-%d")
-        if lag > OFFICIAL_MAX_LAG:
+        if lag > o.get("max_lag", OFFICIAL_MAX_LAG):
             raise LookupError(f"latest official close {df.index[-1]:%Y-%m-%d} is {lag} days old")
         return clean(df), dict(currency=None, exchangeName=o["name"], exchangeTimezoneName="UTC"), o["id"], extra
     except Exception as e:
         reason = str(e)[:160]
+        if not o["cnbc"]:
+            raise RuntimeError(f"official {o['id']} unavailable ({reason}); no fallback")
         log(f"  {sym}: official {o['id']} unavailable ({reason}); CNBC fallback")
         df, meta = fetch_cnbc("CNBC:" + o["cnbc"])
         extra["fallback"] = reason
         return clean(df), meta, "cnbc", extra
 
 
+# Indices whose Yahoo history is a single bar: the index publisher's own daily file (keyless).
+CSINDEX = {"000300.SS": "000300"}
+
+
+def fetch_csindex(code, years=10):
+    start = (dt.datetime.now(UTC) - pd.DateOffset(years=years, days=25)).strftime("%Y%m%d")
+    r = SESSION.get("https://www.csindex.com.cn/csindex-home/perf/index-perf",
+                    params=dict(indexCode=code, startDate=start, endDate=dt.date.today().strftime("%Y%m%d")), timeout=60)
+    if r.status_code != 200:
+        raise IOError(f"CSI HTTP {r.status_code}")
+    rows = {}
+    for x in r.json().get("data") or []:
+        d = pd.Timestamp(dt.datetime.strptime(x["tradeDate"], "%Y%m%d"))
+        if d.weekday() < 5 and x.get("close"):
+            rows[d] = (x.get("open"), x.get("high"), x.get("low"), x["close"], x.get("tradingVol"))
+    if len(rows) < 30:
+        raise LookupError("CSI: too few closes")
+    idx = sorted(rows)
+    df = pd.DataFrame([rows[d] for d in idx], index=pd.DatetimeIndex(idx), columns=["open", "high", "low", "close", "volume"])
+    return df, dict(currency="CNY", exchangeName="China Securities Index Co.", exchangeTimezoneName="Asia/Shanghai")
+
+
 def fetch(sym):
+    if sym in CSINDEX:
+        try:
+            df, meta = fetch_csindex(CSINDEX[sym])
+            return clean(df), meta, "csindex"
+        except Exception as e:
+            log(f"  {sym}: CSI index file failed ({e}); trying Yahoo")
     if sym.startswith("CNBC:"):
         df, meta = fetch_cnbc(sym)
         return clean(df), meta, "cnbc"
