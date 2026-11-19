@@ -141,9 +141,9 @@
     },
     {
       "company": "Fireweed Metals",
-      "yahoo": "FWZ.V",
-      "tradingview": "TSXV:FWZ",
-      "primary_venue": "TSX Venture",
+      "yahoo": "FWZ.TO",
+      "tradingview": "TSX:FWZ",
+      "primary_venue": "TSX",
       "exchange_ticker": "FWZ",
       "other_lines": null,
       "commodity": "Zinc/lead/silver, tungsten explorer",
