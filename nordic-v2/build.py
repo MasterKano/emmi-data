@@ -346,6 +346,17 @@ def weather():
           'source':result['source'],'method':result['method']})
     return normals,meta
 
+def stored_weather_inputs():
+    """Normals and grid weights from the committed files, for runs without the box climate module (GitHub Actions).
+    weather_normals.json is the 2006-2025 same-date normal written by weather(); weather_weights.json holds the same
+    country masks. Forecast comparisons are identical to a box build; only the ERA5 history in weather.json is not rebuilt."""
+    wn=json.loads((OUT/'weather_normals.json').read_text()) if (OUT/'weather_normals.json').exists() else json.loads((BASE/'weather_normals.json').read_text())
+    ww=json.loads((BASE/'weather_weights.json').read_text())
+    if list(wn.get('baseline') or [])!=list(BASELINE):raise ValueError(f"weather_normals.json baseline {wn.get('baseline')} is not {list(BASELINE)}")
+    cols=wn['columns'][1:]
+    normals={c:pd.DataFrame([r[1:] for r in rows],index=[r[0] for r in rows],columns=cols) for c,rows in wn['regions'].items()}
+    return normals,ww
+
 def daily_series(items,psrs=None):
     by={}
     for it in items:
@@ -565,7 +576,14 @@ def prices():
 
 
 def capacity(c,y):
-    text=query(dict(documentType='A68',processType='A33',in_Domain=COUNTRIES[c],**ec._period(dt.date(y,1,1),dt.date(y+1,1,1))),f'capacity_{c}_{y}',y<TODAY.year)
+    try:text=query(dict(documentType='A68',processType='A33',in_Domain=COUNTRIES[c],**ec._period(dt.date(y,1,1),dt.date(y+1,1,1))),f'capacity_{c}_{y}',y<TODAY.year)
+    except Exception as e:
+        # Sweden publishes no current-year country A68; generation() holds the last annual vintage with a label.
+        # That is a known, labelled gap, not a build failure.
+        if y==TODAY.year and 'No matching data' in str(e):
+            log(f'capacity {c} {y}: not published by ENTSO-E yet; last annual vintage is held and labelled')
+            return {'year':y,'as_of':None,'valid_through':None,'wind_mw':None,'nuclear_mw':None,'status':'not published','psr_mw':{}}
+        raise
     root=ec._strip_ns(text);ec._ack(root);by={}
     for ts in root.iter('TimeSeries'):
         psr=ts.findtext('MktPSRType/psrType')
@@ -1006,7 +1024,7 @@ def main():
     if selected('hydrology'):safe('hydrology',hydrology)
     if selected('tomorrow'):
         if normals is None:
-            try:normals,meta=weather()
+            try:normals,meta=weather() if (CLIMATE/'daily_products.py').exists() else stored_weather_inputs()
             except Exception as e:
                 safe('weather for tomorrow',lambda e=e:(_ for _ in ()).throw(e))
                 normals,meta=None,None
