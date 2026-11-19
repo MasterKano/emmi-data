@@ -247,7 +247,7 @@ OFFICIAL = {
                  url="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value={y}"),
     "CNBC:DE10Y-DE": dict(cnbc="DE10Y-DE", id="bbk", name="Deutsche Bundesbank", series="Federal securities yield curve (Svensson), residual maturity 10 years",
                           url="https://www.bundesbank.de/dynamic/action/en/statistics/time-series-databases/time-series-databases/759784/759784?tsId=" + BBK_KEY),
-    "CNBC:GB10Y-GB": dict(cnbc="GB10Y-GB", id="boe", name="Bank of England", series="IADB IUDMNPY: 10-year nominal par yield (gilts)",
+    "CNBC:GB10Y-GB": dict(cnbc="GB10Y-GB", id="boe", pub_lag=2, name="Bank of England", series="IADB IUDMNPY: 10-year nominal par yield (gilts)",
                           url="https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?SeriesCodes=IUDMNPY&UsingCodes=Y&html.x=1&Datefrom=01/Jan/{y}&Dateto=now"),
     "CNBC:FR10Y-FR": dict(cnbc="FR10Y-FR", id="bdf", name="Banque de France", series="TEC10 (10-year constant maturity rate)",
                           url="https://webstat.banque-france.fr/en/catalog/fm/FM.M.FR.EUR.FR2.BB.FRMOYTEC10.HSTA"),
@@ -1019,11 +1019,38 @@ def main():
             base0["__y10"] = b0.get("yields10")
         except Exception as e:
             log(f"intraday: no base market.json for official yields ({e})")
+    # Official series publish once a day at different hours (NY Fed SOFR ~13:00 UTC, Norges Bank, BoE a day or two late), so
+    # the 05:30 UTC full build often misses yesterday's fixing. Intraday runs re-fetch an official row once an hour while its
+    # latest close is older than the previous business day; the 10Y set is refreshed together so the comparison chart stays whole.
+    refresh_off = set()
+    if a.intraday and now.minute < 15:
+        bd = lambda n: (pd.Timestamp(now.date()) - pd.offsets.BDay(n)).strftime("%Y-%m-%d")
+        prev_bd = bd(1)
+        for sym in OFFICIAL:
+            b = base0.get(sym) or {}
+            want = bd(OFFICIAL[sym].get("pub_lag", 1))
+            asof = b.get("bar_date") or (b.get("official") or {}).get("asof") or ""
+            if OFFICIAL[sym].get("max_lag", OFFICIAL_MAX_LAG) <= OFFICIAL_MAX_LAG and asof < want:
+                refresh_off.add(sym)
+        TEN0 = ["^TNX", "CNBC:DE10Y-DE", "CNBC:GB10Y-GB", "CNBC:FR10Y-FR", "CNBC:CH10Y-CH"]
+        if refresh_off & set(TEN0):
+            refresh_off |= set(TEN0)
+        if refresh_off:
+            log(f"intraday: re-fetching stale official rows (previous business day {prev_bd}): {sorted(refresh_off)}")
     t0 = time.time()
     for i, sym in enumerate(syms):
         try:
             if sym in OFFICIAL:
                 b = base0.get(sym)
+                if sym in refresh_off:
+                    try:
+                        df, meta, src, offx[sym] = fetch_official(sym)
+                        cache[sym] = (df, meta, src)
+                        log(f"[{i+1}/{len(syms)}] {sym}: refreshed, {len(df)} closes to {df.index[-1].date()} via {src}")
+                        continue
+                    except Exception as e:
+                        log(f"[{i+1}/{len(syms)}] {sym}: official refresh failed ({e}); keeping the full-build row")
+                        offx.pop(sym, None)
                 if a.intraday and b and not b.get("error") and b.get("official"):
                     offx[sym] = dict(carry=dict(b, live=cnbc_live(OFFICIAL[sym]["cnbc"]) or b.get("live")))
                     log(f"[{i+1}/{len(syms)}] {sym}: official row kept from the full build, live quote refreshed")
@@ -1162,7 +1189,7 @@ def main():
     TEN = [("US", "^TNX"), ("DE", "CNBC:DE10Y-DE"), ("GB", "CNBC:GB10Y-GB"), ("FR", "CNBC:FR10Y-FR"), ("CH", "CNBC:CH10Y-CH")]
     try:
         cols = {k: cache[s][0]["close"] for k, s in TEN if s in cache}
-        if a.intraday and base0.get("__y10") and all("carry" in offx.get(x, {}) for _, x in TEN):
+        if a.intraday and base0.get("__y10") and not all(x in cache for _, x in TEN):
             cols = {}
             y10 = base0["__y10"]
         if "DE" in cols and len(cols) >= 2:

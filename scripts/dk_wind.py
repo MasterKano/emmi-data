@@ -129,6 +129,9 @@ def overlap_pct(a, b):
     )
 
 
+SETTLE_REFETCH_DAYS = 10
+
+
 def _fresh(path: Path, ttl: float) -> bool:
     return path.exists() and time.time() - path.stat().st_mtime < ttl
 
@@ -183,10 +186,32 @@ def fetch_energinet_settlement_zones(start, end, cache_dir=None, today=None):
         if _fresh(path, _ttl(y, today)):
             parts.append(_read_zones(path))
             continue
-        lo, _ = ec._cet_bounds(a, a + dt.timedelta(days=1))
+        # Incremental: re-ask only the last SETTLE_REFETCH_DAYS before the cached end (settlement revisions land within
+        # days), not the whole year. Energinet rate-limits shared runner IPs (HTTP 429); a failed refresh keeps the
+        # cached official days and the caller fills newer days from the 5-minute feed or ENTSO-E.
+        old = None
+        if path.exists():
+            try:
+                old = _read_zones(path)
+            except Exception:
+                old = None
+        fa = a
+        if old is not None and len(old):
+            fa = max(a, (old.index.max() - pd.Timedelta(days=SETTLE_REFETCH_DAYS)).date())
+        lo, _ = ec._cet_bounds(fa, fa + dt.timedelta(days=1))
         _, hi = ec._cet_bounds(b, b)
-        raw = bp._eds("ProductionConsumptionSettlement", lo, hi, {"PriceArea": list(DK_ZONES)}, DK_WIND_SETTLE_COLS)
+        try:
+            raw = bp._eds("ProductionConsumptionSettlement", lo, hi, {"PriceArea": list(DK_ZONES)}, DK_WIND_SETTLE_COLS)
+        except Exception as e:
+            if old is not None and len(old):
+                print(f"DK settlement {y}: refresh failed ({e}); using cached days to {old.index.max().date()}", flush=True)
+                parts.append(old)
+                continue
+            raise
         if raw is None or raw.empty:
+            if old is not None and len(old):
+                parts.append(old)
+                continue
             country = cache_dir / f"dk_wind_settlement_{y}.csv"
             if not country.exists():
                 print(f"DK settlement {y}: no rows", flush=True)
@@ -202,6 +227,9 @@ def fetch_energinet_settlement_zones(start, end, cache_dir=None, today=None):
         for z in DK_ZONES:
             cols[z] = daily_average_mw(p[z].sort_index(), 3600, min_cover=1.0)
         df = pd.DataFrame(cols).sort_index()
+        if old is not None and len(old):
+            df = pd.concat([old[old.index < df.index.min()] if len(df) else old, df])
+            df = df[~df.index.duplicated(keep="last")].sort_index()
         _write_zones(path, df)
         # Keep the Pulse country-total cache in step when we refetch a year.
         country = cache_dir / f"dk_wind_settlement_{y}.csv"
