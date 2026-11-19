@@ -34,7 +34,7 @@ on:
 
 env:
   # data files published to the live-data branch (not committed to main)
-  LIVE_PATHS: "data/index_detail.json data/mr.json data/nordic_mtd.json data/nordic_drivers.json data/market.json data/news.json data/power.json data/symbols.json data/companies.json data/co data/dealflow.json data/griddc.json data/griddc_state.json data/balancing.json data/mastr_de.json data/griddc_events.json data/hydro_nordic.json data/us_valuation.json data/fi_wind.json data/nordic_monthly.json data/nordic_precip.json data/nordic_dash.json data/gas.json data/gas data/tracker_uk.json data/tracker_de.json data/tracker_de_wind.json"
+  LIVE_PATHS: "data/index_detail.json data/mr.json data/nordic_mtd.json data/nordic_drivers.json data/market.json data/news.json data/power.json data/symbols.json data/companies.json data/co data/dealflow.json data/griddc.json data/griddc_state.json data/balancing.json data/mastr_de.json data/griddc_events.json data/hydro_nordic.json data/us_valuation.json data/fi_wind.json data/nordic_monthly.json data/nordic_precip.json data/nordic_dash.json data/gas.json data/gas data/tracker_uk.json data/tracker_de.json data/tracker_de_wind.json data/events.json"
 
 permissions:
   contents: write
@@ -161,6 +161,23 @@ jobs:
         run: python scripts/build_mastr.py
         timeout-minutes: 8
         continue-on-error: true
+      - name: Company events log (reclassify upcoming/past, publish to live-data)
+        id: company_events_log
+        # every run, ~1 s. The hand-kept source is data/events.json on MasterKano/emmi main (public); this copies it with
+        # that repo's scripts/events_refresh.py, marks each event upcoming or past for today in Zurich and stamps as_of, so
+        # the site (live.js reads data/events.json from live-data first) never shows a stale log between hand edits.
+        # If either download fails the live-data copy (baseline above) is kept and the step is marked failed.
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/events"; mkdir -p "$e/data" "$e/scripts"
+          raw=https://raw.githubusercontent.com/MasterKano/emmi/main
+          curl -fsSL --retry 3 --max-time 30 "$raw/data/events.json" -o "$e/data/events.json"
+          curl -fsSL --retry 3 --max-time 30 "$raw/scripts/events_refresh.py" -o "$e/scripts/events_refresh.py"
+          python -c "import json,sys; d=json.load(open(sys.argv[1])); assert d.get('events'), 'no events'" "$e/data/events.json"
+          python "$e/scripts/events_refresh.py" --write > "$e/log"; grep -E "events,|^wrote" "$e/log"
+          cp "$e/data/events.json" data/events.json
       - name: Grid & DC events calendar (weekly date check, no network)
         id: grid_dc_events_calendar
         if: env.MODE == 'full'
