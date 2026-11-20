@@ -3,17 +3,25 @@ name: Metals and positioning
 # scripts/build_metals.py -> data/cot.json (CFTC + ICE Commitments of Traders, weekly) and data/metals.json
 # (COMEX warehouse stocks, GLD/IAU/SLV holdings, IMF official gold reserves, cited supply/demand balances).
 # Schedules (UTC; Zurich is UTC+1 in winter, UTC+2 in summer):
-#   Fri 21:11  after the CFTC release (15:30 New York = 20:30/19:30 UTC); ICE Futures Europe publishes the same day.
-#   Sat 09:11  catch-up for a late CFTC or ICE file.
+#   CFTC publishes Friday 15:30 New York (20:30 UTC in winter, 19:30 UTC in summer); ICE's automated file
+#   usually follows the same afternoon. GitHub Actions cron can lag by hours, so one tight Friday slot
+#   is not enough — several Friday evening attempts plus Saturday catch-ups.
+#   Fri 20:45, 21:20, 21:55, 22:40  after the official release; a no-op if the file is unchanged.
+#   Sat 07:11 and 12:11  catch-up if Friday's runs all ran before the file appeared.
 #   Mon-Fri 23:23  daily: CME posts the depository reports for the prior day's activity in the US afternoon; ETF
 #              holdings update after the US close; the IMF reserves file (monthly) is cheap, so it is re-read daily.
+#              Friday 23:23 is also a late COT catch-up.
 # Every run rebuilds everything from the last published copy (live-data), so a missed run is harmless and a
 # failed source keeps its previous section (listed in "errors"). Off-quarter minutes on purpose.
 # Publishing: plain (non-force) push on top of the current live-data tip, retried from a fresh fetch if it moved.
 on:
   schedule:
-    - cron: "11 21 * * 5"
-    - cron: "11 9 * * 6"
+    - cron: "45 20 * * 5"
+    - cron: "20 21 * * 5"
+    - cron: "55 21 * * 5"
+    - cron: "40 22 * * 5"
+    - cron: "11 7 * * 6"
+    - cron: "11 12 * * 6"
     - cron: "23 23 * * 1-5"
   workflow_dispatch:
     inputs:
