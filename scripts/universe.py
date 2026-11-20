@@ -210,6 +210,45 @@ GROUPS = [
             R("EURSEK=X", "EUR/SEK", "OANDA:EURSEK", "fx"),
         ]),
     ]),
+    # Live Pulse "Sectors" (Jerry 20 Nov 2026, t1442u/t1443u): the 11 S&P 500 sector ETFs (Select Sector SPDR) and the 19
+    # STOXX Europe 600 supersector ETFs (iShares, Xetra), the same lists as build_index_detail.py, so they refresh with every
+    # intraday price run and the index detail sheet can read live moves. note = the sector label EMMi shows.
+    dict(id="sectors", label="Sectors", sections=[
+        dict(label="US sectors (S&P 500, Select Sector SPDR)", rows=[
+            R("XLK", "Technology Select Sector SPDR (XLK)", "AMEX:XLK", "etf", note="Technology"),
+            R("XLF", "Financials Select Sector SPDR (XLF)", "AMEX:XLF", "etf", note="Financials"),
+            R("XLV", "Health care Select Sector SPDR (XLV)", "AMEX:XLV", "etf", note="Health care"),
+            R("XLY", "Consumer discretionary Select Sector SPDR (XLY)", "AMEX:XLY", "etf", note="Consumer discretionary"),
+            R("XLC", "Communication Select Sector SPDR (XLC)", "AMEX:XLC", "etf", note="Communication"),
+            R("XLI", "Industrials Select Sector SPDR (XLI)", "AMEX:XLI", "etf", note="Industrials"),
+            R("XLP", "Consumer staples Select Sector SPDR (XLP)", "AMEX:XLP", "etf", note="Consumer staples"),
+            R("XLE", "Energy Select Sector SPDR (XLE)", "AMEX:XLE", "etf", note="Energy"),
+            R("XLU", "Utilities Select Sector SPDR (XLU)", "AMEX:XLU", "etf", note="Utilities"),
+            R("XLRE", "Real estate Select Sector SPDR (XLRE)", "AMEX:XLRE", "etf", note="Real estate"),
+            R("XLB", "Materials Select Sector SPDR (XLB)", "AMEX:XLB", "etf", note="Materials"),
+        ]),
+        dict(label="Europe sectors (STOXX Europe 600, iShares on Xetra)", rows=[
+            R("EXV1.DE", "iShares STOXX Europe 600 Banks (EXV1)", "XETR:EXV1", "etf", note="Banks"),
+            R("EXH4.DE", "iShares STOXX Europe 600 Industrial goods (EXH4)", "XETR:EXH4", "etf", note="Industrial goods"),
+            R("EXV4.DE", "iShares STOXX Europe 600 Health care (EXV4)", "XETR:EXV4", "etf", note="Health care"),
+            R("EXV3.DE", "iShares STOXX Europe 600 Technology (EXV3)", "XETR:EXV3", "etf", note="Technology"),
+            R("EXH5.DE", "iShares STOXX Europe 600 Insurance (EXH5)", "XETR:EXH5", "etf", note="Insurance"),
+            R("EXH3.DE", "iShares STOXX Europe 600 Food & beverage (EXH3)", "XETR:EXH3", "etf", note="Food & beverage"),
+            R("EXH7.DE", "iShares STOXX Europe 600 Personal & household (EXH7)", "XETR:EXH7", "etf", note="Personal & household"),
+            R("EXH1.DE", "iShares STOXX Europe 600 Oil & gas (EXH1)", "XETR:EXH1", "etf", note="Oil & gas"),
+            R("EXH9.DE", "iShares STOXX Europe 600 Utilities (EXH9)", "XETR:EXH9", "etf", note="Utilities"),
+            R("EXH2.DE", "iShares STOXX Europe 600 Financial services (EXH2)", "XETR:EXH2", "etf", note="Financial services"),
+            R("EXV2.DE", "iShares STOXX Europe 600 Telecoms (EXV2)", "XETR:EXV2", "etf", note="Telecoms"),
+            R("EXV8.DE", "iShares STOXX Europe 600 Construction (EXV8)", "XETR:EXV8", "etf", note="Construction"),
+            R("EXV7.DE", "iShares STOXX Europe 600 Chemicals (EXV7)", "XETR:EXV7", "etf", note="Chemicals"),
+            R("EXV6.DE", "iShares STOXX Europe 600 Basic resources (EXV6)", "XETR:EXV6", "etf", note="Basic resources"),
+            R("EXV5.DE", "iShares STOXX Europe 600 Autos & parts (EXV5)", "XETR:EXV5", "etf", note="Autos & parts"),
+            R("EXH6.DE", "iShares STOXX Europe 600 Media (EXH6)", "XETR:EXH6", "etf", note="Media"),
+            R("EXV9.DE", "iShares STOXX Europe 600 Travel & leisure (EXV9)", "XETR:EXV9", "etf", note="Travel & leisure"),
+            R("EXH8.DE", "iShares STOXX Europe 600 Retail (EXH8)", "XETR:EXH8", "etf", note="Retail"),
+            R("EXI5.DE", "iShares STOXX Europe 600 Real estate (EXI5)", "XETR:EXI5", "etf", note="Real estate"),
+        ]),
+    ]),
     # Live Pulse metals and softs (IG's lists, the parts with a free Yahoo futures quote). Continuous front month
     # (no contract-month resolution in contracts.py), so a roll day can show a jump. Gold, silver, platinum and
     # COMEX copper are already in "commodities". Not sourced: LME copper, zinc, lead, nickel, iron ore (Yahoo ZNC=F
