@@ -4,7 +4,9 @@ Writes two files (both published to the live-data branch by .github/workflows/me
   data/cot.json     Commitments of Traders, managed money / producer / swap positions and open interest, weekly,
                     about three years per market. CFTC disaggregated futures-only report (Socrata API,
                     publicreporting.cftc.gov, dataset 72hh-3qpy) for the US contracts; ICE Futures Europe's own
-                    COT files (COTHist<year>.csv, same layout) for Brent, gasoil and the London softs.
+                    COT files for Brent, gasoil and the London softs. The current year is read from
+                    ICE's automated file (cot_report/automated/COTHist<year>.csv), which is updated
+                    on release day; prior years and a fallback come from the annual futures/ archive.
   data/metals.json  COMEX warehouse stocks (CME Group daily depository reports, .xls), gold and silver ETF holdings
                     (SPDR GLD historical archive; iShares IAU and SLV fund pages), official gold reserves by country
                     (IMF International Liquidity dataset, gold volume in fine troy ounces, monthly), and the latest
@@ -39,7 +41,7 @@ US = [
     ("wti", "WTI crude", "energy", "CL=F", "067651", "1,000 bbl"),
     ("hh", "Henry Hub gas", "energy", "NG=F", "023651", "10,000 MMBtu"),
     ("ulsd", "NY Harbor ULSD", "energy", "HO=F", "022651", "42,000 gal"),
-    ("rbob", "RBOB gasoline", "energy", None, "111659", "42,000 gal"),
+    ("rbob", "RBOB gasoline", "energy", "RB=F", "111659", "42,000 gal"),
     ("gold", "Gold", "precious", "GC=F", "088691", "100 oz"),
     ("silver", "Silver", "precious", "SI=F", "084691", "5,000 oz"),
     ("platinum", "Platinum", "precious", "PL=F", "076651", "50 oz"),
@@ -59,6 +61,7 @@ US = [
     ("rice", "Rough rice", "grains", "ZR=F", "039601", "2,000 cwt"),
     ("hogs", "Lean hogs", "livestock", "HE=F", "054642", "40,000 lb"),
     ("cattle", "Live cattle", "livestock", "LE=F", "057642", "40,000 lb"),
+    ("feeders", "Feeder cattle", "livestock", "GF=F", "061641", "50,000 lb"),
     ("lumber", "Lumber", "softs", "LBR=F", "058644", "27,500 bd ft"),
 ]
 ICE = [
@@ -136,17 +139,58 @@ def cot_cftc():
     return out
 
 
+# The annual snapshot under /publicdocs/futures/COTHist{year}.csv is the historical archive.
+# For the current year it can lag the weekly report by weeks (in Nov 2026 it still ended at
+# 3 Nov while the 17 Nov report was already on the automated path the report centre updates
+# on release day). Prior years only exist on the futures/ path.
+ICE_HIST = "https://www.ice.com/publicdocs/futures/COTHist%d.csv"
+ICE_LIVE = "https://www.ice.com/publicdocs/cot_report/automated/COTHist%d.csv"
+ICE_HEADERS = dict(UA, **{"Cache-Control": "no-cache", "Pragma": "no-cache"})
+
+
+def ice_csv_urls(year, now=None):
+    """URLs to try for a year's ICE COT file, preferred first."""
+    now = now or NOW
+    if year == now.year:
+        return (ICE_LIVE % year, ICE_HIST % year)
+    return (ICE_HIST % year,)
+
+
+def expected_cftc_tuesday(now=None):
+    """Most recent Tuesday whose CFTC report should already be public.
+
+    CFTC publishes Friday 15:30 New York time (20:30 UTC in winter, 19:30 UTC in summer).
+    Before that Friday release, the latest public report is the previous Tuesday.
+    A 20:30 UTC cutoff is used year-round (one hour late in summer, which is harmless).
+    """
+    now = now or NOW
+    d = now.date()
+    tue = d - dt.timedelta(days=(d.weekday() - 1) % 7)
+    release = dt.datetime(tue.year, tue.month, tue.day, 20, 30, tzinfo=dt.timezone.utc) + dt.timedelta(days=3)
+    if now < release:
+        tue -= dt.timedelta(days=7)
+    return tue.isoformat()
+
+
+def _ice_year_rows(year):
+    last_err = None
+    for url in ice_csv_urls(year):
+        try:
+            r = requests.get(url, timeout=90, headers=ICE_HEADERS)
+            r.raise_for_status()
+            return list(csv.DictReader(io.StringIO(r.content.decode("utf-8-sig", "replace"))))
+        except Exception as ex:  # noqa: BLE001
+            last_err = ex
+    if year == NOW.year:
+        raise last_err
+    return []
+
+
 def cot_ice():
     y = NOW.year
     frames = []
     for yy in (y - 3, y - 2, y - 1, y):
-        try:
-            r = requests.get("https://www.ice.com/publicdocs/futures/COTHist%d.csv" % yy, timeout=90, headers=UA)
-            r.raise_for_status()
-            frames.append(list(csv.DictReader(io.StringIO(r.content.decode("utf-8-sig", "replace")))))
-        except Exception:  # noqa: BLE001
-            if yy == y:
-                raise
+        frames.append(_ice_year_rows(yy))
     rows = [x for f in frames for x in f]
     out = []
     for mid, label, grp, sym, name, unit in ICE:
@@ -420,8 +464,16 @@ def main():
             raise SystemExit("no CoT data from any source and no base copy")
         order = {m[0]: i for i, m in enumerate(US + ICE)}
         mk.sort(key=lambda m: order.get(m["id"], 99))
+        cftc_dates = [m["w"][-1][0] for m in mk if m.get("exch") == "CFTC" and m.get("w")]
+        ice_dates = [m["w"][-1][0] for m in mk if m.get("exch") == "ICE Futures Europe" and m.get("w")]
+        report_date = max(cftc_dates) if cftc_dates else None
+        expect = expected_cftc_tuesday()
+        if report_date and report_date < expect:
+            errs.append("CFTC: latest report %s is behind the expected %s release (Friday 15:30 New York)" % (report_date, expect))
+        if cftc_dates and ice_dates and max(ice_dates) < max(cftc_dates):
+            errs.append("ICE: latest report %s is behind CFTC %s" % (max(ice_dates), max(cftc_dates)))
         cot = {"generated_utc": stamp, "markets": mk, "errors": errs,
-               "report_date": max(m["w"][-1][0] for m in mk if m.get("exch") == "CFTC") if any(m.get("exch") == "CFTC" for m in mk) else None,
+               "report_date": report_date,
                "cols": ["date", "open_interest", "managed_money_long", "managed_money_short", "producer_long", "producer_short", "swap_long", "swap_short"],
                "note": "Positions in contracts. CFTC reports positions as of Tuesday and publishes them on Friday at 15:30 New York time; ICE Futures Europe publishes its report for the same Tuesday."}
         write_json(os.path.join(a.out, "cot.json"), cot)
