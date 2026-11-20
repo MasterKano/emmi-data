@@ -78,9 +78,42 @@ def test_universe_lists_rbob_and_feeder_cattle():
     assert "GF=F" in syms
 
 
+def test_endex_week_and_pick():
+    doc = {
+        "wp_refdt": "2026-11-13T00:00:00Z", "wp_pubdt": "2026-11-17T15:51:29Z",
+        "wp_vpcode": "TFM", "wp_rptype": "COMB", "wp_sts": "NEWT", "wp_munit": "MWHO",
+        "wp_ifu_lo": ["0", "1", "100", "0", "0", "0", "0", "0", "0", "1"],
+        "wp_ifu_sh": ["0", "1", "40"],
+        "wp_ifi_lo": ["0", "1", "10"], "wp_ifi_sh": ["0", "1", "20"],
+        "wp_oth_lo": ["0", "0", "0"], "wp_oth_sh": ["0", "0", "0"],
+        "wp_com_lo": ["0", "1", "50"], "wp_com_sh": ["0", "1", "80"],
+        "wp_ope_lo": ["0", "0", "0"], "wp_ope_sh": ["0", "0", "0"],
+    }
+    w = M.endex_week(doc)
+    assert w[0] == "2026-11-13"
+    assert w[1] == 160  # 100+10+0+50+0
+    assert w[2] == 100 and w[3] == 40  # investment funds
+    assert w[4] == 50 and w[5] == 80   # commercial
+    assert w[6] == 10 and w[7] == 20   # investment firms
+    futr = dict(doc, wp_rptype="FUTR", wp_ifu_lo=["0", "0", "999"])
+    amnd = dict(doc, wp_sts="AMND", wp_pubdt="2026-11-18T00:00:00Z")
+    picked = M.endex_pick([futr, doc, amnd])
+    got = picked[("TFM", "2026-11-13")]
+    assert got["wp_rptype"] == "COMB" and got["wp_sts"] == "AMND"
+
+
+def test_endex_mappings():
+    by = {m[0]: m for m in M.ENDEX}
+    assert by["ttf"][3] == "TTF=F" and by["ttf"][4] == "TFM"
+    assert by["eua"][3] == "CO2.L" and by["eua"][4] == "C"
+    assert M.ESMA.startswith("https://registers.esma.europa.eu/solr/")
+
+
 if __name__ == "__main__":
     test_ice_current_year_prefers_automated_file()
     test_expected_cftc_tuesday_before_and_after_friday_release()
     test_us_list_has_rbob_and_feeders_with_yahoo_symbols()
     test_universe_lists_rbob_and_feeder_cattle()
+    test_endex_week_and_pick()
+    test_endex_mappings()
     print("ok")

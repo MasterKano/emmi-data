@@ -7,6 +7,7 @@ name: Metals and positioning
 #   usually follows the same afternoon. GitHub Actions cron can lag by hours, so one tight Friday slot
 #   is not enough — several Friday evening attempts plus Saturday catch-ups.
 #   Fri 20:45, 21:20, 21:55, 22:40  after the official release; a no-op if the file is unchanged.
+#   Wed 13:40  ICE Endex / ESMA MiFID II report (TTF, EUA) is usually public by Wednesday afternoon.
 #   Sat 07:11 and 12:11  catch-up if Friday's runs all ran before the file appeared.
 #   Mon-Fri 23:23  daily: CME posts the depository reports for the prior day's activity in the US afternoon; ETF
 #              holdings update after the US close; the IMF reserves file (monthly) is cheap, so it is re-read daily.
@@ -20,6 +21,7 @@ on:
     - cron: "20 21 * * 5"
     - cron: "55 21 * * 5"
     - cron: "40 22 * * 5"
+    - cron: "40 13 * * 3"
     - cron: "11 7 * * 6"
     - cron: "11 12 * * 6"
     - cron: "23 23 * * 1-5"

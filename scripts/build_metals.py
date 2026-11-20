@@ -7,6 +7,9 @@ Writes two files (both published to the live-data branch by .github/workflows/me
                     COT files for Brent, gasoil and the London softs. The current year is read from
                     ICE's automated file (cot_report/automated/COTHist<year>.csv), which is updated
                     on release day; prior years and a fallback come from the annual futures/ archive.
+                    Dutch TTF and EU carbon (EUA) come from ICE Endex's MiFID II Article 58 weekly
+                    report, republished in the public ESMA register (the official files also sit at
+                    ice.com/report/234, which is not a stable machine-readable feed).
   data/metals.json  COMEX warehouse stocks (CME Group daily depository reports, .xls), gold and silver ETF holdings
                     (SPDR GLD historical archive; iShares IAU and SLV fund pages), official gold reserves by country
                     (IMF International Liquidity dataset, gold volume in fine troy ounces, monthly), and the latest
@@ -71,6 +74,17 @@ ICE = [
     ("robusta", "Robusta coffee", "softs", None, "ICE Robusta Coffee Futures - ICE Futures Europe", "10 t"),
     ("white_sugar", "White sugar", "softs", None, "ICE White Sugar Futures - ICE Futures Europe", "50 t"),
 ]
+# ICE Endex MiFID II Art. 58 (week ending Friday), via the ESMA register. Official CSV/PDF also
+# appear at https://www.ice.com/report/234, but that page is not a stable machine-readable feed.
+# EEX publishes its own EUA report (XEER / FEUA); we use the ICE Endex EUA future (C) to match TTF.
+# Futures-only (FUTR) rows only begin in Sept 2026, so the history uses COMB (futures and options)
+# from 2018 (TTF) and 2021 (EUA) for a consistent series.
+ESMA = "https://registers.esma.europa.eu/solr/esma_registers_coder58/select"
+ENDEX = [
+    ("ttf", "Dutch TTF gas", "energy", "TTF=F", "TFM", "MWh"),
+    ("eua", "EU carbon (EUA)", "energy", "CO2.L", "C", "lots"),
+]
+ENDEX_CATS = ("ifu", "ifi", "oth", "com", "ope")
 FIELDS = ["open_interest_all", "m_money_positions_long_all", "m_money_positions_short_all",
           "prod_merc_positions_long", "prod_merc_positions_short", "swap_positions_long_all", "swap__positions_short_all"]
 ICE_FIELDS = ["Open_Interest_All", "M_Money_Positions_Long_All", "M_Money_Positions_Short_All",
@@ -209,6 +223,104 @@ def cot_ice():
         out.append({"id": mid, "name": label, "group": grp, "sym": sym, "exch": "ICE Futures Europe", "unit": unit,
                     "src": "ICE Futures Europe Commitments of Traders, futures only", "url": "https://www.ice.com/report/122",
                     "w": w, "s": stats(w)})
+    return out
+
+
+
+def _esma_num(v, i=2):
+    """The ESMA arrays are [RISKR, OTHER, TOTAL, ...] for positions, changes and % of OI."""
+    try:
+        xs = v if isinstance(v, list) else [v]
+        if i >= len(xs):
+            return None
+        s = str(xs[i]).replace(",", "").strip()
+        if s in ("", ".", "NA", "None"):
+            return None
+        x = float(s)
+        return x if math.isfinite(x) else None
+    except (TypeError, ValueError):
+        return None
+
+
+def endex_week(doc):
+    """One week: [date, oi, funds long/short, commercial long/short, investment-firm long/short]."""
+    d = (doc.get("wp_refdt") or "")[:10]
+    if not d:
+        return None
+
+    def pair(cat):
+        return _esma_num(doc.get("wp_%s_lo" % cat), 2), _esma_num(doc.get("wp_%s_sh" % cat), 2)
+
+    longs = [pair(cat)[0] for cat in ENDEX_CATS]
+    oi = sum(x for x in longs if x is not None) or None
+    fu_l, fu_s = pair("ifu")
+    co_l, co_s = pair("com")
+    fi_l, fi_s = pair("ifi")
+    return [d, oi, fu_l, fu_s, co_l, co_s, fi_l, fi_s]
+
+
+def endex_pick(docs):
+    """One document per (contract, Friday): COMB over FUTR, amended over new, latest published."""
+    best = {}
+
+    def rank(x):
+        typ = (x.get("wp_rptype") or "").strip().upper()
+        sts = (x.get("wp_sts") or "").strip().upper()
+        return (0 if typ == "COMB" else 1, 0 if sts == "AMND" else 1, x.get("wp_pubdt") or "")
+
+    for doc in docs:
+        code = (doc.get("wp_vpcode") or "").strip().upper()
+        day = (doc.get("wp_refdt") or "")[:10]
+        typ = (doc.get("wp_rptype") or "").strip().upper()
+        if not code or not day or typ not in ("COMB", "FUTR"):
+            continue
+        key = (code, day)
+        cur = best.get(key)
+        if cur is None or rank(doc) < rank(cur):
+            best[key] = doc
+    return best
+
+
+def cot_endex():
+    q = "tv_mic:NDEX AND wp_vpcode:(TFM OR C)"
+    docs, start, step = [], 0, 500
+    while True:
+        r = requests.get(ESMA, params={"q": q, "rows": step, "start": start, "wt": "json",
+                                       "sort": "wp_refdt asc"}, timeout=90, headers=UA)
+        r.raise_for_status()
+        resp = r.json().get("response") or {}
+        batch = resp.get("docs") or []
+        docs.extend(batch)
+        found = int(resp.get("numFound") or len(docs))
+        start += len(batch)
+        if not batch or start >= found:
+            break
+    picked = endex_pick(docs)
+    out = []
+    for mid, label, grp, sym, code, unit in ENDEX:
+        weeks = []
+        last_unit = unit
+        for (c, _day), doc in sorted(picked.items()):
+            if c != code:
+                continue
+            row = endex_week(doc)
+            if row:
+                weeks.append(row)
+            mu = (doc.get("wp_munit") or "").strip().upper()
+            if mu == "MWHO":
+                last_unit = "MWh"
+            elif mu == "LOTS":
+                last_unit = "lots"
+        weeks = weeks[-WEEKS:]
+        if len(weeks) < 10:
+            continue
+        out.append({"id": mid, "name": label, "group": grp, "sym": sym, "exch": "ICE Endex",
+                    "code": code, "unit": last_unit, "scheme": "mifid",
+                    "src": "ICE Endex MiFID II Article 58, futures and options combined, via the ESMA register",
+                    "url": "https://www.ice.com/report/234",
+                    "w": weeks, "s": stats(weeks)})
+    if not out:
+        raise RuntimeError("ICE Endex/ESMA returned no TTF or EUA weeks")
     return out
 
 
@@ -453,16 +565,17 @@ def main():
     cot = dict(bcot) if bcot else {}
     if "cot" in only:
         errs, mk = [], []
-        for name, fn in (("CFTC", cot_cftc), ("ICE", cot_ice)):
+        exch_of = {"CFTC": "CFTC", "ICE": "ICE Futures Europe", "Endex": "ICE Endex"}
+        for name, fn in (("CFTC", cot_cftc), ("ICE", cot_ice), ("Endex", cot_endex)):
             try:
                 mk += fn()
             except Exception as ex:  # noqa: BLE001
                 errs.append("%s: %s" % (name, ex))
-                keep = [m for m in bcot.get("markets", []) if (m.get("exch") == "CFTC") == (name == "CFTC")]
+                keep = [m for m in bcot.get("markets", []) if m.get("exch") == exch_of[name]]
                 mk += [dict(m, stale=True) for m in keep]
         if not mk:
             raise SystemExit("no CoT data from any source and no base copy")
-        order = {m[0]: i for i, m in enumerate(US + ICE)}
+        order = {m[0]: i for i, m in enumerate(US + ICE + ENDEX)}
         mk.sort(key=lambda m: order.get(m["id"], 99))
         cftc_dates = [m["w"][-1][0] for m in mk if m.get("exch") == "CFTC" and m.get("w")]
         ice_dates = [m["w"][-1][0] for m in mk if m.get("exch") == "ICE Futures Europe" and m.get("w")]
@@ -475,7 +588,7 @@ def main():
         cot = {"generated_utc": stamp, "markets": mk, "errors": errs,
                "report_date": report_date,
                "cols": ["date", "open_interest", "managed_money_long", "managed_money_short", "producer_long", "producer_short", "swap_long", "swap_short"],
-               "note": "Positions in contracts. CFTC reports positions as of Tuesday and publishes them on Friday at 15:30 New York time; ICE Futures Europe publishes its report for the same Tuesday."}
+               "note": "Positions in contracts (CFTC and ICE Futures Europe) or in MWh / lots (ICE Endex). CFTC reports positions as of Tuesday and publishes them on Friday at 15:30 New York time; ICE Futures Europe publishes its report for the same Tuesday. ICE Endex MiFID II reports positions for the week ending Friday and publishes the following Wednesday; ESMA republishes that file. Endex TTF and EUA use investment funds, not CFTC managed money, and a futures-and-options history."}
         write_json(os.path.join(a.out, "cot.json"), cot)
 
     met = dict(bmet) if bmet else {}
