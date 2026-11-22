@@ -1,0 +1,59 @@
+name: Futures chains and contract history
+
+# Per-commodity futures for the EMMi commodity sheet (scripts/build_futures.py): every listed month from the
+# TradingView public futures scanner, and per-contract daily bars from Yahoo (history kept, appended daily).
+# Writes futures/ on main (like curves/, so history is kept). Weekdays 21:40 UTC, after the US settles and before
+# Globex reopens; Saturday 06:20 UTC catches a missed Friday. Off-quarter minutes on purpose.
+# Publishing is a plain push; if main moved, rebase this one data commit on the new tip and retry (never force).
+on:
+  schedule:
+    - cron: "40 21 * * 1-5"
+    - cron: "20 6 * * 6"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "refetch a year of Yahoo bars for every listed contract"
+        type: boolean
+        default: false
+      only:
+        description: "comma-separated ids (brent,wti,...); blank = all"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: futures
+  cancel-in-progress: false
+
+jobs:
+  futures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build futures/ (fails only if most markets fail; a failed market keeps its last good file)
+        env:
+          BACKFILL: ${{ inputs.backfill && '--backfill' || '' }}
+          ONLY: ${{ inputs.only }}
+        run: python scripts/build_futures.py --out futures $BACKFILL ${ONLY:+--only "$ONLY"}
+      - name: Publish to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          git add futures
+          git diff --cached --quiet && { echo "no change"; exit 0; }
+          git commit -q -m "futures as of $(python3 -c "import json;print(max(v['asof'] for v in json.load(open('futures/index.json'))['by_sym'].values()))") ($(date -u +'%Y-%m-%d %H:%M') UTC)"
+          for i in 1 2 3 4 5 6; do
+            if git push -q origin HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved, rebasing and retrying ($i)"; sleep $((i * 5))
+            git pull -q --rebase origin main
+          done
+          echo "publish failed"; exit 1

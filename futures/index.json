@@ -1,0 +1,266 @@
+{
+ "built_utc": "2026-11-22T09:27:48Z",
+ "by_sym": {
+  "ALI=F": {
+   "asof": "2026-11-20",
+   "front": "ALIZ26",
+   "history": "yahoo",
+   "id": "aluminium",
+   "n": 7,
+   "sym": "ALI=F",
+   "title": "Aluminium"
+  },
+  "BZ=F": {
+   "asof": "2026-11-20",
+   "front": "BRNF27",
+   "history": "yahoo",
+   "id": "brent",
+   "n": 18,
+   "sym": "BZ=F",
+   "title": "Brent crude"
+  },
+  "CC=F": {
+   "asof": "2026-11-20",
+   "front": "CCZ26",
+   "history": "yahoo",
+   "id": "cocoa",
+   "n": 10,
+   "sym": "CC=F",
+   "title": "Cocoa NY"
+  },
+  "CL=F": {
+   "asof": "2026-11-20",
+   "front": "CLF27",
+   "history": "yahoo",
+   "id": "wti",
+   "n": 18,
+   "sym": "CL=F",
+   "title": "WTI crude"
+  },
+  "CO2.L": {
+   "asof": "2026-11-20",
+   "front": "ECFX26",
+   "history": "tradingview",
+   "id": "eua",
+   "n": 17,
+   "sym": "CO2.L",
+   "title": "EU carbon (EUA)"
+  },
+  "CT=F": {
+   "asof": "2026-11-20",
+   "front": "CTZ26",
+   "history": "yahoo",
+   "id": "cotton",
+   "n": 11,
+   "sym": "CT=F",
+   "title": "Cotton"
+  },
+  "GC=F": {
+   "asof": "2026-11-20",
+   "front": "GCX26",
+   "history": "yahoo",
+   "id": "gold",
+   "n": 18,
+   "sym": "GC=F",
+   "title": "Gold"
+  },
+  "GF=F": {
+   "asof": "2026-11-20",
+   "front": "GFF27",
+   "history": "yahoo",
+   "id": "feeders",
+   "n": 8,
+   "sym": "GF=F",
+   "title": "Feeder cattle"
+  },
+  "HE=F": {
+   "asof": "2026-11-20",
+   "front": "HEZ26",
+   "history": "yahoo",
+   "id": "hogs",
+   "n": 11,
+   "sym": "HE=F",
+   "title": "Lean hogs"
+  },
+  "HG=F": {
+   "asof": "2026-11-20",
+   "front": "HGX26",
+   "history": "yahoo",
+   "id": "copper",
+   "n": 18,
+   "sym": "HG=F",
+   "title": "Copper"
+  },
+  "HO=F": {
+   "asof": "2026-11-20",
+   "front": "HOZ26",
+   "history": "yahoo",
+   "id": "ulsd",
+   "n": 18,
+   "sym": "HO=F",
+   "title": "NY Harbor diesel (ULSD)"
+  },
+  "KC=F": {
+   "asof": "2026-11-20",
+   "front": "KCZ26",
+   "history": "yahoo",
+   "id": "coffee",
+   "n": 7,
+   "sym": "KC=F",
+   "title": "Coffee (Arabica)"
+  },
+  "LBR=F": {
+   "asof": "2026-11-20",
+   "front": "LBRF27",
+   "history": "tradingview",
+   "id": "lumber",
+   "n": 3,
+   "sym": "LBR=F",
+   "title": "Lumber"
+  },
+  "LE=F": {
+   "asof": "2026-11-20",
+   "front": "LEZ26",
+   "history": "yahoo",
+   "id": "cattle",
+   "n": 10,
+   "sym": "LE=F",
+   "title": "Live cattle"
+  },
+  "NG=F": {
+   "asof": "2026-11-20",
+   "front": "NGZ26",
+   "history": "yahoo",
+   "id": "hh",
+   "n": 18,
+   "sym": "NG=F",
+   "title": "Henry Hub gas"
+  },
+  "OJ=F": {
+   "asof": "2026-11-20",
+   "front": "OJF27",
+   "history": "yahoo",
+   "id": "oj",
+   "n": 6,
+   "sym": "OJ=F",
+   "title": "Orange juice"
+  },
+  "PA=F": {
+   "asof": "2026-11-20",
+   "front": "PAZ26",
+   "history": "yahoo",
+   "id": "palladium",
+   "n": 8,
+   "sym": "PA=F",
+   "title": "Palladium"
+  },
+  "PL=F": {
+   "asof": "2026-11-20",
+   "front": "PLF27",
+   "history": "yahoo",
+   "id": "platinum",
+   "n": 9,
+   "sym": "PL=F",
+   "title": "Platinum"
+  },
+  "RB=F": {
+   "asof": "2026-11-20",
+   "front": "RBZ26",
+   "history": "yahoo",
+   "id": "rbob",
+   "n": 18,
+   "sym": "RB=F",
+   "title": "RBOB gasoline"
+  },
+  "SB=F": {
+   "asof": "2026-11-20",
+   "front": "SBH27",
+   "history": "yahoo",
+   "id": "sugar",
+   "n": 12,
+   "sym": "SB=F",
+   "title": "Sugar No.11"
+  },
+  "SI=F": {
+   "asof": "2026-11-20",
+   "front": "SIX26",
+   "history": "yahoo",
+   "id": "silver",
+   "n": 18,
+   "sym": "SI=F",
+   "title": "Silver"
+  },
+  "TTF=F": {
+   "asof": "2026-11-20",
+   "front": "TFMZ26",
+   "history": "yahoo",
+   "id": "ttf",
+   "n": 18,
+   "sym": "TTF=F",
+   "title": "Dutch TTF gas"
+  },
+  "ZC=F": {
+   "asof": "2026-11-20",
+   "front": "ZCZ26",
+   "history": "yahoo",
+   "id": "corn",
+   "n": 13,
+   "sym": "ZC=F",
+   "title": "Corn"
+  },
+  "ZL=F": {
+   "asof": "2026-11-20",
+   "front": "ZLZ26",
+   "history": "yahoo",
+   "id": "soyoil",
+   "n": 17,
+   "sym": "ZL=F",
+   "title": "Soybean oil"
+  },
+  "ZM=F": {
+   "asof": "2026-11-20",
+   "front": "ZMZ26",
+   "history": "yahoo",
+   "id": "soymeal",
+   "n": 17,
+   "sym": "ZM=F",
+   "title": "Soybean meal"
+  },
+  "ZO=F": {
+   "asof": "2026-11-20",
+   "front": "ZOZ26",
+   "history": "yahoo",
+   "id": "oats",
+   "n": 7,
+   "sym": "ZO=F",
+   "title": "Oats"
+  },
+  "ZR=F": {
+   "asof": "2026-11-20",
+   "front": "ZRF27",
+   "history": "yahoo",
+   "id": "rice",
+   "n": 5,
+   "sym": "ZR=F",
+   "title": "Rough rice"
+  },
+  "ZS=F": {
+   "asof": "2026-11-20",
+   "front": "ZSF27",
+   "history": "yahoo",
+   "id": "soybeans",
+   "n": 17,
+   "sym": "ZS=F",
+   "title": "Soybeans"
+  },
+  "ZW=F": {
+   "asof": "2026-11-20",
+   "front": "ZWZ26",
+   "history": "yahoo",
+   "id": "wheat",
+   "n": 14,
+   "sym": "ZW=F",
+   "title": "Wheat Chicago"
+  }
+ }
+}
