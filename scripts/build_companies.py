@@ -643,6 +643,8 @@ def main():
 
     specs = {}
     for g in GROUPS:
+        if g["id"] == "equity_monitor":      # Markets tiles only (Asian large caps): no company pages
+            continue
         for sec in g["sections"]:
             for r in sec["rows"]:
                 if r.get("kind", "equity") == "equity":

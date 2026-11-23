@@ -9,6 +9,7 @@ This repository stays **public** so the price refresh keeps using free GitHub Ac
 | File | What it does |
 |---|---|
 | `intraday.yml` | Weekdays, every 15 minutes (`:07/:22/:37/:52`, 05–21 UTC). Yahoo quotes, except Dutch TTF (`TTF=F`), which is priced from ICE Endex in Amsterdam (`scripts/ice_endex.py`, ICE's public delayed quotes) with Yahoo's NYMEX copy as the labelled fallback. Updates `data/market.json` on `live-data`. |
+| `intraday.yml` (same run) | After the prices: the four regional sector maps for the EMMi Markets Equities Monitor (S&P 500, Europe top 80, Nikkei 225, CSI 300; `scripts/build_region_maps.py`, constituents in `scripts/region_maps_universe.json`, about 1,100 Yahoo daily bars in ~10 s). Writes `data/region_maps.json` on `live-data`. Never holds up the price publish; a map it cannot price keeps the last copy, flagged `stale`. Tiles for the regional lineups are the `equity_monitor` group in `scripts/universe.py`. |
 | `ticker.yml` | One long-running job that dispatches `intraday.yml` during market hours and queues its own successor. On weekday mornings it dispatches one full `update-data.yml` catch-up if today's build is missing. The hourly schedule only restarts the chain. |
 | `update-data.yml` | Weekday 05:30 full, 12:30 and 17:30 power, 21:00 market, weekend 12:30 power, catch-ups 09:45 and 13:45. Publishes `LIVE_PATHS` to `live-data`. |
 | `ho-curve.yml` | Weekdays 20:07 UTC. `data/ho_curve.csv` and `data/ho_curve_history.csv` on `live-data`. |
