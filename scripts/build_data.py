@@ -22,6 +22,7 @@ sys.path.insert(0, HERE)
 from universe import GROUPS  # noqa: E402
 import overrides as OV  # noqa: E402
 import contracts  # noqa: E402
+import ice_endex  # noqa: E402
 
 ROOT = os.path.dirname(HERE)
 UTC = dt.timezone.utc
@@ -951,7 +952,86 @@ def analyse(spec, df, meta, src, now, fund=None, fx_table=None):
 
 
 # ------------------------------------------------------------------ futures: explicit contract months
+# Futures priced from their main European exchange instead of Yahoo's US-listed copy (Yahoo stays as the labelled fallback).
+# TTF=F: Yahoo carries only the NYMEX-listed TTF (TTFZ26.NYM ...), which trades thinly and can go a whole morning without
+# a print; the market is ICE Endex in Amsterdam (TFM). Same contract month and roll rule (contracts.active).
+EUROPE = {"TTF=F": dict(fetch=ice_endex.quote, exch="ICE Endex", venue="ICE Endex (Amsterdam)", tz="Europe/Amsterdam",
+                        note="ICE Endex Dutch TTF front month, traded in Amsterdam, EUR/MWh. ICE's delayed quote (about 10 minutes "
+                             "behind); 1D is against ICE's prior settlement. Daily closes are ICE settlements; today's open, high "
+                             "and low come from ICE's 10-minute prices.",
+                        fallback_note="ICE Endex quote unavailable this run; showing the NYMEX-listed TTF copy (Yahoo), which "
+                                      "trades thinly and can lag the Amsterdam market. The tag shows its last trade time.")}
+
+
+def europe_frame(q, df_y, now):
+    """Daily bars for one ICE month: ICE settlements as closes (today: the live last price until ICE settles), today's
+    open/high/low from ICE's 10-minute prices, earlier open/high/low from the same month's NYMEX bars (df_y, may be None),
+    always widened to contain the ICE close. Volume is left out (ICE gives no daily history; NYMEX volume is not comparable)."""
+    closes = {pd.Timestamp(d): float(p) for d, p in q["settlements"]}
+    td = pd.Timestamp(q["trade_date"])
+    closes[td] = float(q["close"])
+    idx = sorted(closes)
+    df = pd.DataFrame({"close": [closes[d] for d in idx]}, index=pd.DatetimeIndex(idx))
+    for col in ("open", "high", "low"):
+        df[col] = float("nan")
+    if df_y is not None and len(df_y) and {"open", "high", "low"} <= set(df_y.columns):
+        y = df_y[["open", "high", "low"]].copy()
+        y.index = pd.DatetimeIndex([pd.Timestamp(t.date()) if hasattr(t, "date") else pd.Timestamp(t) for t in y.index])
+        y = y[~y.index.duplicated(keep="last")]
+        common = df.index.intersection(y.index).difference([td])
+        df.loc[common, ["open", "high", "low"]] = y.loc[common].values
+    if q.get("open") is not None:
+        df.loc[td, ["open", "high", "low"]] = [q["open"], q["high"], q["low"]]
+    ok = df["open"].notna() & df["high"].notna() & df["low"].notna()
+    df.loc[ok, "high"] = df.loc[ok, ["open", "high", "close"]].max(axis=1)
+    df.loc[ok, "low"] = df.loc[ok, ["open", "low", "close"]].min(axis=1)
+    df["volume"] = float("nan")
+    df = df[["open", "high", "low", "close", "volume"]]
+    t_last = int(q["last_time"].timestamp())
+    start = int((dt.datetime.combine(q["trade_date"], dt.time(0, 0), ZoneInfo("Europe/Amsterdam")) - dt.timedelta(hours=2)).timestamp())
+    end = int(q["session_end"].timestamp()) if q["state"] == "open" else min(int(now.timestamp()) - 1, int(q["session_end"].timestamp()))
+    zero = dict(start=start, end=start)
+    meta = dict(currency="EUR", exchangeName="ICE Endex", exchangeTimezoneName="Europe/Amsterdam",
+                regularMarketPrice=q["last"], regularMarketTime=t_last, regularMarketVolume=q.get("volume"),
+                currentTradingPeriod=dict(regular=dict(start=start, end=end), pre=zero, post=zero))
+    return df, meta
+
+
+def fetch_europe(sym, label, df_y, now):
+    e = EUROPE[sym]
+    q = e["fetch"](label, now=now)
+    if q["label"] != label:
+        raise LookupError(f"ICE returned {q['label']}, wanted {label}")
+    age = (now - q["last_time"]).total_seconds() / 86400
+    if age > 5:
+        raise LookupError(f"ICE {label} last trade {q['last_time']:%Y-%m-%d %H:%M} UTC is {age:.0f} days old")
+    df, meta = europe_frame(q, df_y, now)
+    return df, meta, q
+
+
 def fetch_contract(sym, df_c, meta_c, src_c, now, futx):
+    df, meta, src = _fetch_contract_yahoo(sym, df_c, meta_c, src_c, now, futx)
+    if sym not in EUROPE:
+        return df, meta, src
+    info = futx[sym]
+    df_y = df if info.get("sym") else None          # NYMEX bars of the same month only (never the continuous series)
+    try:
+        df_e, meta_e, q = fetch_europe(sym, info["month"], df_y, now)
+        info.update(sym=info.get("sym") or contracts.active(sym, now.astimezone(NEWYORK).date())[0], why=None,
+                    europe=dict(exch=EUROPE[sym]["exch"], venue=EUROPE[sym]["venue"], url=q["url"], src=q["src"],
+                                market_id=q["market_id"], last=q["last"], last_time=q["last_time"].isoformat(),
+                                trade_date=q["trade_date"].isoformat(), settled=q["settled"],
+                                prev_settle=q["prev_settle"], prev_date=q["prev_date"].isoformat() if q["prev_date"] else None,
+                                volume=q.get("volume")))
+        log(f"  {sym}: {EUROPE[sym]['venue']} {q['label']} {q['last']} at {q['last_time']:%H:%M} UTC, prior settle {q['prev_settle']}")
+        return df_e, meta_e, "ice-endex"
+    except Exception as ex:
+        info["europe_error"] = f"{EUROPE[sym]['exch']}: {ex}"[:200]
+        log(f"  {sym}: {info['europe_error']} -> Yahoo fallback")
+        return df, meta, src
+
+
+def _fetch_contract_yahoo(sym, df_c, meta_c, src_c, now, futx):
     """Swap Yahoo's continuous series (BZ=F ...) for the explicit active contract (BZZ26.NYM ...): its own daily bars
     give a same-month 1D..1Y. Falls back to the continuous series (changes then suppressed in apply_contract)."""
     csym, label, exp = contracts.active(sym, now.astimezone(NEWYORK).date())
@@ -979,8 +1059,17 @@ def apply_contract(row, spec, info, now):
     for k in LONG_CONT:
         row["pct"][k] = cont["pct"].get(k)
     row["pct_cont"] = list(LONG_CONT)
+    e = EUROPE.get(spec["sym"])
+    if e and info.get("europe"):
+        row.update(note=e["note"], exch=e["exch"], venue=e["venue"], quote_src=dict(name=e["venue"], url=info["europe"]["url"]),
+                   europe=info["europe"])
+    elif e:
+        row.update(note=e["fallback_note"], exch="NYMEX (Yahoo fallback)", europe_error=info.get("europe_error"),
+                   quote_src=dict(name="Yahoo (NYMEX-listed TTF)", url="https://finance.yahoo.com/quote/" + (info.get("sym") or spec["sym"])))
     if info.get("sym"):
         row["contract"] = dict(sym=info["sym"], month=info["month"], expiry=info["expiry"], cont=spec["sym"])
+        if e and info.get("europe"):
+            row["contract"].update(exchange=e["exch"], code="TFM " + info["month"])
         row["name"] = f'{spec["name"]} {info["month"]}'
     else:   # continuous level only: a change could straddle a roll, so none is shown
         row["contract"] = dict(sym=None, cont=spec["sym"], why=info.get("why"))
