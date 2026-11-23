@@ -177,6 +177,41 @@ GROUPS = [
         R("000300.SS", "CSI 300", "SSE:000300", "index", "Shanghai and Shenzhen 300 largest A-shares (Yahoo 000300.SS)."),
         R("^VIX", "CBOE VIX", "TVC:VIX", "index"),
     ])]),
+    # EMMi Markets Equities Monitor (Jerry 23 Nov 2026, t1592u-t1595u): the extra tiles for the Morning Pulse v1.10 regional
+    # lineups (2 rows of 4 per region), so the site draws the same US / Europe / Asia tiles. Its own group: the Indices
+    # group, the risk gauge, the table tabs, company pages and deal flow are unchanged (build_companies.py skips it).
+    # US: S&P 500, Nasdaq 100, Dow Jones, Russell 2000 / SOX, Magnificent 7 (MAGS), VIX, standout US sector ETF.
+    # Europe: Stoxx 600, DAX, FTSE 100, CAC 40 / SMI, OMX Stockholm 30, Euro Stoxx 50, standout sector (AEX, IBEX reserves).
+    # Asia: Nikkei 225, CSI 300, Hang Seng, Kospi / Taiex, ASX 200, then S&P 500 and Nasdaq 100 futures while US cash is
+    # shut, else the two biggest movers among the Asian large caps below.
+    dict(id="equity_monitor", label="Equities Monitor", sections=[
+        dict(label="US", rows=[
+            R("^NDX", "Nasdaq 100", "NASDAQ:NDX", "index"),
+            R("^RUT", "Russell 2000", "TVC:RUT", "index"),
+            R("^SOX", "PHLX Semiconductor (SOX)", "NASDAQ:SOX", "index"),
+            R("MAGS", "Magnificent 7 (MAGS ETF)", "CBOE:MAGS", "etf", "Roundhill Magnificent Seven ETF: equal-weight Apple, Microsoft, Alphabet, Amazon, Nvidia, Meta, Tesla."),
+        ]),
+        dict(label="Europe", rows=[
+            R("^FCHI", "CAC 40", "EURONEXT:PX1", "index"),
+            R("^AEX", "AEX", "EURONEXT:AEX", "index"),
+            R("^IBEX", "IBEX 35", "BME:IBC", "index"),
+        ]),
+        dict(label="Asia", rows=[
+            R("^KS11", "Kospi", "KRX:KOSPI", "index"),
+            R("^TWII", "Taiex", "TWSE:TAIEX", "index"),
+            R("^AXJO", "ASX 200", "ASX:XJO", "index"),
+            R("ES=F", "S&P 500 fut.", "CME_MINI:ES1!", "future", "CME E-mini S&P 500, continuous front month: trades almost round the clock, so it shows the US mood while US cash is shut."),
+            R("NQ=F", "Nasdaq 100 fut.", "CME_MINI:NQ1!", "future", "CME E-mini Nasdaq 100, continuous front month."),
+        ]),
+        dict(label="Asia large caps", rows=[
+            R("2330.TW", "TSMC", "TWSE:2330"),
+            R("005930.KS", "Samsung Electronics", "KRX:005930"),
+            R("000660.KS", "SK Hynix", "KRX:000660"),
+            R("9988.HK", "Alibaba", "HKEX:9988"),
+            R("0700.HK", "Tencent", "HKEX:700"),
+            R("7203.T", "Toyota", "TSE:7203"),
+        ]),
+    ]),
     dict(id="rates", label="Rates & FX", sections=[
         dict(label="US Treasury yields (%)", rows=[
             R("^IRX", "US 13-week T-bill", "TVC:US03MY", "yield"),

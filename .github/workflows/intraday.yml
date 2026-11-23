@@ -7,6 +7,9 @@ name: Intraday prices
 # (no history growth). Intraday and full builds share ONE file, live-data data/market.json: each intraday run starts
 # from the latest published copy (so fundamentals and official yields carry over from the last full build) and
 # publish_live.sh keeps whichever copy has the newer full build (fundamentals_utc), then the newer prices.
+# After the prices, the same run rebuilds the four regional sector maps for the EMMi Equities Monitor (S&P 500, Europe
+# top 80, Nikkei 225, CSI 300; scripts/build_region_maps.py, ~10 s) into live-data data/region_maps.json. That step can
+# never hold up or fail the price publish (continue-on-error); a map it cannot price keeps the last copy, flagged stale.
 on:
   schedule:
     - cron: "7,22,37,52 5-21 * * 1-5"
@@ -22,7 +25,7 @@ concurrency:
 jobs:
   prices:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 9
     steps:
       - uses: actions/checkout@v5
         with:
@@ -45,5 +48,15 @@ jobs:
         timeout-minutes: 4
       - name: Publish to orphan branch live-data (data/market.json only; other files on the branch are kept)
         run: bash scripts/publish_live.sh market "$RUNNER_TEMP/live/market.json"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Regional sector maps (S&P 500, Europe top 80, Nikkei 225, CSI 300) -> live-data data/region_maps.json
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          mkdir -p "$RUNNER_TEMP/maps/data"
+          git show FETCH_HEAD:data/region_maps.json > "$RUNNER_TEMP/maps_base.json" 2>/dev/null || rm -f "$RUNNER_TEMP/maps_base.json"
+          python scripts/build_region_maps.py --base "$RUNNER_TEMP/maps_base.json" --out "$RUNNER_TEMP/maps/data/region_maps.json"
+          LIVE_PATHS="data/region_maps.json" bash scripts/publish_live.sh data "$RUNNER_TEMP/maps"
         env:
           GH_TOKEN: ${{ github.token }}
