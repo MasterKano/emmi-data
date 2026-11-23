@@ -154,7 +154,7 @@ GROUPS = [
         R("HO=F", "NY Harbor diesel (ULSD)", "NYMEX:HO1!", "future", note="NYMEX NY Harbor ULSD, USD/gal (x42 = USD/bbl)."),
         R("RB=F", "RBOB gasoline", "NYMEX:RB1!", "future", note="NYMEX RBOB gasoline, USD/gal (x42 = USD/bbl). Continuous front month with the same roll rule as ULSD."),
         R("NG=F", "Henry Hub gas", "OANDA:NATGASUSD", "future"),
-        R("TTF=F", "Dutch TTF gas", "ICEEUR:TFM1!", "future", note="Yahoo TTF=F is the NYMEX-listed TTF contract: thin trade, often no prints after mid-afternoon Zurich. The tag shows the last trade time; ICE Endex has no free feed."),
+        R("TTF=F", "Dutch TTF gas", "ICEEUR:TFM1!", "future", note="ICE Endex Dutch TTF front month (Amsterdam), from ICE's public delayed quotes; Yahoo's NYMEX-listed TTF=F is the fallback."),
         R("GC=F", "Gold", "OANDA:XAUUSD", "future"),
         R("SI=F", "Silver", "OANDA:XAGUSD", "future"),
         R("HG=F", "Copper (COMEX)", "OANDA:XCUUSD", "future"),
