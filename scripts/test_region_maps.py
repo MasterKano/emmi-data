@@ -71,6 +71,17 @@ try:
 except RuntimeError:
     pass
 
+# Yahoo series: a latest session missing from the 5d bars is filled from meta (seen 24 Nov 2026 00:20 CET)
+import datetime as _dt
+ts = lambda iso: int(_dt.datetime.fromisoformat(iso).timestamp())
+res = {"meta": {"exchangeTimezoneName": "Europe/Berlin", "regularMarketTime": ts("2026-11-23T17:35:00+01:00"), "regularMarketPrice": 186.34},
+       "timestamp": [ts("2026-11-19T09:00:00+01:00"), ts("2026-11-20T09:00:00+01:00")], "indicators": {"quote": [{"close": [187.02, 183.68]}]}}
+ser, _ = M.series(res)
+assert [d.isoformat() for d, _v in ser] == ["2026-11-19", "2026-11-20", "2026-11-23"] and ser[-1][1] == 186.34, "missing Monday filled from meta"
+res["timestamp"].append(ts("2026-11-23T09:00:00+01:00")); res["indicators"]["quote"][0]["close"].append(186.0)
+ser, _ = M.series(res)
+assert len(ser) == 3 and ser[-1][1] == 186.0, "bars win when the session is there"
+
 # stale fallback: a map that fails keeps the published copy, flagged
 M.fetch_all = lambda syms, workers=12: ({}, {})
 out = M.build(now=z("2026-11-23T23:30"), base={"maps": {"sp500": dict(m)}}, keys=("sp500", "csi300"), universe=U)

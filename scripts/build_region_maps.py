@@ -142,19 +142,32 @@ def bars(sym, tries=3):
             res = ((r.json().get("chart") or {}).get("result") or [None])[0]
             if not res or not res.get("timestamp"):
                 return None, None
-            meta = res.get("meta") or {}
-            tz = ZoneInfo(meta.get("exchangeTimezoneName") or "UTC")
-            closes = res["indicators"]["quote"][0].get("close") or []
-            out = collections.OrderedDict()
-            for t, c in zip(res["timestamp"], closes):
-                if c is not None:
-                    out[dt.datetime.fromtimestamp(t, tz).date()] = float(c)
-            return list(out.items()), meta
+            return series(res)
         except Exception as e:  # noqa: BLE001
             err = e
             time.sleep(1.5 * (i + 1) + random.random())
     log(f"  {sym}: {err}")
     return None, None
+
+
+def series(res):
+    """Yahoo chart result -> ([(local date, close)], meta). Pure; tested."""
+    meta = res.get("meta") or {}
+    tz = ZoneInfo(meta.get("exchangeTimezoneName") or "UTC")
+    closes = res["indicators"]["quote"][0].get("close") or []
+    out = collections.OrderedDict()
+    for t, c in zip(res["timestamp"], closes):
+        if c is not None:
+            out[dt.datetime.fromtimestamp(t, tz).date()] = float(c)
+    # Yahoo's 5d daily series can drop the latest session around local midnight (seen 24 Nov 2026 00:20 CET:
+    # Xetra/Euronext/SIX names ended on Fri 20 Nov while meta had Monday's close). The meta's last regular
+    # trade then fills that day.
+    rmt, rmp = meta.get("regularMarketTime"), meta.get("regularMarketPrice")
+    if rmt and rmp:
+        d = dt.datetime.fromtimestamp(rmt, tz).date()
+        if not out or d > next(reversed(out)):
+            out[d] = float(rmp)
+    return list(out.items()), meta
 
 
 def fetch_all(syms, workers=12):
