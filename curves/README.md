@@ -7,7 +7,7 @@ curves/<curve>/<YYYY-MM-DD>.csv
 curves/<curve>/index.json
 ```
 
-Built 2026-11-24 10:44 Europe/Zurich. Files are data only. This folder lives on `main` (not the force-pushed `live-data` branch) so history is kept.
+Built 2026-11-24 22:48 Europe/Zurich. Files are data only. This folder lives on `main` (not the force-pushed `live-data` branch) so history is kept.
 
 ## Schema
 
