@@ -81,7 +81,6 @@ jobs:
         id: seed
         if: steps.window.outputs.proceed == 'yes'
         env:
-          NORDIC_CLIMATE_SEED_TOKEN: ${{ secrets.NORDIC_CLIMATE_SEED_TOKEN }}
           NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
         run: python scripts/nordic-climate/restore_seed.py
       - name: Rebuild without the legacy publisher

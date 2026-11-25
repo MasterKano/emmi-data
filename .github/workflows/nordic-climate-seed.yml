@@ -1,13 +1,8 @@
-name: Nordic climate history rebuild
+name: Nordic climate seed restore
 
-# Prepared, not part of pull-request CI. Fork and same-repo pull requests
-# are not a trigger, so they cannot read the seed token.
-# Dispatch it from main after NORDIC_CLIMATE_SEED_TOKEN is an environment
-# secret on nordic-climate-publish. That environment should not require a
-# reviewer; the one-time reviewer gate is only the cutover publish.
-# Point files stay in runner temp. The uploaded artifact is the comparison
-# JSON only.
+# Public release. No token. Read-only. Does not publish.
 on:
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -19,14 +14,10 @@ concurrency:
 
 jobs:
   restore:
-    if: github.ref == 'refs/heads/main'
-    environment: nordic-climate-publish
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -34,17 +25,10 @@ jobs:
           cache-dependency-path: scripts/nordic-climate/requirements.txt
       - name: Install
         run: pip install -r scripts/nordic-climate/requirements.txt
-      - name: Restore monthly CSVs from the private seed
+      - name: Download the public monthly seed and check the pin
         env:
-          NORDIC_CLIMATE_SEED_TOKEN: ${{ secrets.NORDIC_CLIMATE_SEED_TOKEN }}
           NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
         run: |
-          {
-            echo "### Nordic climate history rebuild"
-            echo "Token is the environment secret \`NORDIC_CLIMATE_SEED_TOKEN\` on \`nordic-climate-publish\`."
-            echo "Scope: Contents read-only on \`MasterKano/nordic-climate-seed\` only."
-            echo "Pinned sha256: \`09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7\`."
-          } >> "$GITHUB_STEP_SUMMARY"
           python scripts/nordic-climate/restore_seed.py
           python - <<'PY'
           import os
@@ -54,39 +38,12 @@ jobs:
           leaked = [p.name for p in cache.rglob("*") if p.is_file() and not p.name.startswith("om_")]
           if leaked:
               raise SystemExit(f"unexpected extract: {leaked[:10]}")
-          if "om_1940_01.csv" not in names or "om_2026_10.csv" not in names:
-              raise SystemExit(f"monthly span looks wrong: {names[:3]} .. {names[-3:]} ({len(names)})")
-          if len(names) != 1042:
-              raise SystemExit(f"expected 1042 monthly CSVs, found {len(names)}")
+          if names[0] != "om_1940_01.csv" or names[-1] != "om_2026_10.csv" or len(names) != 1042:
+              raise SystemExit(f"monthly span looks wrong: {names[:2]} .. {names[-2:]} ({len(names)})")
           print(f"monthly csvs only: {len(names)} files, {names[0]} .. {names[-1]}")
           PY
-      - name: Rebuild 1940-present and compare the whole published overlap
-        env:
-          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
-          NORDIC_CLIMATE_LOCK: ${{ runner.temp }}/nordic.lock
-        run: |
-          set -euo pipefail
-          python scripts/nordic-climate/run_pipeline.py
-          python scripts/nordic-climate/compare_published.py \
-            --built scripts/nordic-climate \
-            --published nordic-climate \
-            --out "$RUNNER_TEMP/history_comparison.json"
-          python - <<'PY'
-          import json, os
-          report = json.load(open(os.environ["RUNNER_TEMP"] + "/history_comparison.json"))
-          daily = report["daily"]
-          print(
-              f"overlap_days={daily['compared_days']} mismatches={daily['n_mismatches']} "
-              f"missing={daily['n_published_days_missing']} new={daily['n_new_dates']}"
-          )
-          if not report["ok"]:
-              raise SystemExit("full-history comparison failed")
-          PY
-      - name: Upload comparison report only
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nordic-climate-history-comparison
-          retention-days: 14
-          if-no-files-found: ignore
-          path: ${{ runner.temp }}/history_comparison.json
+          {
+            echo "### Nordic climate seed restore"
+            echo "Public release, no token. Pinned sha256 \`09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7\`."
+            echo "Licence: Open-Meteo CC BY 4.0 and Copernicus ERA5, see the seed repo LICENCE.md."
+          } >> "$GITHUB_STEP_SUMMARY"

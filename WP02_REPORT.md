@@ -108,9 +108,9 @@ check on this machine before the push:
 - `nordic-climate/` on `main` was not modified. `git diff origin/main -- nordic-climate/`
   is empty.
 
-A full 1940-to-present rebuild on Actions, which is what would refresh
-`mtd.json` and `monthly.csv` from the seed, has not run. It needs
-`NORDIC_CLIMATE_SEED_TOKEN`. The local synthetic rebuild (same code, 22
+The hosted 1940-present rebuild is the pull-request workflow
+`nordic-climate-history.yml`. It uses the public seed and no token. The
+local synthetic rebuild (same code, 22
 seconds, 1,042 complete months) did write all five files and the sanity
 output. Wind in that sanity file matches the daily series (rmse 0).
 Temperature and rain do not, because the fixture weather is not ERA5 while
@@ -150,7 +150,7 @@ Names only.
 
 | Name | Kind | State |
 |---|---|---|
-| `NORDIC_CLIMATE_SEED_TOKEN` | Actions secret. Fine-grained PAT, Contents read-only, repository `MasterKano/nordic-climate-seed` only. Not `newsletter-archive`. | **Jerry must create that private repo and the token. Nothing here created either.** |
+| `NORDIC_CLIMATE_SEED_TOKEN` | Not used. The seed release is public. | Do not add it. |
 | `NORDIC_CLIMATE_PUBLISH` | Actions variable, value `1` | **must stay unset until cutover** |
 
 No CDS key, no Open-Meteo key, no mail secret.
@@ -189,11 +189,8 @@ that fails the job. The constant and the citation live in
 
 ## Risks
 
-- Until Jerry creates `MasterKano/nordic-climate-seed` and
-  `NORDIC_CLIMATE_SEED_TOKEN` scoped only to it, a hosted runner cannot
-  restore the monthly CSVs. The live overlap check does not need them.
-  The public-API rebuild on this machine is the full-history comparison
-  that does not wait on that repo.
+- The monthly seed is the public release. No token is required to restore
+  it. `newsletter-archive` stays private and is not read.
 - The first successful seed run is also the check that the slim tarball's
   paths are `openmeteo100m/om_YYYY_MM.csv`. The job fails closed otherwise.
 - GitHub-hosted runners share egress. Open-Meteo may be slower or stricter
@@ -243,13 +240,11 @@ No provider was purchased.
 Giving emmi-data a credential for all of private `newsletter-archive` is the
 wrong scope. That repo is not only this cache.
 
-(a) Dedicated private repo `MasterKano/nordic-climate-seed`, containing only
-the monthly `om_YYYY_MM.csv` files (a release tag
-`nordic-climate-seed-20261125` plus a `.sha256`). A fine-grained PAT with
-Contents read-only on that repo alone, stored as `NORDIC_CLIMATE_SEED_TOKEN`.
-This is the recommended option. It is zero-cost on GitHub's free private
-repo and on public Actions minutes. The runner downloads into temp and
-discards it. There is no Actions cache of the point files on the public repo.
+(a) Dedicated repo `MasterKano/nordic-climate-seed`, containing only the
+monthly `om_YYYY_MM.csv` files. Jerry later made this repo public, which is
+allowed by the licences below. Restore downloads that release with no token.
+The runner still discards the files with the job. There is no Actions cache
+of the point files.
 
 (b) A public copy of those monthly CSVs was assessed and not made. Open-Meteo
 CC BY 4.0 allows redistribution of the data with attribution. The Copernicus
@@ -355,10 +350,9 @@ hour to the next valid time. The commented crons are `5 5 * * 6` and
 hour, so CET and CEST do not need two UTC lines. Late-runner and same-day
 dedup stay in `schedule_window.py`.
 
-The history rebuild workflow is `workflow_dispatch` on `main` only, using
-environment `nordic-climate-publish`. It is not a pull-request check and it
-does not run until the environment secret exists. It is ready; this round
-does not wait for that run.
+The seed release is public. Restore downloads it with no token. The history
+rebuild is a pull-request workflow, read-only, and does not use an
+environment or a secret. Its run URL is recorded after this commit’s CI.
 
 IFS sync evidence is in `OPERATIONS.md`. Six files were written to
 `/tmp/ifs-sync-test` and matched the workspace by sha256.
@@ -366,30 +360,27 @@ IFS sync evidence is in `OPERATIONS.md`. Six files were written to
 
 ### Remaining actions for Jerry
 
-1. Fine-grained PAT. Resource owner MasterKano. Repository access: only
-   `nordic-climate-seed`. Permissions: Contents Read, Metadata Read. Expiry
-   one year, with a reminder to rotate.
-2. Environments `nordic-climate-cutover` (required reviewer, `main` only)
-   and `nordic-climate-publish` (no reviewer, `main` only). Put the token
-   in both as environment secret `NORDIC_CLIMATE_SEED_TOKEN`. Not a
-   repository secret.
-3. After this PR is on main, dispatch **Nordic climate history rebuild**
-   from main. That is the hosted 1940-present compare. It does not publish.
-4. Cutover, still later: retire Mark's routine, set `NORDIC_CLIMATE_PUBLISH`
-   to `1`, approve the one manual run (environment `nordic-climate-cutover`),
-   set `NORDIC_CLIMATE_CUTOVER_DONE` to `1`, then uncomment the two Zurich
-   crons. A schedule event also requires `NORDIC_CLIMATE_CUTOVER_DONE=1`.
-   With that variable unset the schedule job is skipped and does not enter
-   `nordic-climate-publish`. Confirm Actions email for the account that
-   edits the cron.
+No seed token. The release is public. Environments already exist and stay
+as they are: `nordic-climate-cutover` (reviewer MasterKano, `main` only) and
+`nordic-climate-publish` (no reviewer, `main` only). Both variables stay
+unset. Crons stay commented.
 
-Publishing stays disabled until those last steps. Do not merge this as part
-of the seed upload.
+Cutover, still later and not part of merging this PR: retire Mark's routine,
+set `NORDIC_CLIMATE_PUBLISH` to `1`, approve the one manual run (environment
+`nordic-climate-cutover`), set `NORDIC_CLIMATE_CUTOVER_DONE` to `1`, then
+uncomment the two Zurich crons. A schedule event requires
+`NORDIC_CLIMATE_PUBLISH=1`, `NORDIC_CLIMATE_CUTOVER_DONE=1`, and
+`refs/heads/main`. With cutover unset the schedule job is skipped and does
+not enter `nordic-climate-publish`. Confirm Actions email for the account
+that edits the cron.
+
+Merging this PR does not set either variable and does not register a
+schedule, so it does not publish.
 
 ## Readiness for 11 Dec 2026
 
 The Action can be reviewed now. It is not the publisher. The bot remains the
 production path, which is what the 11 Dec deadline requires if this is not
-yet accepted. Before any cutover: add `NORDIC_CLIMATE_SEED_TOKEN`, re-run the
-seed workflow so the real tarball is verified, then follow OPERATIONS.md so
-only one system is authorised to push.
+yet accepted. No seed token is required. Follow OPERATIONS.md so only one
+system is authorised to push, and only after `NORDIC_CLIMATE_CUTOVER_DONE`
+is set.

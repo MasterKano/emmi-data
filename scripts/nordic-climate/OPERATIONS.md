@@ -74,8 +74,8 @@ and it still cannot publish unless the workflow ref is `refs/heads/main`.
 Do this only after the dry-run evidence in `WP02_REPORT.md` has been accepted,
 and only so that **one** system is allowed to write `nordic-climate/` on `main`.
 
-1. Create the token and the two environments named below. The private seed
-   repo and its release already exist. Do not create a token from a workflow.
+1. The seed release is already public and the two environments already
+   exist. Do not add a seed token.
 2. Confirm Mark's routine will not run again. Until that is true, do not do
    steps 3–6.
 3. Set the repository variable `NORDIC_CLIMATE_PUBLISH` to `1`. Leave
@@ -103,39 +103,22 @@ To turn publishing back off without deleting the workflow: delete
 `NORDIC_CLIMATE_PUBLISH` (or set it to anything other than `1`) and comment
 the crons again. The job is skipped when the variable is not `1`.
 
-## Credential Jerry must add
+## No seed token
 
-The private repo and the release are already in place. No token was created
-by this work, and none is committed.
+`MasterKano/nordic-climate-seed` is public. `restore_seed.py` downloads the
+release with no `Authorization` header. Workflows do not reference
+`NORDIC_CLIMATE_SEED_TOKEN`. `newsletter-archive` stays private and is not
+read.
 
-Name: `NORDIC_CLIMATE_SEED_TOKEN`
+Licence for the monthly files: Open-Meteo data are CC BY 4.0
+(https://open-meteo.com/en/license). Calling the free API is a separate,
+non-commercial contract (https://open-meteo.com/en/terms). ERA5 is Copernicus:
+attribute “Generated using Copernicus Climate Change Service information 2026”
+and note that the monthly CSVs are an adaptation. The same text is in the
+seed repo `LICENCE.md`.
 
-Create a fine-grained personal access token:
-
-1. Resource owner: **MasterKano**.
-2. Repository access: **Only select repositories**, and only
-   `nordic-climate-seed`. Not `newsletter-archive`, not `emmi-data`.
-3. Permissions: **Contents: Read-only**. **Metadata: Read-only** (GitHub
-   requires Metadata on a fine-grained token; it is read-only). No other
-   permissions.
-4. Expiry: **1 year**. A shorter expiry will stop the Saturday run when it
-   lapses. Put a reminder on the calendar a month before expiry and replace
-   the secret. Do not choose “no expiry”.
-
-Store it as an **environment secret**, not a repository secret, on both:
-
-- `nordic-climate-cutover` (Settings → Environments → that environment →
-  Environment secrets)
-- `nordic-climate-publish` (same)
-
-Repository secrets are visible to workflows on a same-repo pull request.
-Environment secrets are visible only to a job that names the environment.
-These workflows do not use `pull_request_target`. The history rebuild and
-the publish job name an environment and run only when `github.ref` is
-`refs/heads/main`. A pull request, including from a fork, does not receive
-the token.
-
-Environment settings:
+Environment settings, already created, are only the publish gate. They do
+not hold a seed secret:
 
 | Environment | Required reviewer | Deployment branches | Used by |
 |---|---|---|---|

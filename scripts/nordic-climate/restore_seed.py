@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""Restore monthly Open-Meteo point CSVs from a dedicated private seed repo.
+"""Restore monthly Open-Meteo point CSVs from the public seed release.
 
-The token on public emmi-data must not be able to read MasterKano/newsletter-archive.
-Jerry creates a separate private repo that contains only the monthly point
-CSVs, and a fine-grained PAT with Contents read-only on that repo alone.
-Default repo: ``MasterKano/nordic-climate-seed`` (override with
-``NORDIC_CLIMATE_SEED_REPO``). This script does not create the repo or the
-token, and it never prints the token.
+The release is on public ``MasterKano/nordic-climate-seed``, tag
+``nordic-climate-seed-20261125``. No token is used. ``newsletter-archive``
+stays private and is not read.
 
-The files are extracted into the runner's temp directory and are not saved
-to the public repo's Actions cache. ``hourly_raw/`` and the retired 10 m
-cache are not extracted.
+The tarball must match its sibling ``.sha256`` and ``PINNED_SHA256``.
+Only ``cache/openmeteo100m/om_YYYY_MM.csv`` is extracted, into the runner's
+temp directory. Nothing is written to the Actions cache.
 """
 from __future__ import annotations
 
@@ -23,18 +20,12 @@ from pathlib import Path
 
 import requests
 
-# Dedicated private repo. Not newsletter-archive. Jerry creates it; this
-# script does not.
 DEFAULT_SEED_REPO = "MasterKano/nordic-climate-seed"
 SEED_TAG = "nordic-climate-seed-20261125"
 SEED_TARBALL = "nordic-climate-seed-20261125.tar.gz"
 SEED_SHA_NAME = "nordic-climate-seed-20261125.sha256"
-SECRET_NAME = "NORDIC_CLIMATE_SEED_TOKEN"
-# sha256 of nordic-climate-seed-20261125.tar.gz on MasterKano/nordic-climate-seed.
-# 1,042 files, cache/openmeteo100m/om_YYYY_MM.csv only, 1940-01 through 2026-10.
-# Verified by a second download of the release asset on 25 Nov 2026.
+# sha256 of the public release tarball. 1,042 monthly CSVs, 1940-01 through 2026-10.
 PINNED_SHA256 = "09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7"
-API = "https://api.github.com"
 MONTH_CSV = re.compile(r"om_\d{4}_\d{2}\.csv\Z")
 
 
@@ -42,56 +33,21 @@ def seed_repo() -> str:
     return os.environ.get("NORDIC_CLIMATE_SEED_REPO", DEFAULT_SEED_REPO).strip()
 
 
-def _token() -> str:
-    token = os.environ.get(SECRET_NAME, "")
-    if not token.strip():
-        raise SystemExit(
-            f"Missing credential {SECRET_NAME}. Store it as an environment secret, "
-            "not a repository secret, on nordic-climate-publish and "
-            "nordic-climate-cutover. Fine-grained PAT, Contents read-only, "
-            f"repository {seed_repo()} only. Do not grant newsletter-archive. "
-            "No token was created here."
-        )
-    return token.strip()
-
-
-def _headers(token: str, accept: str) -> dict:
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": accept,
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "emmi-data-nordic-climate",
-    }
+def asset_url(name: str) -> str:
+    """Public release URL. No Authorization header is added."""
+    return f"https://github.com/{seed_repo()}/releases/download/{SEED_TAG}/{name}"
 
 
 def download_release_assets(dest: Path, session: requests.Session | None = None) -> tuple[Path, Path]:
-    token = _token()
     sess = session or requests.Session()
-    meta = sess.get(
-        f"{API}/repos/{seed_repo()}/releases/tags/{SEED_TAG}",
-        headers=_headers(token, "application/vnd.github+json"),
-        timeout=60,
-    )
-    if meta.status_code in (401, 403, 404):
-        raise SystemExit(
-            f"Could not read the private seed release ({meta.status_code}). "
-            f"{SECRET_NAME} needs Contents Read-only on {seed_repo()} only."
-        )
-    meta.raise_for_status()
-    assets = {a["name"]: a for a in meta.json().get("assets", [])}
-    for name in (SEED_TARBALL, SEED_SHA_NAME):
-        if name not in assets:
-            raise SystemExit(f"Seed release {SEED_TAG} is missing asset {name}")
     dest.mkdir(parents=True, exist_ok=True)
     paths = {}
+    headers = {"User-Agent": "emmi-data-nordic-climate"}
     for name in (SEED_TARBALL, SEED_SHA_NAME):
-        asset = assets[name]
-        url = asset["url"]
         out = dest / name
-        with sess.get(url, headers=_headers(token, "application/octet-stream"), timeout=300, stream=True) as resp:
-            if resp.status_code in (401, 403, 404):
-                raise SystemExit(f"Seed asset download failed ({resp.status_code}) for {name}")
-            resp.raise_for_status()
+        with sess.get(asset_url(name), headers=headers, timeout=300, stream=True, allow_redirects=True) as resp:
+            if resp.status_code != 200:
+                raise SystemExit(f"Public seed download failed ({resp.status_code}) for {name}")
             with out.open("wb") as fh:
                 for chunk in resp.iter_content(1024 * 1024):
                     if chunk:

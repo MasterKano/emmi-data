@@ -254,28 +254,34 @@ def test_seed_sha256_mismatch_and_missing_token(tmp_path, monkeypatch):
     bad.write_text(("0" * 64) + "\n")
     with pytest.raises(SystemExit, match="integrity"):
         restore_seed.verify_sha256(blob, bad)
-    monkeypatch.delenv("NORDIC_CLIMATE_SEED_TOKEN", raising=False)
-    with pytest.raises(SystemExit, match="environment secret"):
-        restore_seed._token()
+    url = restore_seed.asset_url(restore_seed.SEED_TARBALL)
+    assert url == (
+        "https://github.com/MasterKano/nordic-climate-seed/releases/download/"
+        "nordic-climate-seed-20261125/nordic-climate-seed-20261125.tar.gz"
+    )
+    assert "token" not in url
 
 
 def test_workflows_are_read_only_until_the_publish_gate():
     dry = (REPO / ".github/workflows/nordic-climate-dry-run.yml").read_text()
     live = (REPO / ".github/workflows/nordic-climate-live.yml").read_text()
     seed = (REPO / ".github/workflows/nordic-climate-seed.yml").read_text()
+    history = (REPO / ".github/workflows/nordic-climate-history.yml").read_text()
     publish = (REPO / ".github/workflows/nordic-climate-publish.yml").read_text()
     groups = {
         dry: "group: nordic-climate-dry-run",
         live: "group: nordic-climate-live",
         seed: "group: nordic-climate-seed",
+        history: "group: nordic-climate-history",
         publish: "group: nordic-climate-publish",
     }
     for text, group in groups.items():
         assert group in text
         assert "cancel-in-progress: false" in text
-    for text in (dry, live, seed):
+    for text in (dry, live, seed, history):
         assert "contents: read" in text
         assert "contents: write" not in text
+        assert "NORDIC_CLIMATE_SEED_TOKEN" not in text
     assert "contents: write" in publish
     assert "actions: write" not in publish
     assert "actions/cache" not in publish
@@ -287,10 +293,11 @@ def test_workflows_are_read_only_until_the_publish_gate():
     assert "timezone: Europe/Zurich" in publish
     assert "5 5 * * 6" in publish
     assert "5 5 11 * *" in publish
-    seed_on = seed.split("on:", 1)[1].split("permissions:", 1)[0]
-    assert "pull_request" not in seed_on
-    for text in (dry, live, seed, publish):
-        assert "pull_request_target" not in text.split("jobs:", 1)[0]
+    assert "pull_request:" in seed.split("permissions:", 1)[0]
+    assert "pull_request:" in history.split("permissions:", 1)[0]
+    for text in (dry, live, seed, history, publish):
+        assert "pull_request_target" not in text
+    assert "NORDIC_CLIMATE_SEED_TOKEN" not in publish
     assert "nordic-climate-seed" in seed
     assert "NORDIC_CLIMATE_PUBLISH" in publish
     cron_lines = [line for line in publish.splitlines() if "cron:" in line]
