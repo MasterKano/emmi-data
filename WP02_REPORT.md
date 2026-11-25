@@ -350,9 +350,20 @@ hour to the next valid time. The commented crons are `5 5 * * 6` and
 hour, so CET and CEST do not need two UTC lines. Late-runner and same-day
 dedup stay in `schedule_window.py`.
 
-The seed release is public. Restore downloads it with no token. The history
-rebuild is a pull-request workflow, read-only, and does not use an
-environment or a secret. Its run URL is recorded after this commit’s CI.
+The seed release is public. Restore downloads it with no token. On commit
+`d71837fe87d9c6ccfda03650adb936406bedd0c5` the hosted runs were:
+
+- Seed restore, no token: https://github.com/MasterKano/emmi-data/actions/runs/45579257834
+  (1,042 files, sha256 `09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7`).
+- History rebuild: https://github.com/MasterKano/emmi-data/actions/runs/45579257993
+  compared 31,731 published days, 0 mismatches, 4 new days, `ok=True`.
+  Artifact `nordic-climate-history-comparison`.
+
+The job condition for a scheduled publish is `refs/heads/main` and
+`NORDIC_CLIMATE_PUBLISH == '1'` and
+`github.event_name == 'schedule' && vars.NORDIC_CLIMATE_CUTOVER_DONE == '1'`.
+A schedule with cutover unset is skipped. A manual run before cutover uses
+environment `nordic-climate-cutover`.
 
 IFS sync evidence is in `OPERATIONS.md`. Six files were written to
 `/tmp/ifs-sync-test` and matched the workspace by sha256.
