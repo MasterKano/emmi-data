@@ -1,7 +1,9 @@
 """Single-runner lock for one machine.
 
-GitHub Actions concurrency (group ``nordic-climate``, cancel-in-progress false)
-is what stops two hosted runs from overlapping. This file lock stops two
+Each workflow has its own concurrency group with cancel-in-progress false, so
+a second run of that workflow waits. GitHub still drops an older *pending*
+run when a newer one joins the same group, which is why the dry-run, live,
+seed and publish workflows do not share a group. This file lock stops two
 processes on the same machine. A second acquire fails immediately.
 """
 from __future__ import annotations

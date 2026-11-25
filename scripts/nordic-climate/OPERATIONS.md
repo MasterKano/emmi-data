@@ -21,8 +21,11 @@ Nothing in this tree pushes to `main` until the steps below are done, in order.
 button for workflow files on the default branch, so evidence runs use
 `pull_request`.
 
-All of the data workflows share concurrency group `nordic-climate` with
-`cancel-in-progress: false`, so a second run waits instead of overlapping.
+Each workflow has its own concurrency group (`nordic-climate-dry-run`,
+`nordic-climate-live`, `nordic-climate-seed`, `nordic-climate-publish`) with
+`cancel-in-progress: false`. A second run of the same workflow waits. GitHub
+cancels an older *pending* run in a shared group, so the workflows do not
+share one group. The publish group is the one that matters after cutover.
 `publish_outputs.py` also takes a file lock on one machine.
 
 ## Schedule

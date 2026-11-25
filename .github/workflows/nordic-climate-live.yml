@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: nordic-climate
+  group: nordic-climate-live
   cancel-in-progress: false
 
 jobs:

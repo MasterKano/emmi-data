@@ -216,15 +216,21 @@ def test_workflows_are_read_only_until_the_publish_gate():
     live = (REPO / ".github/workflows/nordic-climate-live.yml").read_text()
     seed = (REPO / ".github/workflows/nordic-climate-seed.yml").read_text()
     publish = (REPO / ".github/workflows/nordic-climate-publish.yml").read_text()
+    groups = {
+        dry: "group: nordic-climate-dry-run",
+        live: "group: nordic-climate-live",
+        seed: "group: nordic-climate-seed",
+        publish: "group: nordic-climate-publish",
+    }
+    for text, group in groups.items():
+        assert group in text
+        assert "cancel-in-progress: false" in text
     for text in (dry, live, seed):
         assert "contents: read" in text
         assert "contents: write" not in text
-        assert "group: nordic-climate" in text
-        assert "cancel-in-progress: false" in text
     assert "contents: write" in publish
     assert "actions: write" in publish
     assert "NORDIC_CLIMATE_PUBLISH" in publish
-    assert "group: nordic-climate" in publish
     cron_lines = [line for line in publish.splitlines() if "cron:" in line]
     assert cron_lines and all(line.lstrip().startswith("#") for line in cron_lines)
     assert "github-actions[bot]" in (REPO / "scripts/nordic-climate/publish_outputs.py").read_text()

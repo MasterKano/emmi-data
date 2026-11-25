@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: nordic-climate
+  group: nordic-climate-seed
   cancel-in-progress: false
 
 jobs:

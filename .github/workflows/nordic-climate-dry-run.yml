@@ -9,8 +9,11 @@ on:
 permissions:
   contents: read
 
+# Own group. GitHub cancels an older pending run that shares a group, so the
+# evidence workflows must not share one. The publish workflow has its own
+# group too; it is the one that matters once the schedule is enabled.
 concurrency:
-  group: nordic-climate
+  group: nordic-climate-dry-run
   cancel-in-progress: false
 
 jobs:

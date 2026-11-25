@@ -31,7 +31,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: nordic-climate
+  group: nordic-climate-publish
   cancel-in-progress: false
 
 jobs:
