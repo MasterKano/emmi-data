@@ -1,0 +1,40 @@
+{
+  "period": "2024-01..2026-09",
+  "n_months": 33,
+  "grid": "lat 55-71 step 2, lon 4-32 step 4 (72 pts), Open-Meteo models=era5 daily",
+  "vars": {
+    "wind": {
+      "scheme": "coslat",
+      "raw_bias_om_minus_hist": 0.2845959771517251,
+      "raw_rmse": 0.2931451404745417,
+      "corr": 0.9979144243167402,
+      "slope": 0.9121451328523312,
+      "intercept": 0.16795159241090707,
+      "calibrated_rmse": 0.03918279319557002
+    },
+    "temp": {
+      "scheme": "coslat",
+      "raw_bias_om_minus_hist": 0.22498129612839943,
+      "raw_rmse": 0.34320924390930213,
+      "corr": 0.9996978453787473,
+      "slope": 1.029240388921795,
+      "intercept": -0.41467432211846555,
+      "calibrated_rmse": 0.16961528361536776
+    },
+    "rain": {
+      "scheme": "coslat",
+      "raw_bias_om_minus_hist": -0.13252284632053002,
+      "raw_rmse": 0.16263502126699728,
+      "corr": 0.9933089242894736,
+      "slope": 1.0943921310777387,
+      "intercept": -0.09936744660104087,
+      "calibrated_rmse": 0.07571572133409718
+    },
+    "wind100": {
+      "scheme": "coslat",
+      "slope": 1.0,
+      "intercept": 0.0,
+      "note": "Raw ERA5 100m wind, not calibrated to 10m history"
+    }
+  }
+}

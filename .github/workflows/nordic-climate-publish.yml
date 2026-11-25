@@ -1,0 +1,127 @@
+name: Nordic climate publish
+
+# DISABLED until cutover. This is the only workflow with contents: write.
+# Crons are commented, so GitHub does not register a schedule.
+# The job is skipped unless NORDIC_CLIMATE_PUBLISH is exactly 1 and the
+# workflow ref is refs/heads/main.
+#
+# GitHub supports IANA timezones on schedule (docs, 25 Nov 2026):
+# https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onschedule
+# 05:05 Europe/Zurich is one local time in both CET and CEST. 05:05 is outside
+# the DST spring-forward hour, so it is not moved. A Saturday that is also
+# the 11th starts two events at the same minute; schedule_window.py skips the
+# second once mtd.json was generated on that Zurich date. A runner that
+# starts later the same Zurich day still publishes.
+#
+# A schedule event runs only when NORDIC_CLIMATE_PUBLISH and
+# NORDIC_CLIMATE_CUTOVER_DONE are both exactly 1, on refs/heads/main. That
+# job uses environment nordic-climate-publish (no reviewer). If CUTOVER_DONE
+# is unset, the schedule job is skipped and never enters that environment.
+# The only publish before cutover is marked done is workflow_dispatch, which
+# uses environment nordic-climate-cutover (required reviewer).
+#
+# Enable only by scripts/nordic-climate/OPERATIONS.md.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1 and this run is on main."
+        type: boolean
+        default: false
+  # schedule:
+  #   - cron: "5 5 * * 6"
+  #     timezone: Europe/Zurich
+  #   - cron: "5 5 11 * *"
+  #     timezone: Europe/Zurich
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nordic-climate-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.NORDIC_CLIMATE_PUBLISH == '1' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'schedule' && vars.NORDIC_CLIMATE_CUTOVER_DONE == '1')
+      )
+    environment: ${{ github.event_name == 'workflow_dispatch' && vars.NORDIC_CLIMATE_CUTOVER_DONE != '1' && 'nordic-climate-cutover' || 'nordic-climate-publish' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Zurich schedule, including a late runner
+        id: window
+        env:
+          NORDIC_CLIMATE_PUBLISHED_MTD: nordic-climate/mtd.json
+        run: |
+          python scripts/nordic-climate/schedule_window.py | tee /tmp/window.txt
+          if grep -q '^proceed=yes$' /tmp/window.txt; then
+            echo "proceed=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=no" >> "$GITHUB_OUTPUT"
+            echo "### Nordic climate publish skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "See the schedule reason above. This is exit 0, not a failure." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Restore monthly CSVs into runner temp
+        id: seed
+        if: steps.window.outputs.proceed == 'yes'
+        env:
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
+        run: python scripts/nordic-climate/restore_seed.py
+      - name: Rebuild without the legacy publisher
+        if: steps.window.outputs.proceed == 'yes'
+        env:
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
+          NORDIC_CLIMATE_LOCK: ${{ runner.temp }}/nordic.lock
+        run: python scripts/nordic-climate/run_pipeline.py
+      - name: Commit when asked and the files changed
+        id: commit
+        if: steps.window.outputs.proceed == 'yes' && (github.event_name == 'schedule' || inputs.publish)
+        env:
+          NORDIC_CLIMATE_PUBLISH: ${{ vars.NORDIC_CLIMATE_PUBLISH }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          python scripts/nordic-climate/publish_outputs.py | tee /tmp/publish.txt
+          if grep -q '^commit=' /tmp/publish.txt; then
+            echo "push=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Push to main
+        if: steps.commit.outputs.push == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="$(git rev-parse --abbrev-ref HEAD)"
+          if [ "$branch" != "main" ]; then
+            echo "refusing to push $branch to main" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "### Nordic climate publish failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "git push to main failed after retries." >> "$GITHUB_STEP_SUMMARY"
+          exit 1

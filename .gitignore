@@ -6,3 +6,23 @@ nordic-v2/cache
 nordic-v2/output/
 nordic-v2/*.tmp
 nordic-v2/build.lock
+
+# Nordic climate rebuild products and the Open-Meteo cache. The cache is never
+# committed. Compact files are published only by the disabled publish workflow.
+scripts/nordic-climate/cache/
+scripts/nordic-climate/repo_data/
+scripts/nordic-climate/raw/
+scripts/nordic-climate/hourly_raw/
+scripts/nordic-climate/__pycache__/
+scripts/nordic-climate/tests/__pycache__/
+scripts/nordic-climate/.run.lock
+scripts/nordic-climate/daily_grid_mean.csv
+scripts/nordic-climate/daily_normals.csv
+scripts/nordic-climate/monthly.csv
+scripts/nordic-climate/mtd.json
+scripts/nordic-climate/daily_vs_monthly_sanity.csv
+scripts/nordic-climate/daily_vs_monthly_sanity.json
+scripts/nordic-climate/fetch_history.log
+scripts/nordic-climate/run_record.json
+scripts/nordic-climate/live_overlap_report.json
+scripts/nordic-climate/**/*.tmp

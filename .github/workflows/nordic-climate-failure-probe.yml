@@ -1,0 +1,33 @@
+name: Nordic climate failure probe
+
+# Armed only while scripts/nordic-climate/FAILURE_PROBE exists. The job must
+# exit non-zero in that case so the Actions UI shows a failed run. Removing
+# the file makes a later run succeed. Read-only; it publishes nothing.
+on:
+  pull_request:
+    paths:
+      - scripts/nordic-climate/FAILURE_PROBE
+      - .github/workflows/nordic-climate-failure-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Forced failure while the probe file is present
+        run: |
+          {
+            echo "### Nordic climate failure probe"
+            echo "Success stays silent. A non-zero exit is how a failure shows up in Actions."
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f scripts/nordic-climate/FAILURE_PROBE ]; then
+            echo "::error title=Nordic climate failure probe::Forced failure so this run is marked failed."
+            echo "Probe file is present. Exiting 1. Nothing was published." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "Probe file is absent. This run is not a forced failure." >> "$GITHUB_STEP_SUMMARY"

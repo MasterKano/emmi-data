@@ -1,0 +1,49 @@
+name: Nordic climate seed restore
+
+# Public release. No token. Read-only. Does not publish.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nordic-climate-seed
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Download the public monthly seed and check the pin
+        env:
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
+        run: |
+          python scripts/nordic-climate/restore_seed.py
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          cache = Path(os.environ["NORDIC_CLIMATE_CACHE"])
+          names = sorted(p.name for p in cache.glob("om_*.csv"))
+          leaked = [p.name for p in cache.rglob("*") if p.is_file() and not p.name.startswith("om_")]
+          if leaked:
+              raise SystemExit(f"unexpected extract: {leaked[:10]}")
+          if names[0] != "om_1940_01.csv" or names[-1] != "om_2026_10.csv" or len(names) != 1042:
+              raise SystemExit(f"monthly span looks wrong: {names[:2]} .. {names[-2:]} ({len(names)})")
+          print(f"monthly csvs only: {len(names)} files, {names[0]} .. {names[-1]}")
+          PY
+          {
+            echo "### Nordic climate seed restore"
+            echo "Public release, no token. Pinned sha256 \`09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7\`."
+            echo "Licence: Open-Meteo CC BY 4.0 and Copernicus ERA5, see the seed repo LICENCE.md."
+          } >> "$GITHUB_STEP_SUMMARY"

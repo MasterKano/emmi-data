@@ -1,0 +1,65 @@
+name: Nordic climate history rebuild
+
+# Public seed, read-only, no publish. Runs on pull requests so the full
+# 1940-present comparison is evidence before merge.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nordic-climate-history
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Restore the public seed, rebuild, and compare every published day
+        env:
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
+          NORDIC_CLIMATE_LOCK: ${{ runner.temp }}/nordic.lock
+        run: |
+          set -euo pipefail
+          python scripts/nordic-climate/restore_seed.py
+          python scripts/nordic-climate/run_pipeline.py
+          python scripts/nordic-climate/compare_published.py \
+            --built scripts/nordic-climate \
+            --published nordic-climate \
+            --out "$RUNNER_TEMP/history_comparison.json"
+          python - <<'PY'
+          import json, os
+          report = json.load(open(os.environ["RUNNER_TEMP"] + "/history_comparison.json"))
+          daily = report["daily"]
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary, "a") as fh:
+              fh.write("### Nordic climate history rebuild\n\n")
+              fh.write(f"Compared days: {daily['compared_days']}. Mismatches: {daily['n_mismatches']}. ")
+              fh.write(f"Missing: {daily['n_published_days_missing']}. New days: {daily['n_new_dates']}.\n")
+              fh.write("Publish disabled. No seed token.\n")
+          print(
+              f"overlap_days={daily['compared_days']} mismatches={daily['n_mismatches']} "
+              f"missing={daily['n_published_days_missing']} new={daily['n_new_dates']} ok={report['ok']}"
+          )
+          if not report["ok"]:
+              raise SystemExit("full-history comparison failed")
+          PY
+      - name: Upload comparison report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordic-climate-history-comparison
+          retention-days: 14
+          if-no-files-found: ignore
+          path: ${{ runner.temp }}/history_comparison.json

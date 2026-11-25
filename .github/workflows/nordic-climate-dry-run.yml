@@ -1,0 +1,73 @@
+name: Nordic climate dry run
+
+# Read-only. Rebuilds compact files from a synthetic cache and runs the unit
+# tests. It does not download the private seed and it cannot push.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Own group. GitHub cancels an older pending run that shares a group, so the
+# evidence workflows must not share one. The publish workflow has its own
+# group too; it is the one that matters once the schedule is enabled.
+concurrency:
+  group: nordic-climate-dry-run
+  cancel-in-progress: false
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Unit and negative tests
+        run: python -m pytest -q scripts/nordic-climate/tests
+
+  fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Rebuild five compact files from a synthetic cache
+        env:
+          NORDIC_CLIMATE_TODAY: "2026-11-21"
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/fixture/openmeteo100m
+          NORDIC_CLIMATE_LOCK: ${{ runner.temp }}/nordic.lock
+        run: |
+          set -euo pipefail
+          python scripts/nordic-climate/make_fixture_cache.py \
+            --today "$NORDIC_CLIMATE_TODAY" \
+            --cache "$NORDIC_CLIMATE_CACHE"
+          python scripts/nordic-climate/run_pipeline.py
+          test "${NORDIC_CLIMATE_PUBLISH:-}" != "1"
+          git status --porcelain
+      - name: Upload fixture artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordic-climate-fixture
+          retention-days: 14
+          path: |
+            scripts/nordic-climate/daily_grid_mean.csv
+            scripts/nordic-climate/daily_normals.csv
+            scripts/nordic-climate/monthly.csv
+            scripts/nordic-climate/mtd.json
+            scripts/nordic-climate/README.md
+            scripts/nordic-climate/daily_vs_monthly_sanity.csv
+            scripts/nordic-climate/daily_vs_monthly_sanity.json
+            scripts/nordic-climate/run_record.json
