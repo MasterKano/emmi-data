@@ -80,6 +80,7 @@ def test_unchanged_files_make_no_commit(tmp_path, monkeypatch):
     subprocess.run(["git", "add", "nordic-climate"], cwd=repo, check=True)
     subprocess.run(["git", "commit", "-m", "base"], cwd=repo, check=True, capture_output=True)
     before = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     monkeypatch.setenv("NORDIC_CLIMATE_PUBLISH", "1")
     assert publish_outputs.publish(repo, built, today=date.fromisoformat(end)) is None
     after = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -98,6 +99,7 @@ def test_changed_files_commit_as_github_actions_bot(tmp_path, monkeypatch):
     payload = json.loads((built / "mtd.json").read_text())
     payload["generated"] = "2026-11-22"
     (built / "mtd.json").write_text(json.dumps(payload))
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     monkeypatch.setenv("NORDIC_CLIMATE_PUBLISH", "1")
     sha = publish_outputs.publish(repo, built, today=date.fromisoformat(end))
     assert sha
@@ -119,6 +121,7 @@ def test_publish_refuses_without_variable_and_when_validation_fails(tmp_path, mo
     with pytest.raises(SystemExit, match="NORDIC_CLIMATE_PUBLISH"):
         publish_outputs.publish(repo, built, today=date(2026, 11, 21))
     assert subprocess.check_output(["git", "status", "--porcelain"], cwd=repo, text=True).strip() == ""
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
     monkeypatch.setenv("NORDIC_CLIMATE_PUBLISH", "1")
     with pytest.raises(RuntimeError, match="stale"):
         publish_outputs.publish(repo, built, today=date(2026, 12, 31))
