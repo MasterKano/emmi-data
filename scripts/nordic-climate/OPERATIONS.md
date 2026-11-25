@@ -86,11 +86,14 @@ and only so that **one** system is allowed to write `nordic-climate/` on `main`.
    does not push. Run it again with the box ticked for the first real
    commit, as `github-actions[bot]`. Compare that commit with the previous
    `nordic-climate/` files.
-5. Set the repository variable `NORDIC_CLIMATE_CUTOVER_DONE` to `1`. Later
-   manual runs and every scheduled run use `nordic-climate-publish`, which
-   has no required reviewer.
+5. Set the repository variable `NORDIC_CLIMATE_CUTOVER_DONE` to `1`. Only
+   then can a schedule event run, and it uses `nordic-climate-publish`.
+   A schedule with that variable unset is skipped and does not enter
+   `nordic-climate-publish`, even if `NORDIC_CLIMATE_PUBLISH` is `1` and the
+   crons have been uncommented. The only publish before this variable is `1`
+   is the manual run, which uses `nordic-climate-cutover`.
 6. In a follow-up commit on main, uncomment the two `cron` lines, their
-   `timezone` lines, and the `schedule:` key.
+   `timezone` lines, and the `schedule:` key. Do this after step 5.
 
 A dispatch from a feature branch cannot push that branch to main: the job is
 skipped unless `github.ref` is `refs/heads/main`, the checkout is `ref: main`,

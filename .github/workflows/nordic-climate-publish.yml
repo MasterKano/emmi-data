@@ -13,11 +13,12 @@ name: Nordic climate publish
 # second once mtd.json was generated on that Zurich date. A runner that
 # starts later the same Zurich day still publishes.
 #
-# Approval: while NORDIC_CLIMATE_CUTOVER_DONE is unset, a manual run uses
-# environment nordic-climate-cutover (required reviewer). After that variable
-# is 1, and for every schedule event, the job uses nordic-climate-publish
-# with no reviewer. The seed token is an environment secret on those two
-# environments, not a repository secret, so pull requests never receive it.
+# A schedule event runs only when NORDIC_CLIMATE_PUBLISH and
+# NORDIC_CLIMATE_CUTOVER_DONE are both exactly 1, on refs/heads/main. That
+# job uses environment nordic-climate-publish (no reviewer). If CUTOVER_DONE
+# is unset, the schedule job is skipped and never enters that environment.
+# The only publish before cutover is marked done is workflow_dispatch, which
+# uses environment nordic-climate-cutover (required reviewer).
 #
 # Enable only by scripts/nordic-climate/OPERATIONS.md.
 on:
@@ -42,8 +43,14 @@ concurrency:
 
 jobs:
   publish:
-    if: vars.NORDIC_CLIMATE_PUBLISH == '1' && github.ref == 'refs/heads/main'
-    environment: ${{ (github.event_name == 'schedule' || vars.NORDIC_CLIMATE_CUTOVER_DONE == '1') && 'nordic-climate-publish' || 'nordic-climate-cutover' }}
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      vars.NORDIC_CLIMATE_PUBLISH == '1' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'schedule' && vars.NORDIC_CLIMATE_CUTOVER_DONE == '1')
+      )
+    environment: ${{ github.event_name == 'workflow_dispatch' && vars.NORDIC_CLIMATE_CUTOVER_DONE != '1' && 'nordic-climate-cutover' || 'nordic-climate-publish' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

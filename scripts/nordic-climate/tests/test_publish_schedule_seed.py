@@ -312,7 +312,31 @@ def test_published_readme_is_the_method_file_and_wind_stays_raw():
 
 def test_schedule_script_prints_proceed(monkeypatch):
     monkeypatch.setenv("GITHUB_EVENT_NAME", "schedule")
+    monkeypatch.setenv("NORDIC_CLIMATE_CUTOVER_DONE", "1")
     monkeypatch.setenv("NORDIC_CLIMATE_NOW", "2026-12-11T04:05:00+00:00")
     assert schedule_window.main(["schedule_window.py"]) == 0
     monkeypatch.setenv("NORDIC_CLIMATE_NOW", "2026-12-10T04:05:00+00:00")
     assert schedule_window.main(["schedule_window.py"]) == 0
+
+
+def test_publish_route_keeps_schedule_off_until_cutover_is_done():
+    main = "refs/heads/main"
+    assert schedule_window.publish_route("schedule", "1", None, main) is None
+    assert schedule_window.publish_route("schedule", "1", "", main) is None
+    assert schedule_window.publish_route("schedule", "1", "1", main) == "nordic-climate-publish"
+    assert schedule_window.publish_route("workflow_dispatch", "1", None, main) == "nordic-climate-cutover"
+    assert schedule_window.publish_route("workflow_dispatch", "1", "1", main) == "nordic-climate-publish"
+    assert schedule_window.publish_route("schedule", None, "1", main) is None
+    assert schedule_window.publish_route("workflow_dispatch", None, None, main) is None
+    assert schedule_window.publish_route("schedule", "1", "1", "refs/heads/wp02/nordic-climate-actions") is None
+    text = (REPO / ".github/workflows/nordic-climate-publish.yml").read_text()
+    assert "github.event_name == 'schedule' && vars.NORDIC_CLIMATE_CUTOVER_DONE == '1'" in text
+    assert "github.event_name == 'schedule' || vars.NORDIC_CLIMATE_CUTOVER_DONE" not in text
+
+
+def test_scheduled_publish_refuses_without_cutover_done(monkeypatch):
+    monkeypatch.setenv("NORDIC_CLIMATE_PUBLISH", "1")
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "schedule")
+    monkeypatch.delenv("NORDIC_CLIMATE_CUTOVER_DONE", raising=False)
+    with pytest.raises(SystemExit, match="NORDIC_CLIMATE_CUTOVER_DONE"):
+        publish_outputs.publish(Path("/tmp/unused-nordic-publish"), Path("/tmp/unused-nordic-built"))

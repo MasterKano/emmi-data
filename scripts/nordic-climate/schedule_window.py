@@ -39,7 +39,29 @@ def is_scheduled_day(local: datetime) -> bool:
     return local.weekday() == 5 or local.day == 11
 
 
-def decision(moment: datetime, event: str, last_published: date | None = None) -> tuple[bool, str]:
+def publish_route(event: str, publish: str | None, cutover_done: str | None, ref: str) -> str | None:
+    """Which environment may run, or None when the job must be skipped.
+
+    A schedule reaches ``nordic-climate-publish`` only when cutover is done.
+    Before that, only a manual run may publish, and only through
+    ``nordic-climate-cutover``. ``NORDIC_CLIMATE_PUBLISH`` unset skips both.
+    """
+    if ref != "refs/heads/main" or publish != "1":
+        return None
+    if event == "schedule":
+        if cutover_done != "1":
+            return None
+        return "nordic-climate-publish"
+    if event == "workflow_dispatch":
+        if cutover_done == "1":
+            return "nordic-climate-publish"
+        return "nordic-climate-cutover"
+    return None
+
+
+def decision(moment: datetime, event: str, last_published: date | None = None, cutover_done: str | None = None) -> tuple[bool, str]:
+    if event == "schedule" and cutover_done != "1":
+        return False, "scheduled publish requires NORDIC_CLIMATE_CUTOVER_DONE=1; the job must not run"
     if event != "schedule":
         return True, "manual run is not tied to the clock"
     local = as_zurich(moment)
@@ -58,8 +80,8 @@ def decision(moment: datetime, event: str, last_published: date | None = None) -
     )
 
 
-def allows(moment: datetime, event: str, last_published: date | None = None) -> bool:
-    return decision(moment, event, last_published)[0]
+def allows(moment: datetime, event: str, last_published: date | None = None, cutover_done: str | None = "1") -> bool:
+    return decision(moment, event, last_published, cutover_done)[0]
 
 
 def last_published_date(path: Path | None) -> date | None:
@@ -85,9 +107,12 @@ def main(argv: list[str] | None = None) -> int:
         moment = datetime.now(timezone.utc)
     mtd = os.environ.get("NORDIC_CLIMATE_PUBLISHED_MTD")
     published = last_published_date(Path(mtd) if mtd else None)
-    ok, reason = decision(moment, event, published)
+    cutover_done = os.environ.get("NORDIC_CLIMATE_CUTOVER_DONE")
+    ok, reason = decision(moment, event, published, cutover_done)
     print("proceed=yes" if ok else "proceed=no")
     print(reason, file=sys.stderr)
+    if event == "schedule" and cutover_done != "1":
+        return 1
     return 0
 
 

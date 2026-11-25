@@ -79,6 +79,11 @@ def publish(repo: Path, built: Path, today: date | None = None) -> str | None:
             "NORDIC_CLIMATE_PUBLISH is not 1. Publishing stays disabled until "
             "cutover sets that repository variable. No commit was created."
         )
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and os.environ.get("NORDIC_CLIMATE_CUTOVER_DONE") != "1":
+        _fail(
+            "Scheduled publish requires NORDIC_CLIMATE_CUTOVER_DONE=1. "
+            "No commit was created."
+        )
     ref = os.environ.get("GITHUB_REF", "")
     if ref and ref != "refs/heads/main":
         _fail(

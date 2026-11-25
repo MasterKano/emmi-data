@@ -266,16 +266,18 @@ token, and (before `NORDIC_CLIMATE_PUBLISH=1`) the Actions environment
 
 ### Schedule and publish guard
 
-Commented crons are `5 3 11 * 6` and `5 4 11 * 6` (Saturday OR the 11th, one
-fire when both match). A runner that starts after 05:05 the same Zurich day
-still publishes. A second fire that day sees `mtd.json` `generated` already
-equal to that date and exits 0. Times before 04:50 Zurich are the early
-off-season hour and are skipped.
+Commented crons are `5 5 * * 6` and `5 5 11 * *` with `timezone: Europe/Zurich`.
+A runner that starts after 05:05 the same Zurich day still publishes. A
+second fire that day sees `mtd.json` `generated` already equal to that date
+and exits 0. Times before 04:50 Zurich are skipped.
 
-The publish job runs only when `github.ref == 'refs/heads/main'` and
-`NORDIC_CLIMATE_PUBLISH` is `1`, in environment `nordic-climate-publish`.
-It checks out `main`. The push step refuses a HEAD that is not `main`.
-A dispatch from another branch cannot push that branch.
+The publish job runs only when `github.ref` is `refs/heads/main`,
+`NORDIC_CLIMATE_PUBLISH` is `1`, and either the event is `workflow_dispatch`
+or the event is `schedule` and `NORDIC_CLIMATE_CUTOVER_DONE` is `1`. A
+schedule with cutover unset is skipped and does not enter
+`nordic-climate-publish`. A manual run before cutover uses
+`nordic-climate-cutover`. The checkout is `main`. The push step refuses a
+HEAD that is not `main`.
 
 ### Full history
 
@@ -374,9 +376,12 @@ IFS sync evidence is in `OPERATIONS.md`. Six files were written to
 3. After this PR is on main, dispatch **Nordic climate history rebuild**
    from main. That is the hosted 1940-present compare. It does not publish.
 4. Cutover, still later: retire Mark's routine, set `NORDIC_CLIMATE_PUBLISH`
-   to `1`, approve the one cutover run, set `NORDIC_CLIMATE_CUTOVER_DONE`
-   to `1`, then uncomment the two Zurich crons. Confirm Actions email for
-   the account that edits the cron.
+   to `1`, approve the one manual run (environment `nordic-climate-cutover`),
+   set `NORDIC_CLIMATE_CUTOVER_DONE` to `1`, then uncomment the two Zurich
+   crons. A schedule event also requires `NORDIC_CLIMATE_CUTOVER_DONE=1`.
+   With that variable unset the schedule job is skipped and does not enter
+   `nordic-climate-publish`. Confirm Actions email for the account that
+   edits the cron.
 
 Publishing stays disabled until those last steps. Do not merge this as part
 of the seed upload.
