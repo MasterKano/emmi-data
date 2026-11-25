@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Decide whether a scheduled Nordic climate run should publish.
 
-GitHub cron is UTC and can start late. The intended clock is 05:05
-Europe/Zurich on Saturday and on the 11th (the morning after mr-climate).
-Two UTC hours cover CET and CEST. They are one cron each, with day-of-month
-and day-of-week both set, which GitHub treats as OR: one firing on a
-Saturday that is also the 11th, not two.
+The publish crons, once uncommented, are 05:05 Europe/Zurich on Saturday and
+on the 11th. GitHub's schedule syntax accepts an IANA timezone, so those
+crons do not need a pair of UTC hours. 05:05 is outside the DST
+spring-forward gap, so the local time exists once. A Saturday that is also
+the 11th starts both crons at the same minute.
 
 A runner that starts after 05:05 still publishes, as long as it is the same
 Zurich date and that date has not already been published. A run before

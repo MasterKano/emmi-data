@@ -30,6 +30,10 @@ SEED_TAG = "nordic-climate-seed-20261125"
 SEED_TARBALL = "nordic-climate-seed-20261125.tar.gz"
 SEED_SHA_NAME = "nordic-climate-seed-20261125.sha256"
 SECRET_NAME = "NORDIC_CLIMATE_SEED_TOKEN"
+# sha256 of nordic-climate-seed-20261125.tar.gz on MasterKano/nordic-climate-seed.
+# 1,042 files, cache/openmeteo100m/om_YYYY_MM.csv only, 1940-01 through 2026-10.
+# Verified by a second download of the release asset on 25 Nov 2026.
+PINNED_SHA256 = "09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7"
 API = "https://api.github.com"
 MONTH_CSV = re.compile(r"om_\d{4}_\d{2}\.csv\Z")
 
@@ -42,10 +46,10 @@ def _token() -> str:
     token = os.environ.get(SECRET_NAME, "")
     if not token.strip():
         raise SystemExit(
-            f"Missing credential {SECRET_NAME}. Jerry must add it on "
-            "MasterKano/emmi-data: a fine-grained personal access token with "
-            f"Contents Read-only on {seed_repo()} only. "
-            "Do not grant it on MasterKano/newsletter-archive. "
+            f"Missing credential {SECRET_NAME}. Store it as an environment secret, "
+            "not a repository secret, on nordic-climate-publish and "
+            "nordic-climate-cutover. Fine-grained PAT, Contents read-only, "
+            f"repository {seed_repo()} only. Do not grant newsletter-archive. "
             "No token was created here."
         )
     return token.strip()
@@ -106,19 +110,13 @@ def parse_sha256_file(text: str) -> str:
 
 
 def verify_sha256(tarball: Path, sha_file: Path) -> str:
-    """The tarball must match the sibling .sha256 asset.
-
-    If Jerry has set ``NORDIC_CLIMATE_SEED_SHA256`` after creating the slim
-    seed, that pin must match too. There is no pin until then: the previous
-    mixed newsletter-archive tarball is not what this repo should download.
-    """
+    """The tarball, the sibling .sha256 asset, and PINNED_SHA256 must all match."""
     digest = hashlib.sha256(tarball.read_bytes()).hexdigest()
     published = parse_sha256_file(sha_file.read_text())
-    pinned = os.environ.get("NORDIC_CLIMATE_SEED_SHA256", "").strip().lower()
-    if digest != published or (pinned and digest != pinned):
+    if digest != published or digest != PINNED_SHA256 or published != PINNED_SHA256:
         raise SystemExit(
             "Seed integrity check failed: "
-            f"file={digest} sha256_asset={published} pinned={pinned or 'unset'}"
+            f"file={digest} sha256_asset={published} pinned={PINNED_SHA256}"
         )
     return digest
 

@@ -329,6 +329,58 @@ an Open-Meteo paid API plan; Copernicus CDS, which `mr-climate` already uses
 for a different 10 m product; or self-hosted Open-Meteo. `mr-climate` was
 not modified.
 
+## Seed repo, pin, timezone, and the box sync (Jerry approved)
+
+Private repo https://github.com/MasterKano/nordic-climate-seed (stays private).
+
+| Item | Value |
+|---|---|
+| Git commit | `224bc27102e954a83d67c370874507b344e39b2e` (`README.md`, `LICENCE.md` only) |
+| Release | tag `nordic-climate-seed-20261125` |
+| Asset | `nordic-climate-seed-20261125.tar.gz`, 22,538,558 bytes |
+| Sibling | `nordic-climate-seed-20261125.sha256` |
+| Pinned sha256 | `09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7` |
+| Contents | 1,042 files, `cache/openmeteo100m/om_YYYY_MM.csv`, 1940-01 through 2026-10 |
+
+A second `gh release download` matched the pin. The tarball has no hourly
+files and no calibration. `restore_seed.PINNED_SHA256` is that digest;
+restore exits if the file, the sibling checksum, and the pin disagree.
+
+GitHub documents IANA `timezone` on `schedule` (workflow syntax page, read
+25 Nov 2026). DST spring-forward moves a schedule that lands in the skipped
+hour to the next valid time. The commented crons are `5 5 * * 6` and
+`5 5 11 * *` with `timezone: Europe/Zurich`. 05:05 is outside the skipped
+hour, so CET and CEST do not need two UTC lines. Late-runner and same-day
+dedup stay in `schedule_window.py`.
+
+The history rebuild workflow is `workflow_dispatch` on `main` only, using
+environment `nordic-climate-publish`. It is not a pull-request check and it
+does not run until the environment secret exists. It is ready; this round
+does not wait for that run.
+
+IFS sync evidence is in `OPERATIONS.md`. Six files were written to
+`/tmp/ifs-sync-test` and matched the workspace by sha256.
+`/home/box/data/nordic-climate` was not created.
+
+### Remaining actions for Jerry
+
+1. Fine-grained PAT. Resource owner MasterKano. Repository access: only
+   `nordic-climate-seed`. Permissions: Contents Read, Metadata Read. Expiry
+   one year, with a reminder to rotate.
+2. Environments `nordic-climate-cutover` (required reviewer, `main` only)
+   and `nordic-climate-publish` (no reviewer, `main` only). Put the token
+   in both as environment secret `NORDIC_CLIMATE_SEED_TOKEN`. Not a
+   repository secret.
+3. After this PR is on main, dispatch **Nordic climate history rebuild**
+   from main. That is the hosted 1940-present compare. It does not publish.
+4. Cutover, still later: retire Mark's routine, set `NORDIC_CLIMATE_PUBLISH`
+   to `1`, approve the one cutover run, set `NORDIC_CLIMATE_CUTOVER_DONE`
+   to `1`, then uncomment the two Zurich crons. Confirm Actions email for
+   the account that edits the cron.
+
+Publishing stays disabled until those last steps. Do not merge this as part
+of the seed upload.
+
 ## Readiness for 11 Dec 2026
 
 The Action can be reviewed now. It is not the publisher. The bot remains the

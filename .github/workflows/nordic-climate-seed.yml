@@ -1,14 +1,13 @@
-name: Nordic climate seed restore
+name: Nordic climate history rebuild
 
-# Read-only. Downloads monthly CSVs from the dedicated private seed repo
-# MasterKano/nordic-climate-seed when NORDIC_CLIMATE_SEED_TOKEN is set.
-# The token must not be able to read newsletter-archive. Files go to runner
-# temp only: this workflow does not write the Actions cache and does not
-# upload the point files. Until Jerry creates that repo and the secret,
-# the job fails on purpose. A successful restore then rebuilds 1940-present
-# and compares every overlapping day with the published series.
+# Prepared, not part of pull-request CI. Fork and same-repo pull requests
+# are not a trigger, so they cannot read the seed token.
+# Dispatch it from main after NORDIC_CLIMATE_SEED_TOKEN is an environment
+# secret on nordic-climate-publish. That environment should not require a
+# reviewer; the one-time reviewer gate is only the cutover publish.
+# Point files stay in runner temp. The uploaded artifact is the comparison
+# JSON only.
 on:
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -20,10 +19,14 @@ concurrency:
 
 jobs:
   restore:
+    if: github.ref == 'refs/heads/main'
+    environment: nordic-climate-publish
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -37,10 +40,10 @@ jobs:
           NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
         run: |
           {
-            echo "### Nordic climate seed restore"
-            echo "Secret name: \`NORDIC_CLIMATE_SEED_TOKEN\`."
-            echo "Scope: Contents read-only on \`MasterKano/nordic-climate-seed\` only. Not newsletter-archive."
-            echo "The token value is not printed. Point files are not uploaded and are not written to the Actions cache."
+            echo "### Nordic climate history rebuild"
+            echo "Token is the environment secret \`NORDIC_CLIMATE_SEED_TOKEN\` on \`nordic-climate-publish\`."
+            echo "Scope: Contents read-only on \`MasterKano/nordic-climate-seed\` only."
+            echo "Pinned sha256: \`09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7\`."
           } >> "$GITHUB_STEP_SUMMARY"
           python scripts/nordic-climate/restore_seed.py
           python - <<'PY'
@@ -53,6 +56,8 @@ jobs:
               raise SystemExit(f"unexpected extract: {leaked[:10]}")
           if "om_1940_01.csv" not in names or "om_2026_10.csv" not in names:
               raise SystemExit(f"monthly span looks wrong: {names[:3]} .. {names[-3:]} ({len(names)})")
+          if len(names) != 1042:
+              raise SystemExit(f"expected 1042 monthly CSVs, found {len(names)}")
           print(f"monthly csvs only: {len(names)} files, {names[0]} .. {names[-1]}")
           PY
       - name: Rebuild 1940-present and compare the whole published overlap

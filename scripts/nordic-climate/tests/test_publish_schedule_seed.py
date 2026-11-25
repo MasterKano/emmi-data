@@ -152,6 +152,8 @@ def test_box_sync_dry_run_lists_public_urls(capsys):
     assert "raw.githubusercontent.com/MasterKano/emmi-data/main/nordic-climate/mtd.json" in out
     assert "calibration.json" in out
     assert "/home/box/data/nordic-climate" in out
+    with pytest.raises(SystemExit, match="/home/box"):
+        sync_box_copy.main(["--dest", "/home/box/data/nordic-climate"])
 
 
 def test_legacy_publisher_is_disabled():
@@ -242,17 +244,18 @@ def test_seed_sha256_mismatch_and_missing_token(tmp_path, monkeypatch):
     digest = hashlib.sha256(blob.read_bytes()).hexdigest()
     good = tmp_path / "good.sha256"
     good.write_text(digest + "  blob.tar.gz\n")
+    assert restore_seed.PINNED_SHA256 == "09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7"
+    assert digest != restore_seed.PINNED_SHA256
+    with pytest.raises(SystemExit, match="integrity"):
+        restore_seed.verify_sha256(blob, good)
+    monkeypatch.setattr(restore_seed, "PINNED_SHA256", digest)
     assert restore_seed.verify_sha256(blob, good) == digest
     bad = tmp_path / "bad.sha256"
     bad.write_text(("0" * 64) + "\n")
     with pytest.raises(SystemExit, match="integrity"):
         restore_seed.verify_sha256(blob, bad)
-    monkeypatch.setenv("NORDIC_CLIMATE_SEED_SHA256", "1" * 64)
-    with pytest.raises(SystemExit, match="integrity"):
-        restore_seed.verify_sha256(blob, good)
-    monkeypatch.delenv("NORDIC_CLIMATE_SEED_SHA256", raising=False)
     monkeypatch.delenv("NORDIC_CLIMATE_SEED_TOKEN", raising=False)
-    with pytest.raises(SystemExit, match="nordic-climate-seed"):
+    with pytest.raises(SystemExit, match="environment secret"):
         restore_seed._token()
 
 
@@ -279,7 +282,15 @@ def test_workflows_are_read_only_until_the_publish_gate():
     assert "actions/cache" not in seed
     assert "github.ref == 'refs/heads/main'" in publish
     assert "ref: main" in publish
-    assert "environment: nordic-climate-publish" in publish
+    assert "nordic-climate-publish" in publish
+    assert "nordic-climate-cutover" in publish
+    assert "timezone: Europe/Zurich" in publish
+    assert "5 5 * * 6" in publish
+    assert "5 5 11 * *" in publish
+    seed_on = seed.split("on:", 1)[1].split("permissions:", 1)[0]
+    assert "pull_request" not in seed_on
+    for text in (dry, live, seed, publish):
+        assert "pull_request_target" not in text.split("jobs:", 1)[0]
     assert "nordic-climate-seed" in seed
     assert "NORDIC_CLIMATE_PUBLISH" in publish
     cron_lines = [line for line in publish.splitlines() if "cron:" in line]

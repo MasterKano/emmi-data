@@ -1,34 +1,37 @@
 name: Nordic climate publish
 
 # DISABLED until cutover. This is the only workflow with contents: write.
-# It does not use the Actions cache. Point-level files stay in the runner
-# temp directory and are discarded with the runner.
+# Crons are commented, so GitHub does not register a schedule.
+# The job is skipped unless NORDIC_CLIMATE_PUBLISH is exactly 1 and the
+# workflow ref is refs/heads/main.
 #
-# The job runs only when all of these are true:
-# - repository variable NORDIC_CLIMATE_PUBLISH is exactly 1
-# - the workflow ref is refs/heads/main (a dispatch from another branch is skipped)
-# - GitHub environment nordic-climate-publish allows the job
-# The checkout is main, not the branch that was selected in the dispatch UI.
+# GitHub supports IANA timezones on schedule (docs, 25 Nov 2026):
+# https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onschedule
+# 05:05 Europe/Zurich is one local time in both CET and CEST. 05:05 is outside
+# the DST spring-forward hour, so it is not moved. A Saturday that is also
+# the 11th starts two events at the same minute; schedule_window.py skips the
+# second once mtd.json was generated on that Zurich date. A runner that
+# starts later the same Zurich day still publishes.
 #
-# Schedules are present but commented, so GitHub does not register them.
-# Each line is Saturday OR the 11th (GitHub ORs day-of-month and day-of-week),
-# so a Saturday that is the 11th fires once per UTC hour, not twice.
-# 03:05 UTC is 05:05 CEST. 04:05 UTC is 05:05 CET.
-# A runner that starts late the same Zurich day still publishes.
-# A second firing that day sees mtd.json already generated today and skips.
+# Approval: while NORDIC_CLIMATE_CUTOVER_DONE is unset, a manual run uses
+# environment nordic-climate-cutover (required reviewer). After that variable
+# is 1, and for every schedule event, the job uses nordic-climate-publish
+# with no reviewer. The seed token is an environment secret on those two
+# environments, not a repository secret, so pull requests never receive it.
 #
-# Enable only by scripts/nordic-climate/OPERATIONS.md. Do not enable while
-# Mark's Grok Bot routine is still authorised to push nordic-climate/.
+# Enable only by scripts/nordic-climate/OPERATIONS.md.
 on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1 and this workflow is running on main."
+        description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1 and this run is on main."
         type: boolean
         default: false
   # schedule:
-  #   - cron: "5 3 11 * 6"  # 05:05 CEST on Saturday or the 11th
-  #   - cron: "5 4 11 * 6"  # 05:05 CET on Saturday or the 11th
+  #   - cron: "5 5 * * 6"
+  #     timezone: Europe/Zurich
+  #   - cron: "5 5 11 * *"
+  #     timezone: Europe/Zurich
 
 permissions:
   contents: write
@@ -40,7 +43,7 @@ concurrency:
 jobs:
   publish:
     if: vars.NORDIC_CLIMATE_PUBLISH == '1' && github.ref == 'refs/heads/main'
-    environment: nordic-climate-publish
+    environment: ${{ (github.event_name == 'schedule' || vars.NORDIC_CLIMATE_CUTOVER_DONE == '1') && 'nordic-climate-publish' || 'nordic-climate-cutover' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

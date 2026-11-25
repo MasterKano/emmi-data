@@ -22,7 +22,7 @@ from pathlib import Path
 
 import requests
 
-RAW = "https://raw.githubusercontent.com/MasterKano/emmi-data/main/"
+RAW_ROOT = "https://raw.githubusercontent.com/MasterKano/emmi-data"
 # The five published files, plus the calibration the top-up applies to rain.
 # calibration.json is vendored next to the scripts; it is not one of the five
 # published products. It is public only after this branch is on main.
@@ -36,13 +36,15 @@ FILES = {
 }
 
 
-def urls() -> list[tuple[str, str]]:
-    return [(RAW + src, dest) for src, dest in FILES.items()]
+def urls(ref: str = "main") -> list[tuple[str, str]]:
+    base = f"{RAW_ROOT}/{ref}/"
+    return [(base + src, dest) for src, dest in FILES.items()]
 
 
-def sync(dest: Path, dry_run: bool) -> int:
-    dest.mkdir(parents=True, exist_ok=True) if not dry_run else None
-    for url, name in urls():
+def sync(dest: Path, dry_run: bool, ref: str = "main") -> int:
+    if not dry_run:
+        dest.mkdir(parents=True, exist_ok=True)
+    for url, name in urls(ref):
         target = dest / name
         if dry_run:
             print(f"would write {target} from {url}")
@@ -59,9 +61,18 @@ def sync(dest: Path, dry_run: bool) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dest", type=Path, default=Path("/home/box/data/nordic-climate"))
+    parser.add_argument("--ref", default="main", help="git ref for the raw URLs")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--allow-box",
+        action="store_true",
+        help="required before writing under /home/box; not used by tests",
+    )
     args = parser.parse_args(argv)
-    return sync(args.dest, args.dry_run)
+    resolved = args.dest.expanduser()
+    if not args.dry_run and str(resolved).startswith("/home/box") and not args.allow_box:
+        raise SystemExit("Refusing to write under /home/box without --allow-box. Not deployed.")
+    return sync(args.dest, args.dry_run, args.ref)
 
 
 if __name__ == "__main__":

@@ -40,14 +40,22 @@ has both UTC hours, commented out:
 
 ```yaml
 # schedule:
-#   - cron: "5 3 11 * 6"  # 05:05 CEST on Saturday OR the 11th
-#   - cron: "5 4 11 * 6"  # 05:05 CET on Saturday OR the 11th
+#   - cron: "5 5 * * 6"
+#     timezone: Europe/Zurich
+#   - cron: "5 5 11 * *"
+#     timezone: Europe/Zurich
 ```
 
-GitHub treats a cron with both a day-of-month and a day-of-week as OR, and
-fires once when both match. A Saturday that is also the 11th is therefore
-one trigger per UTC hour, not two triggers at the same minute.
+GitHub’s workflow syntax accepts an IANA `timezone` on `schedule`
+(https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onschedule,
+read 25 Nov 2026). The cron is interpreted in that zone, not as UTC. During
+a DST spring-forward, a schedule that falls in the skipped hour moves to the
+next valid time. 05:05 is not in that hour, in Europe/Zurich or in the
+example zone, so it stays 05:05 when the clocks change. The autumn repeat
+hour is 02:00–03:00, not 05:05, so the morning run is not doubled by the
+clock change.
 
+A Saturday that is also the 11th starts both lines at the same minute.
 `schedule_window.py` then:
 
 - skips anything that is not a Saturday or the 11th in Zurich
@@ -66,31 +74,27 @@ and it still cannot publish unless the workflow ref is `refs/heads/main`.
 Do this only after the dry-run evidence in `WP02_REPORT.md` has been accepted,
 and only so that **one** system is allowed to write `nordic-climate/` on `main`.
 
-1. Create the private seed repo and the scoped token named below. Do not
-   create them from this repo's workflows.
-2. On `MasterKano/emmi-data`, create the GitHub Actions environment
-   `nordic-climate-publish` and add a required reviewer (Jerry) before the
-   variable in step 4 is set. The publish job names that environment. If the
-   environment does not exist when the job is first allowed to run, GitHub
-   can create it with no reviewer.
-3. Confirm Mark's routine will not run again (Jerry retires or pauses it).
-   Until that is true, do not do steps 4–6.
-4. Set the repository variable `NORDIC_CLIMATE_PUBLISH` to `1`. This arms
-   the job, and only when the workflow ref is `refs/heads/main`. The crons
-   are still commented, so nothing runs on a clock. A dispatch that selects
-   another branch is skipped.
-5. From the Actions tab on **main**, run **Nordic climate publish** with
-   "Commit the five compact files" unticked. That checks out `main` and does
-   not push. Then run it again with the box ticked for the first real
-   commit, as `github-actions[bot]`. The environment reviewer must approve.
-   Compare the commit with the previous `nordic-climate/` files.
-6. In a follow-up commit on main, uncomment the two `cron` lines and the
-   `schedule:` key in `nordic-climate-publish.yml`.
+1. Create the token and the two environments named below. The private seed
+   repo and its release already exist. Do not create a token from a workflow.
+2. Confirm Mark's routine will not run again. Until that is true, do not do
+   steps 3–6.
+3. Set the repository variable `NORDIC_CLIMATE_PUBLISH` to `1`. Leave
+   `NORDIC_CLIMATE_CUTOVER_DONE` unset. The crons stay commented.
+4. From the Actions tab on **main**, run **Nordic climate publish** with
+   "Commit the five compact files" unticked. The job uses environment
+   `nordic-climate-cutover`, so the required reviewer must approve, and it
+   does not push. Run it again with the box ticked for the first real
+   commit, as `github-actions[bot]`. Compare that commit with the previous
+   `nordic-climate/` files.
+5. Set the repository variable `NORDIC_CLIMATE_CUTOVER_DONE` to `1`. Later
+   manual runs and every scheduled run use `nordic-climate-publish`, which
+   has no required reviewer.
+6. In a follow-up commit on main, uncomment the two `cron` lines, their
+   `timezone` lines, and the `schedule:` key.
 
-The variable, the main-branch guard, the environment, and the uncommented
-crons are separate. A dispatch from a feature branch cannot push that branch
-to main: the job is skipped unless `github.ref` is `refs/heads/main`, the
-checkout is `ref: main`, and the push step refuses a HEAD that is not `main`.
+A dispatch from a feature branch cannot push that branch to main: the job is
+skipped unless `github.ref` is `refs/heads/main`, the checkout is `ref: main`,
+and the push step refuses a HEAD that is not `main`.
 
 To turn publishing back off without deleting the workflow: delete
 `NORDIC_CLIMATE_PUBLISH` (or set it to anything other than `1`) and comment
@@ -98,40 +102,51 @@ the crons again. The job is skipped when the variable is not `1`.
 
 ## Credential Jerry must add
 
-Do not put a token for `MasterKano/newsletter-archive` on this public repo.
-That private repo holds more than this cache.
+The private repo and the release are already in place. No token was created
+by this work, and none is committed.
 
 Name: `NORDIC_CLIMATE_SEED_TOKEN`
 
-- Fine-grained personal access token.
-- Resource: only the new private repo `MasterKano/nordic-climate-seed`.
-- Permission: Contents, Read-only.
-- No other permissions. Do not grant write, Actions, administration, or any
-  access to `newsletter-archive`.
-- Stored as an Actions secret on `MasterKano/emmi-data`. It is not committed.
+Create a fine-grained personal access token:
 
-What Jerry creates, and nothing in this PR creates:
+1. Resource owner: **MasterKano**.
+2. Repository access: **Only select repositories**, and only
+   `nordic-climate-seed`. Not `newsletter-archive`, not `emmi-data`.
+3. Permissions: **Contents: Read-only**. **Metadata: Read-only** (GitHub
+   requires Metadata on a fine-grained token; it is read-only). No other
+   permissions.
+4. Expiry: **1 year**. A shorter expiry will stop the Saturday run when it
+   lapses. Put a reminder on the calendar a month before expiry and replace
+   the secret. Do not choose “no expiry”.
 
-1. A **private** repository `MasterKano/nordic-climate-seed`.
-2. One release on it, tag `nordic-climate-seed-20261125`, containing only
-   `nordic-climate-seed-20261125.tar.gz` and a sibling `.sha256`. The tarball
-   may contain `cache/openmeteo100m/om_YYYY_MM.csv` and nothing else that the
-   restore keeps. `hourly_raw/` and `cache/openmeteo` are ignored if present
-   and must not be the reason for the repo.
-3. The token above, scoped to that repo only.
-4. After the first download, set repository variable or secret note
-   `NORDIC_CLIMATE_SEED_SHA256` to the digest he published, so later runs pin
-   it. Optional until that digest is known. The script already requires the
-   tarball to match the sibling `.sha256` file.
+Store it as an **environment secret**, not a repository secret, on both:
 
-No token was created by this work. Until the repo and the secret exist,
-`nordic-climate-seed.yml` fails on purpose. Dry runs that do not need the
-historical cache do not use the secret.
+- `nordic-climate-cutover` (Settings → Environments → that environment →
+  Environment secrets)
+- `nordic-climate-publish` (same)
 
-The existing release on `newsletter-archive` (tag `nordic-climate-seed-20261125`,
-147,831,212 bytes, sha256
-`7df4f51d980d894a8fee8b0c3c1aa4ecd09cdac1d1ada24d060c744588a48026`) can be the
-source Jerry copies the monthly CSVs from. This workflow does not read it.
+Repository secrets are visible to workflows on a same-repo pull request.
+Environment secrets are visible only to a job that names the environment.
+These workflows do not use `pull_request_target`. The history rebuild and
+the publish job name an environment and run only when `github.ref` is
+`refs/heads/main`. A pull request, including from a fork, does not receive
+the token.
+
+Environment settings:
+
+| Environment | Required reviewer | Deployment branches | Used by |
+|---|---|---|---|
+| `nordic-climate-cutover` | Jerry | `main` only | the first manual publish, while `NORDIC_CLIMATE_CUTOVER_DONE` is unset |
+| `nordic-climate-publish` | none | `main` only | scheduled runs after cutover, later manual runs, and the history rebuild |
+
+Pinned tarball sha256, also checked in `restore_seed.py`:
+
+`09f4947c8062373b9a01869cbd1690dd98a93a43131cba304d92d5cbbbaebbb7`
+
+Release: https://github.com/MasterKano/nordic-climate-seed/releases/tag/nordic-climate-seed-20261125
+(private). Assets: `nordic-climate-seed-20261125.tar.gz` (22,538,558 bytes)
+and `nordic-climate-seed-20261125.sha256`. 1,042 monthly CSVs, 1940-01
+through 2026-10. A second download matched the pin.
 
 `NORDIC_CLIMATE_PUBLISH` is a repository **variable**, not a secret. It is
 absent now. Leave it unset until step 3 above.
@@ -288,14 +303,28 @@ the bot stops, unless something copies the five compact files back. The
 top-up's ERA5 overlap and the climatology in the tiles would then freeze.
 
 The copy script is `scripts/nordic-climate/sync_box_copy.py`. It is not
-deployed and it is not installed on the box. It downloads the five published
-files plus `scripts/nordic-climate/calibration.json` from the public raw
-URLs on `main` into `/home/box/data/nordic-climate/` (override with `--dest`).
-`--dry-run` prints the plan and writes nothing. It does not take a token and
-does not call Open-Meteo. Run it on the box only after this branch is on
-main and Mark's routine has been retired, on a timer that is not the same
-minute as the Action, so the top-up sees the new files. Keep the IFS fetch
-and `topup/` on the box. Do not fold IFS into the ERA5 publish workflow.
+deployed. It refuses to write under `/home/box` unless `--allow-box` is
+passed. `--dest` selects the directory. `--ref` selects the git ref of the
+public raw URLs (default `main`). `--dry-run` prints the plan and writes
+nothing.
+
+Checked on 25 Nov 2026 against `/tmp/ifs-sync-test` with
+`--ref wp02/nordic-climate-actions`. All six files matched the workspace
+copies by sha256. `/home/box/data/nordic-climate` was not created.
+
+| File | Bytes | sha256 |
+|---|---:|---|
+| daily_grid_mean.csv | 836840 | `01db34f72255871f1f983c1341a028e538e4f66f07709d48487f3b712258c3f8` |
+| daily_normals.csv | 48107 | `25bcfac5a76f6cd6dae811f5bbcc413a0958ea6f51e59f11b304a9ed2fd9c3e2` |
+| monthly.csv | 97578 | `f97b108b9ae7e6f91d80af5a92e8b44ed047d00dbac7ea955fae4c11f4890709` |
+| mtd.json | 6359 | `42ba784430c22ef172c1894fe4038381dc6469be2fdd13be7c84ac73b52aa403` |
+| README.md | 5202 | `718a77fa73cb89e20355ca0e80361bc436af71ed6dc147aa020f6a043edbb7e5` |
+| calibration.json | 1193 | `e53e1c20ed6e3c91de979a778722e06cfb45e3e22971cbfef7c4ce9c65f33857` |
+
+Run it on the box only after this branch is on main and Mark's routine has
+been retired, with `--allow-box`, on a timer that is not the same minute as
+the Action. Keep the IFS fetch and `topup/` on the box. Do not fold IFS into
+the ERA5 publish workflow.
 
 ## Costs and licensing
 
