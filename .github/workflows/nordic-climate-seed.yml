@@ -1,0 +1,52 @@
+name: Nordic climate seed restore
+
+# Read-only. Downloads the private monthly-CSV seed when
+# NORDIC_CLIMATE_SEED_TOKEN is set, verifies sha256, and extracts only
+# om_YYYY_MM.csv. Until Jerry adds that secret this job fails on purpose.
+# It does not publish and it does not write the Actions cache.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nordic-climate
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Restore monthly CSVs from the private seed
+        env:
+          NORDIC_CLIMATE_SEED_TOKEN: ${{ secrets.NORDIC_CLIMATE_SEED_TOKEN }}
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
+        run: |
+          {
+            echo "### Nordic climate seed restore"
+            echo "Secret name: \`NORDIC_CLIMATE_SEED_TOKEN\` (Contents Read-only on MasterKano/newsletter-archive). The token value is not printed."
+          } >> "$GITHUB_STEP_SUMMARY"
+          python scripts/nordic-climate/restore_seed.py
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          cache = Path(os.environ["NORDIC_CLIMATE_CACHE"])
+          names = sorted(p.name for p in cache.glob("om_*.csv"))
+          leaked = [p.name for p in cache.rglob("*") if p.is_file() and not p.name.startswith("om_")]
+          if leaked:
+              raise SystemExit(f"unexpected extract: {leaked[:10]}")
+          if "om_1940_01.csv" not in names or "om_2026_10.csv" not in names:
+              raise SystemExit(f"monthly span looks wrong: {names[:3]} .. {names[-3:]} ({len(names)})")
+          print(f"monthly csvs only: {len(names)} files, {names[0]} .. {names[-1]}")
+          PY

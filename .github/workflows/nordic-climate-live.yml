@@ -1,0 +1,37 @@
+name: Nordic climate live dry run
+
+# Read-only live Open-Meteo check against the published overlap. No seed, no push.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nordic-climate
+  cancel-in-progress: false
+
+jobs:
+  overlap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/nordic-climate/requirements.txt
+      - name: Install
+        run: pip install -r scripts/nordic-climate/requirements.txt
+      - name: Compare a live ERA5 fetch with the published daily series
+        run: python scripts/nordic-climate/live_overlap.py
+      - name: Upload live comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordic-climate-live-overlap
+          retention-days: 14
+          if-no-files-found: warn
+          path: scripts/nordic-climate/live_overlap_report.json
