@@ -7,7 +7,7 @@ curves/<curve>/<YYYY-MM-DD>.csv
 curves/<curve>/index.json
 ```
 
-Built 2026-11-24 22:48 Europe/Zurich. Files are data only. This folder lives on `main` (not the force-pushed `live-data` branch) so history is kept.
+Built 2026-11-25 10:45 Europe/Zurich. Files are data only. This folder lives on `main` (not the force-pushed `live-data` branch) so history is kept.
 
 ## Schema
 
@@ -50,8 +50,8 @@ A missing date or a missing contract on a date means no observation was recovere
 
 - Unit: USD USD/bbl
 - Earliest date: 2026-11-11
-- Latest date: 2026-11-24
-- Dates archived: 10
+- Latest date: 2026-11-25
+- Dates archived: 11
 - Weekday gaps: none between earliest and latest
 - Sources present: tradingview_scanner
 
@@ -59,8 +59,8 @@ A missing date or a missing contract on a date means no observation was recovere
 
 - Unit: USD USD/gal
 - Earliest date: 2026-10-27
-- Latest date: 2026-11-24
-- Dates archived: 23
+- Latest date: 2026-11-25
+- Dates archived: 24
 - Weekday gaps: none between earliest and latest
 - Sources present: tradingview_scanner, tradingview_scanner_history
 
