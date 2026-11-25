@@ -122,9 +122,8 @@ intercept 0.
 ## Tests
 
 `python -m pytest -q scripts/nordic-climate/tests` — **26 passed** locally
-after the review corrections. The earlier hosted dry run, on the previous
-commit, passed 24. The hosted re-run of these 26 is the dry-run URL added
-with this commit.
+and on the hosted dry run
+https://github.com/MasterKano/emmi-data/actions/runs/45563079765 (1.40s).
 
 Covered negatives:
 
@@ -286,10 +285,26 @@ the private seed repo and token exist. It uploads
 `nordic-climate-history-comparison` only (counts and mismatches, not the
 point files).
 
-Separately, this machine is rebuilding 1940–2025 from the public Open-Meteo
-API into `/tmp` (not the repo, not an artifact) so the whole published
-overlap can be compared without that credential. The result is filled in
-below when that rebuild finishes.
+The public-API rebuild on this machine finished without the private seed
+and without writing anything into the repo. Open-Meteo ERA5, 1940-01-01
+through 2026-11-19 (31,735 days). Compared with the published files from
+`540c0178`:
+
+- 31,731 overlapping days, 0 mismatches, maximum absolute difference 0 for
+  wind100, temp and rain.
+- No published day missing. 1940-01-01 rain still blank.
+- Four new days only: 2026-11-16, 2026-11-17, 2026-11-18, 2026-11-19.
+  Nothing on a shared date changed, so there is no ERA5 revision to record
+  on this overlap.
+- `daily_normals.csv` and `README.md` are byte-identical (48,107 and 5,202
+  bytes).
+- `monthly.csv`: 1,042 overlapping months, maximum absolute difference 0.
+- Calibration-window sanity on the rebuild: wind100 bias 0, temperature
+  RMSE 0.170, rain RMSE 0.076.
+
+The point files stayed in `/tmp` and were not committed, cached, or uploaded.
+The hosted equivalent is still the second step of `nordic-climate-seed.yml`,
+which does not run until Jerry creates the private seed repo.
 
 ### Box sync and failure mail
 
