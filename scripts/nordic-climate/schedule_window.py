@@ -1,53 +1,75 @@
 #!/usr/bin/env python3
-"""Decide whether a scheduled Nordic climate run is the 05:05 Europe/Zurich slot.
+"""Decide whether a scheduled Nordic climate run should publish.
 
-GitHub cron is UTC and cannot express CET/CEST. The publish workflow therefore
-lists both UTC hours once it is enabled:
+GitHub cron is UTC and can start late. The intended clock is 05:05
+Europe/Zurich on Saturday and on the 11th (the morning after mr-climate).
+Two UTC hours cover CET and CEST. They are one cron each, with day-of-month
+and day-of-week both set, which GitHub treats as OR: one firing on a
+Saturday that is also the 11th, not two.
 
-- 03:05 UTC — 05:05 CEST (last Sunday of March through last Sunday of October)
-- 04:05 UTC — 05:05 CET (the rest of the year)
-
-Saturday 05:05 and the 11th 05:05 each need both hours. The hour that is not
-05:05 in Zurich is a no-op (exit 0, ``proceed=no``) so it does not publish and
-does not raise a failure notification. 05:05 is outside the DST fallback
-(02:00–03:00) and spring-forward (02:00) windows, so the local time exists
-once.
-
-``workflow_dispatch`` is not tied to the clock. The mr-climate workbook
-refresh is a different system and runs at 06:00 UTC on the 10th; this window
-is the following morning, the 11th.
+A runner that starts after 05:05 still publishes, as long as it is the same
+Zurich date and that date has not already been published. A run before
+04:50 Zurich is the off-season hour arriving early, and is skipped.
+``workflow_dispatch`` is not tied to the clock. Skipping is exit 0 so it
+does not send a failure notification.
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
-from datetime import datetime, time, timezone
+from datetime import date, datetime, time, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ZURICH = ZoneInfo("Europe/Zurich")
+# Not before the 05:05 slot. There is no end: a delayed runner later that
+# Zurich day is still the scheduled run.
 WINDOW_START = time(4, 50)
-WINDOW_END = time(5, 20)
 
 
-def in_zurich_window(moment: datetime) -> bool:
+def as_zurich(moment: datetime) -> datetime:
     if moment.tzinfo is None:
         moment = moment.replace(tzinfo=timezone.utc)
-    local = moment.astimezone(ZURICH)
-    return WINDOW_START <= local.time() <= WINDOW_END
+    return moment.astimezone(ZURICH)
 
 
-def is_scheduled_day(moment: datetime) -> bool:
-    """Saturday, or the 11th (the morning after mr-climate)."""
-    if moment.tzinfo is None:
-        moment = moment.replace(tzinfo=timezone.utc)
-    local = moment.astimezone(ZURICH)
+def is_scheduled_day(local: datetime) -> bool:
+    """Saturday, or the 11th. A Saturday that is the 11th is still one day."""
     return local.weekday() == 5 or local.day == 11
 
 
-def allows(moment: datetime, event: str) -> bool:
+def decision(moment: datetime, event: str, last_published: date | None = None) -> tuple[bool, str]:
     if event != "schedule":
-        return True
-    return in_zurich_window(moment) and is_scheduled_day(moment)
+        return True, "manual run is not tied to the clock"
+    local = as_zurich(moment)
+    if not is_scheduled_day(local):
+        return False, f"{local.date().isoformat()} is not a Saturday or the 11th in Zurich"
+    if last_published == local.date():
+        return False, f"already published on {local.date().isoformat()} Zurich; skipping the duplicate"
+    if local.time() < WINDOW_START:
+        return False, (
+            f"{local.isoformat()} is before 04:50 Zurich; "
+            "this is the early off-season hour, not a delayed 05:05 run"
+        )
+    return True, (
+        f"{local.isoformat()} is a scheduled Zurich day at or after 04:50 "
+        "and that date is not yet published"
+    )
+
+
+def allows(moment: datetime, event: str, last_published: date | None = None) -> bool:
+    return decision(moment, event, last_published)[0]
+
+
+def last_published_date(path: Path | None) -> date | None:
+    """The ``generated`` date in the published mtd.json, if it is there."""
+    if path is None or not path.exists():
+        return None
+    raw = json.loads(path.read_text()).get("generated")
+    if not raw:
+        return None
+    return date.fromisoformat(str(raw)[:10])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,15 +83,11 @@ def main(argv: list[str] | None = None) -> int:
             moment = moment.replace(tzinfo=timezone.utc)
     else:
         moment = datetime.now(timezone.utc)
-    ok = allows(moment, event)
+    mtd = os.environ.get("NORDIC_CLIMATE_PUBLISHED_MTD")
+    published = last_published_date(Path(mtd) if mtd else None)
+    ok, reason = decision(moment, event, published)
     print("proceed=yes" if ok else "proceed=no")
-    if not ok:
-        local = moment.astimezone(ZURICH)
-        print(
-            f"Outside the 05:05 Europe/Zurich window "
-            f"(local {local.isoformat()}); not publishing.",
-            file=sys.stderr,
-        )
+    print(reason, file=sys.stderr)
     return 0
 
 

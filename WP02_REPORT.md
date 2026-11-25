@@ -46,14 +46,15 @@ CSVs. `hourly_raw/` is a resume cache inside `om_fetch`, used only when the
 month CSV is absent. `cache/openmeteo` is the retired 10 m tree and is not
 read. The restore script extracts only `om_YYYY_MM.csv`.
 
-The durable seed stays the private release
-`MasterKano/newsletter-archive` tag `nordic-climate-seed-20261125`
-(tarball 147,831,212 bytes, GitHub digest and pinned sha256
-`7df4f51d980d894a8fee8b0c3c1aa4ecd09cdac1d1ada24d060c744588a48026`).
-It is not committed here. The Actions cache is a separate evictable copy
-(10 GB per repo, unused entries drop after 7 days) and is written only by
-the publish workflow, which is disabled. Dry runs do not upload the cache:
-artifacts on this public repo are world-readable.
+The monthly CSVs are not stored in this public repo's Actions cache and are
+not uploaded as artifacts. A token on emmi-data must not be able to read
+`newsletter-archive`. The recommended store is a new private repo
+`MasterKano/nordic-climate-seed` and a fine-grained read-only token for that
+repo only. Details are in the review section below and in
+`scripts/nordic-climate/OPERATIONS.md`. The old mixed tarball remains on
+`newsletter-archive` tag `nordic-climate-seed-20261125` (147,831,212 bytes,
+sha256 `7df4f51d980d894a8fee8b0c3c1aa4ecd09cdac1d1ada24d060c744588a48026`)
+and is not what the workflow reads.
 
 This environment's git token cannot download that private asset (the release
 is visible to the user's GitHub connection, and the shell token is not).
@@ -120,8 +121,10 @@ intercept 0.
 
 ## Tests
 
-`python -m pytest -q scripts/nordic-climate/tests` — **24 passed** locally
-and on the hosted dry run (1.66s).
+`python -m pytest -q scripts/nordic-climate/tests` — **26 passed** locally
+after the review corrections. The earlier hosted dry run, on the previous
+commit, passed 24. The hosted re-run of these 26 is the dry-run URL added
+with this commit.
 
 Covered negatives:
 
@@ -138,7 +141,7 @@ Covered negatives:
 - publishing with the variable unset, or with a stale or gapped series, does not commit
 - the legacy Kano publisher refuses to run
 - a second process holding the run lock fails
-- Zurich Saturday 05:05 in January (CET) and July (CEST) is in window; the other UTC hour is not; 10 Dec is not; 11 Dec 05:05 CET is
+- a late runner the same Zurich day still publishes; a time before 04:50 does not; a second run the same Zurich date is skipped; 11 July 2026 (Saturday and the 11th) does not publish twice; 10 Dec does not run
 - seed extract keeps only `om_YYYY_MM.csv`; a bad sha256 and a missing token fail
 - dry-run workflows are `contents: read`; only the publish workflow has `contents: write`; crons are commented
 
@@ -148,7 +151,7 @@ Names only.
 
 | Name | Kind | State |
 |---|---|---|
-| `NORDIC_CLIMATE_SEED_TOKEN` | Actions secret. Fine-grained PAT, Contents read-only, repository `MasterKano/newsletter-archive` only | **not set. Jerry has to add it. Nothing here created a token.** |
+| `NORDIC_CLIMATE_SEED_TOKEN` | Actions secret. Fine-grained PAT, Contents read-only, repository `MasterKano/nordic-climate-seed` only. Not `newsletter-archive`. | **Jerry must create that private repo and the token. Nothing here created either.** |
 | `NORDIC_CLIMATE_PUBLISH` | Actions variable, value `1` | **must stay unset until cutover** |
 
 No CDS key, no Open-Meteo key, no mail secret.
@@ -187,12 +190,13 @@ that fails the job. The constant and the citation live in
 
 ## Risks
 
-- Until `NORDIC_CLIMATE_SEED_TOKEN` exists, a runner with an empty cache
-  cannot rebuild 1940–present. The live overlap check does not need the seed.
-  Add the secret before relying on this Action for 11 Dec.
-- The real tarball's internal paths have not been listed from this
-  environment. The seed job fails closed if they are not
-  `openmeteo100m/om_YYYY_MM.csv`. The first successful seed run is that check.
+- Until Jerry creates `MasterKano/nordic-climate-seed` and
+  `NORDIC_CLIMATE_SEED_TOKEN` scoped only to it, a hosted runner cannot
+  restore the monthly CSVs. The live overlap check does not need them.
+  The public-API rebuild on this machine is the full-history comparison
+  that does not wait on that repo.
+- The first successful seed run is also the check that the slim tarball's
+  paths are `openmeteo100m/om_YYYY_MM.csv`. The job fails closed otherwise.
 - GitHub-hosted runners share egress. Open-Meteo may be slower or stricter
   there than on the box. Connection timeouts are retried. A hard block fails
   the job rather than being bypassed.
@@ -215,19 +219,100 @@ Leave it on the box. It does not publish to emmi-data.
 `topup/<month>_100m_run<date>.json`. The fetch is Open-Meteo `ecmwf_ifs` on
 the same 72-point grid. It does not use the monthly point cache.
 
-Recommendation: after the Action is the publisher, a box job pulls the five
-compact files and the vendored `calibration.json` back onto
-`/home/box/data/nordic-climate/`. Keep the IFS fetch and `topup/` on the box.
-Do not put IFS into the ERA5 workflow.
+`scripts/nordic-climate/sync_box_copy.py` is that copy. It is not deployed.
+`--dry-run` lists the public raw URLs and writes nothing. Keep the IFS fetch
+and `topup/` on the box. Do not put IFS into the ERA5 workflow.
 
 ## Recovery
 
 1. Delete `NORDIC_CLIMATE_PUBLISH` or set it to anything but `1`.
-2. Comment the four cron lines if they were uncommented.
+2. Comment the two cron lines if they were uncommented.
 3. Jerry resumes Mark's routine. The box scripts, cache, and `gh` login were
    not changed by this work.
 4. Revert a bad `nordic-climate/` commit on `main` only if a published file
    is wrong. Do not delete the cache on the box.
+
+## Review corrections (provisional acceptance)
+
+ChatGPT's review is applied on this branch. Publishing stays disabled.
+`nordic-climate/` on `main` is still untouched. Mark's routine and
+`mr-climate` were not changed. No token, repo, or public copy was created.
+No provider was purchased.
+
+### Cache access
+
+Giving emmi-data a credential for all of private `newsletter-archive` is the
+wrong scope. That repo is not only this cache.
+
+(a) Dedicated private repo `MasterKano/nordic-climate-seed`, containing only
+the monthly `om_YYYY_MM.csv` files (a release tag
+`nordic-climate-seed-20261125` plus a `.sha256`). A fine-grained PAT with
+Contents read-only on that repo alone, stored as `NORDIC_CLIMATE_SEED_TOKEN`.
+This is the recommended option. It is zero-cost on GitHub's free private
+repo and on public Actions minutes. The runner downloads into temp and
+discards it. There is no Actions cache of the point files on the public repo.
+
+(b) A public copy of those monthly CSVs was assessed and not made. Open-Meteo
+CC BY 4.0 allows redistribution of the data with attribution. The Copernicus
+licence allows redistribution of ERA5 with attribution and a note that the
+product was adapted. The files are weather reanalysis, not a customer list.
+The existing tarball's own text says "Not for public redistribution" and it
+also contains `hourly_raw/` and the 10 m cache, so that file stays private.
+A later public release of only the monthly CSVs, with both attributions,
+would need Jerry's approval. It is not required for the private-repo option.
+
+Jerry approves and creates: the private repo, the slim release, the scoped
+token, and (before `NORDIC_CLIMATE_PUBLISH=1`) the Actions environment
+`nordic-climate-publish` with himself as a required reviewer.
+
+### Schedule and publish guard
+
+Commented crons are `5 3 11 * 6` and `5 4 11 * 6` (Saturday OR the 11th, one
+fire when both match). A runner that starts after 05:05 the same Zurich day
+still publishes. A second fire that day sees `mtd.json` `generated` already
+equal to that date and exits 0. Times before 04:50 Zurich are the early
+off-season hour and are skipped.
+
+The publish job runs only when `github.ref == 'refs/heads/main'` and
+`NORDIC_CLIMATE_PUBLISH` is `1`, in environment `nordic-climate-publish`.
+It checks out `main`. The push step refuses a HEAD that is not `main`.
+A dispatch from another branch cannot push that branch.
+
+### Full history
+
+The hosted job that rebuilds 1940-present and compares every overlapping
+day is the second step of `nordic-climate-seed.yml`. It does not run until
+the private seed repo and token exist. It uploads
+`nordic-climate-history-comparison` only (counts and mismatches, not the
+point files).
+
+Separately, this machine is rebuilding 1940–2025 from the public Open-Meteo
+API into `/tmp` (not the repo, not an artifact) so the whole published
+overlap can be compared without that credential. The result is filled in
+below when that rebuild finishes.
+
+### Box sync and failure mail
+
+`scripts/nordic-climate/sync_box_copy.py` copies the five published files and
+`calibration.json` from public raw URLs onto the box path the IFS top-up
+reads. `--dry-run` writes nothing. It is not deployed.
+
+Scheduled-failure mail goes to the GitHub user who last edited the cron
+(https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/notifications-for-workflow-runs).
+That user must have Actions email enabled at
+https://github.com/settings/notifications. This work confirmed a failed
+check and an Actions error annotation. It could not read MasterKano's inbox,
+so email delivery is a setting Jerry confirms, not a fact this run proved.
+
+### Licensing
+
+CC BY 4.0 is the licence on the data (share and adapt, including
+commercially, with attribution). The free API terms are the contract for
+calling the service without a subscription, and they exclude commercial use
+(10,000/day, 5,000/hour, 600/minute). Compliant alternatives, none adopted:
+an Open-Meteo paid API plan; Copernicus CDS, which `mr-climate` already uses
+for a different 10 m product; or self-hosted Open-Meteo. `mr-climate` was
+not modified.
 
 ## Readiness for 11 Dec 2026
 

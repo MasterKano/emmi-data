@@ -130,6 +130,27 @@ def test_publish_refuses_without_variable_and_when_validation_fails(tmp_path, mo
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip() == head
 
 
+def test_publish_refuses_a_non_main_ref(tmp_path, monkeypatch):
+    repo = tmp_path / "repo"
+    built = tmp_path / "built"
+    _bundle(built, "2026-11-21")
+    _git_repo(repo)
+    monkeypatch.setenv("NORDIC_CLIMATE_PUBLISH", "1")
+    monkeypatch.setenv("GITHUB_REF", "refs/heads/wp02/nordic-climate-actions")
+    with pytest.raises(SystemExit, match="refs/heads/main"):
+        publish_outputs.publish(repo, built, today=date(2026, 11, 21))
+    assert subprocess.check_output(["git", "status", "--porcelain"], cwd=repo, text=True).strip() == ""
+
+
+def test_box_sync_dry_run_lists_public_urls(capsys):
+    import sync_box_copy
+    assert sync_box_copy.main(["--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "raw.githubusercontent.com/MasterKano/emmi-data/main/nordic-climate/mtd.json" in out
+    assert "calibration.json" in out
+    assert "/home/box/data/nordic-climate" in out
+
+
 def test_legacy_publisher_is_disabled():
     with pytest.raises(RuntimeError, match="github-actions"):
         update.publish_emmi_data()
@@ -155,19 +176,33 @@ def test_overlapping_lock_fails(tmp_path):
         held.release()
 
 
-def test_zurich_window_covers_cet_and_cest_only():
+def test_zurich_window_accepts_a_late_runner_and_skips_a_duplicate():
     def at(y, m, d, hh, mm):
         return datetime(y, m, d, hh, mm, tzinfo=timezone.utc)
     # Saturday 17 Jan 2026 04:05 UTC is 05:05 CET.
     assert schedule_window.allows(at(2026, 1, 17, 4, 5), "schedule")
-    # The summer hour on that winter morning is 04:05 CET, not 05:05.
+    # 03:05 UTC that morning is 04:05 CET, before 04:50.
     assert not schedule_window.allows(at(2026, 1, 17, 3, 5), "schedule")
+    # The same Saturday, a runner that only starts at 09:05 CET, still publishes.
+    assert schedule_window.allows(at(2026, 1, 17, 8, 5), "schedule")
     # Saturday 18 Jul 2026 03:05 UTC is 05:05 CEST.
     assert schedule_window.allows(at(2026, 7, 18, 3, 5), "schedule")
-    # 04:05 UTC that day is 06:05 CEST.
-    assert not schedule_window.allows(at(2026, 7, 18, 4, 5), "schedule")
-    # Friday 11 Dec 2026 04:05 UTC is 05:05 CET, the morning after mr-climate.
+    # 04:05 UTC is 06:05 CEST. Late enough to count, unless today was already published.
+    assert schedule_window.allows(at(2026, 7, 18, 4, 5), "schedule")
+    assert not schedule_window.allows(
+        at(2026, 7, 18, 4, 5), "schedule", last_published=date(2026, 7, 18)
+    )
+    # 11 July 2026 is a Saturday. One Zurich day: the second hour does not run again.
+    assert schedule_window.allows(at(2026, 7, 11, 3, 5), "schedule")
+    assert not schedule_window.allows(
+        at(2026, 7, 11, 4, 5), "schedule", last_published=date(2026, 7, 11)
+    )
+    # Friday 11 Dec 2026 04:05 UTC is 05:05 CET. A delay to 15:00 CET still counts.
     assert schedule_window.allows(at(2026, 12, 11, 4, 5), "schedule")
+    assert schedule_window.allows(at(2026, 12, 11, 14, 0), "schedule")
+    assert not schedule_window.allows(
+        at(2026, 12, 11, 14, 0), "schedule", last_published=date(2026, 12, 11)
+    )
     # The 10th is mr-climate's day, not this routine.
     assert not schedule_window.allows(at(2026, 12, 10, 4, 5), "schedule")
     # Manual runs are not tied to the clock.
@@ -204,10 +239,17 @@ def test_seed_sha256_mismatch_and_missing_token(tmp_path, monkeypatch):
     digest = hashlib.sha256(blob.read_bytes()).hexdigest()
     good = tmp_path / "good.sha256"
     good.write_text(digest + "  blob.tar.gz\n")
+    assert restore_seed.verify_sha256(blob, good) == digest
+    bad = tmp_path / "bad.sha256"
+    bad.write_text(("0" * 64) + "\n")
+    with pytest.raises(SystemExit, match="integrity"):
+        restore_seed.verify_sha256(blob, bad)
+    monkeypatch.setenv("NORDIC_CLIMATE_SEED_SHA256", "1" * 64)
     with pytest.raises(SystemExit, match="integrity"):
         restore_seed.verify_sha256(blob, good)
+    monkeypatch.delenv("NORDIC_CLIMATE_SEED_SHA256", raising=False)
     monkeypatch.delenv("NORDIC_CLIMATE_SEED_TOKEN", raising=False)
-    with pytest.raises(SystemExit, match="NORDIC_CLIMATE_SEED_TOKEN"):
+    with pytest.raises(SystemExit, match="nordic-climate-seed"):
         restore_seed._token()
 
 
@@ -229,7 +271,13 @@ def test_workflows_are_read_only_until_the_publish_gate():
         assert "contents: read" in text
         assert "contents: write" not in text
     assert "contents: write" in publish
-    assert "actions: write" in publish
+    assert "actions: write" not in publish
+    assert "actions/cache" not in publish
+    assert "actions/cache" not in seed
+    assert "github.ref == 'refs/heads/main'" in publish
+    assert "ref: main" in publish
+    assert "environment: nordic-climate-publish" in publish
+    assert "nordic-climate-seed" in seed
     assert "NORDIC_CLIMATE_PUBLISH" in publish
     cron_lines = [line for line in publish.splitlines() if "cron:" in line]
     assert cron_lines and all(line.lstrip().startswith("#") for line in cron_lines)

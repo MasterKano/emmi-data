@@ -1,9 +1,12 @@
 name: Nordic climate seed restore
 
-# Read-only. Downloads the private monthly-CSV seed when
-# NORDIC_CLIMATE_SEED_TOKEN is set, verifies sha256, and extracts only
-# om_YYYY_MM.csv. Until Jerry adds that secret this job fails on purpose.
-# It does not publish and it does not write the Actions cache.
+# Read-only. Downloads monthly CSVs from the dedicated private seed repo
+# MasterKano/nordic-climate-seed when NORDIC_CLIMATE_SEED_TOKEN is set.
+# The token must not be able to read newsletter-archive. Files go to runner
+# temp only: this workflow does not write the Actions cache and does not
+# upload the point files. Until Jerry creates that repo and the secret,
+# the job fails on purpose. A successful restore then rebuilds 1940-present
+# and compares every overlapping day with the published series.
 on:
   pull_request:
   workflow_dispatch:
@@ -18,7 +21,7 @@ concurrency:
 jobs:
   restore:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -35,7 +38,9 @@ jobs:
         run: |
           {
             echo "### Nordic climate seed restore"
-            echo "Secret name: \`NORDIC_CLIMATE_SEED_TOKEN\` (Contents Read-only on MasterKano/newsletter-archive). The token value is not printed."
+            echo "Secret name: \`NORDIC_CLIMATE_SEED_TOKEN\`."
+            echo "Scope: Contents read-only on \`MasterKano/nordic-climate-seed\` only. Not newsletter-archive."
+            echo "The token value is not printed. Point files are not uploaded and are not written to the Actions cache."
           } >> "$GITHUB_STEP_SUMMARY"
           python scripts/nordic-climate/restore_seed.py
           python - <<'PY'
@@ -50,3 +55,33 @@ jobs:
               raise SystemExit(f"monthly span looks wrong: {names[:3]} .. {names[-3:]} ({len(names)})")
           print(f"monthly csvs only: {len(names)} files, {names[0]} .. {names[-1]}")
           PY
+      - name: Rebuild 1940-present and compare the whole published overlap
+        env:
+          NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/openmeteo100m
+          NORDIC_CLIMATE_LOCK: ${{ runner.temp }}/nordic.lock
+        run: |
+          set -euo pipefail
+          python scripts/nordic-climate/run_pipeline.py
+          python scripts/nordic-climate/compare_published.py \
+            --built scripts/nordic-climate \
+            --published nordic-climate \
+            --out "$RUNNER_TEMP/history_comparison.json"
+          python - <<'PY'
+          import json, os
+          report = json.load(open(os.environ["RUNNER_TEMP"] + "/history_comparison.json"))
+          daily = report["daily"]
+          print(
+              f"overlap_days={daily['compared_days']} mismatches={daily['n_mismatches']} "
+              f"missing={daily['n_published_days_missing']} new={daily['n_new_dates']}"
+          )
+          if not report["ok"]:
+              raise SystemExit("full-history comparison failed")
+          PY
+      - name: Upload comparison report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nordic-climate-history-comparison
+          retention-days: 14
+          if-no-files-found: ignore
+          path: ${{ runner.temp }}/history_comparison.json

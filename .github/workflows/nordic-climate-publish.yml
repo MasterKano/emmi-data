@@ -1,15 +1,21 @@
 name: Nordic climate publish
 
 # DISABLED until cutover. This is the only workflow with contents: write.
+# It does not use the Actions cache. Point-level files stay in the runner
+# temp directory and are discarded with the runner.
+#
+# The job runs only when all of these are true:
+# - repository variable NORDIC_CLIMATE_PUBLISH is exactly 1
+# - the workflow ref is refs/heads/main (a dispatch from another branch is skipped)
+# - GitHub environment nordic-climate-publish allows the job
+# The checkout is main, not the branch that was selected in the dispatch UI.
 #
 # Schedules are present but commented, so GitHub does not register them.
-# The job is also skipped unless the repository variable NORDIC_CLIMATE_PUBLISH
-# is exactly 1. Uncommenting the cron lines alone does not publish. Setting
-# the variable alone does not publish, because nothing is scheduled.
-#
-# UTC hours cover Europe/Zurich 05:05 in both CET (UTC+1) and CEST (UTC+2).
-# schedule_window.py no-ops the hour that is not 05:05 in Zurich.
-# Saturday ~05:05, and the 11th ~05:05 (the morning after mr-climate's 10th).
+# Each line is Saturday OR the 11th (GitHub ORs day-of-month and day-of-week),
+# so a Saturday that is the 11th fires once per UTC hour, not twice.
+# 03:05 UTC is 05:05 CEST. 04:05 UTC is 05:05 CET.
+# A runner that starts late the same Zurich day still publishes.
+# A second firing that day sees mtd.json already generated today and skips.
 #
 # Enable only by scripts/nordic-climate/OPERATIONS.md. Do not enable while
 # Mark's Grok Bot routine is still authorised to push nordic-climate/.
@@ -17,18 +23,15 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1, and ignored when this box is unticked."
+        description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1 and this workflow is running on main."
         type: boolean
         default: false
   # schedule:
-  #   - cron: "5 3 * * 6"   # 05:05 CEST Saturday
-  #   - cron: "5 4 * * 6"   # 05:05 CET Saturday
-  #   - cron: "5 3 11 * *"  # 05:05 CEST on the 11th
-  #   - cron: "5 4 11 * *"  # 05:05 CET on the 11th
+  #   - cron: "5 3 11 * 6"  # 05:05 CEST on Saturday or the 11th
+  #   - cron: "5 4 11 * 6"  # 05:05 CET on Saturday or the 11th
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: nordic-climate-publish
@@ -36,11 +39,14 @@ concurrency:
 
 jobs:
   publish:
-    if: vars.NORDIC_CLIMATE_PUBLISH == '1'
+    if: vars.NORDIC_CLIMATE_PUBLISH == '1' && github.ref == 'refs/heads/main'
+    environment: nordic-climate-publish
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -48,38 +54,26 @@ jobs:
           cache-dependency-path: scripts/nordic-climate/requirements.txt
       - name: Install
         run: pip install -r scripts/nordic-climate/requirements.txt
-      - name: Zurich 05:05 window
+      - name: Zurich schedule, including a late runner
         id: window
+        env:
+          NORDIC_CLIMATE_PUBLISHED_MTD: nordic-climate/mtd.json
         run: |
           python scripts/nordic-climate/schedule_window.py | tee /tmp/window.txt
           if grep -q '^proceed=yes$' /tmp/window.txt; then
             echo "proceed=yes" >> "$GITHUB_OUTPUT"
           else
             echo "proceed=no" >> "$GITHUB_OUTPUT"
+            echo "### Nordic climate publish skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "See the schedule reason above. This is exit 0, not a failure." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Restore evictable cache, or the durable seed on a miss
-        if: steps.window.outputs.proceed == 'yes'
-        uses: actions/cache/restore@v4
-        id: cache
-        with:
-          path: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
-          key: nordic-climate-om100m-monthly-v1-${{ github.run_id }}
-          restore-keys: |
-            nordic-climate-om100m-monthly-v1-
-      - name: Seed restore when the cache missed
+      - name: Restore monthly CSVs into runner temp
         id: seed
         if: steps.window.outputs.proceed == 'yes'
         env:
           NORDIC_CLIMATE_SEED_TOKEN: ${{ secrets.NORDIC_CLIMATE_SEED_TOKEN }}
           NORDIC_CLIMATE_CACHE: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
-        run: |
-          if [ -f "$NORDIC_CLIMATE_CACHE/om_1940_01.csv" ]; then
-            echo "monthly cache already present"
-            echo "downloaded=0" >> "$GITHUB_OUTPUT"
-          else
-            python scripts/nordic-climate/restore_seed.py
-            echo "downloaded=1" >> "$GITHUB_OUTPUT"
-          fi
+        run: python scripts/nordic-climate/restore_seed.py
       - name: Rebuild without the legacy publisher
         if: steps.window.outputs.proceed == 'yes'
         env:
@@ -91,8 +85,9 @@ jobs:
         if: steps.window.outputs.proceed == 'yes' && (github.event_name == 'schedule' || inputs.publish)
         env:
           NORDIC_CLIMATE_PUBLISH: ${{ vars.NORDIC_CLIMATE_PUBLISH }}
+          GITHUB_REF: ${{ github.ref }}
         run: |
-          set -o pipefail
+          set -euo pipefail
           python scripts/nordic-climate/publish_outputs.py | tee /tmp/publish.txt
           if grep -q '^commit=' /tmp/publish.txt; then
             echo "push=1" >> "$GITHUB_OUTPUT"
@@ -105,6 +100,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          branch="$(git rev-parse --abbrev-ref HEAD)"
+          if [ "$branch" != "main" ]; then
+            echo "refusing to push $branch to main" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           for i in 1 2 3 4 5 6; do
             if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
@@ -116,9 +116,3 @@ jobs:
           echo "### Nordic climate publish failed" >> "$GITHUB_STEP_SUMMARY"
           echo "git push to main failed after retries." >> "$GITHUB_STEP_SUMMARY"
           exit 1
-      - name: Save monthly CSV cache after a seed download
-        if: steps.window.outputs.proceed == 'yes' && steps.seed.outputs.downloaded == '1'
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ runner.temp }}/nordic-climate-cache/openmeteo100m
-          key: nordic-climate-om100m-monthly-v1-${{ github.run_id }}

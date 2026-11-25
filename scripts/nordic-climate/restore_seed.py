@@ -1,26 +1,20 @@
 #!/usr/bin/env python3
-"""Restore monthly Open-Meteo point CSVs from the private durable seed.
+"""Restore monthly Open-Meteo point CSVs from a dedicated private seed repo.
 
-The seed is a GitHub release asset on private ``MasterKano/newsletter-archive``,
-tag ``nordic-climate-seed-20261125``. It is not committed to public emmi-data.
-Actions cache (10 GB, evicted after 7 days unused) is a separate, disposable
-copy. On a cache miss the publish workflow downloads this seed.
+The token on public emmi-data must not be able to read MasterKano/newsletter-archive.
+Jerry creates a separate private repo that contains only the monthly point
+CSVs, and a fine-grained PAT with Contents read-only on that repo alone.
+Default repo: ``MasterKano/nordic-climate-seed`` (override with
+``NORDIC_CLIMATE_SEED_REPO``). This script does not create the repo or the
+token, and it never prints the token.
 
-Compact monthly files (``cache/openmeteo100m/om_YYYY_MM.csv``) are enough to
-rebuild the five published products. ``update.om_month`` returns a cached
-month CSV without reading ``hourly_raw/``. ``hourly_raw`` is only a resume
-cache for an interrupted hourly download, and ``cache/openmeteo`` is the
-retired 10 m tree. Neither is extracted.
-
-Cross-repo download needs a fine-grained PAT stored on emmi-data as
-``NORDIC_CLIMATE_SEED_TOKEN`` (Contents: Read-only, repository
-MasterKano/newsletter-archive only). This script does not create tokens and
-never prints the token.
+The files are extracted into the runner's temp directory and are not saved
+to the public repo's Actions cache. ``hourly_raw/`` and the retired 10 m
+cache are not extracted.
 """
 from __future__ import annotations
 
 import hashlib
-import io
 import os
 import re
 import sys
@@ -29,15 +23,19 @@ from pathlib import Path
 
 import requests
 
-SEED_REPO = "MasterKano/newsletter-archive"
+# Dedicated private repo. Not newsletter-archive. Jerry creates it; this
+# script does not.
+DEFAULT_SEED_REPO = "MasterKano/nordic-climate-seed"
 SEED_TAG = "nordic-climate-seed-20261125"
 SEED_TARBALL = "nordic-climate-seed-20261125.tar.gz"
 SEED_SHA_NAME = "nordic-climate-seed-20261125.sha256"
 SECRET_NAME = "NORDIC_CLIMATE_SEED_TOKEN"
-# GitHub asset digest of the tarball, release id 457689669, asset 790197533.
-PINNED_SHA256 = "7df4f51d980d894a8fee8b0c3c1aa4ecd09cdac1d1ada24d060c744588a48026"
 API = "https://api.github.com"
 MONTH_CSV = re.compile(r"om_\d{4}_\d{2}\.csv\Z")
+
+
+def seed_repo() -> str:
+    return os.environ.get("NORDIC_CLIMATE_SEED_REPO", DEFAULT_SEED_REPO).strip()
 
 
 def _token() -> str:
@@ -46,7 +44,8 @@ def _token() -> str:
         raise SystemExit(
             f"Missing credential {SECRET_NAME}. Jerry must add it on "
             "MasterKano/emmi-data: a fine-grained personal access token with "
-            "Contents Read-only on MasterKano/newsletter-archive only. "
+            f"Contents Read-only on {seed_repo()} only. "
+            "Do not grant it on MasterKano/newsletter-archive. "
             "No token was created here."
         )
     return token.strip()
@@ -65,14 +64,14 @@ def download_release_assets(dest: Path, session: requests.Session | None = None)
     token = _token()
     sess = session or requests.Session()
     meta = sess.get(
-        f"{API}/repos/{SEED_REPO}/releases/tags/{SEED_TAG}",
+        f"{API}/repos/{seed_repo()}/releases/tags/{SEED_TAG}",
         headers=_headers(token, "application/vnd.github+json"),
         timeout=60,
     )
     if meta.status_code in (401, 403, 404):
         raise SystemExit(
             f"Could not read the private seed release ({meta.status_code}). "
-            f"{SECRET_NAME} needs Contents Read-only on {SEED_REPO}."
+            f"{SECRET_NAME} needs Contents Read-only on {seed_repo()} only."
         )
     meta.raise_for_status()
     assets = {a["name"]: a for a in meta.json().get("assets", [])}
@@ -89,18 +88,11 @@ def download_release_assets(dest: Path, session: requests.Session | None = None)
             if resp.status_code in (401, 403, 404):
                 raise SystemExit(f"Seed asset download failed ({resp.status_code}) for {name}")
             resp.raise_for_status()
-            digest = hashlib.sha256()
             with out.open("wb") as fh:
                 for chunk in resp.iter_content(1024 * 1024):
                     if chunk:
                         fh.write(chunk)
-                        digest.update(chunk)
         paths[name] = out
-        if name == SEED_TARBALL and digest.hexdigest() != PINNED_SHA256:
-            out.unlink(missing_ok=True)
-            raise SystemExit(
-                f"Seed tarball sha256 {digest.hexdigest()} does not match pinned {PINNED_SHA256}"
-            )
     return paths[SEED_TARBALL], paths[SEED_SHA_NAME]
 
 
@@ -114,12 +106,19 @@ def parse_sha256_file(text: str) -> str:
 
 
 def verify_sha256(tarball: Path, sha_file: Path) -> str:
+    """The tarball must match the sibling .sha256 asset.
+
+    If Jerry has set ``NORDIC_CLIMATE_SEED_SHA256`` after creating the slim
+    seed, that pin must match too. There is no pin until then: the previous
+    mixed newsletter-archive tarball is not what this repo should download.
+    """
     digest = hashlib.sha256(tarball.read_bytes()).hexdigest()
     published = parse_sha256_file(sha_file.read_text())
-    if digest != published or digest != PINNED_SHA256 or published != PINNED_SHA256:
+    pinned = os.environ.get("NORDIC_CLIMATE_SEED_SHA256", "").strip().lower()
+    if digest != published or (pinned and digest != pinned):
         raise SystemExit(
             "Seed integrity check failed: "
-            f"file={digest} sha256_asset={published} pinned={PINNED_SHA256}"
+            f"file={digest} sha256_asset={published} pinned={pinned or 'unset'}"
         )
     return digest
 

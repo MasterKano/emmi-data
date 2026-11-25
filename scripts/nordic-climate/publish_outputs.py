@@ -79,6 +79,12 @@ def publish(repo: Path, built: Path, today: date | None = None) -> str | None:
             "NORDIC_CLIMATE_PUBLISH is not 1. Publishing stays disabled until "
             "cutover sets that repository variable. No commit was created."
         )
+    ref = os.environ.get("GITHUB_REF", "")
+    if ref and ref != "refs/heads/main":
+        _fail(
+            f"Refusing to publish from {ref}. Only refs/heads/main may publish. "
+            "The workflow checks out main and does not push another branch."
+        )
     today = today or date.today()
     daily = validate_built(built, today)
     dest = repo / "nordic-climate"
