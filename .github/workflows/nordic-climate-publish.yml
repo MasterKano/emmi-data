@@ -1,7 +1,7 @@
 name: Nordic climate publish
 
-# DISABLED until cutover. This is the only workflow with contents: write.
-# Crons are commented, so GitHub does not register a schedule.
+# ARMED 26 Nov 2026 (Jerry, t760u): Saturday and the 11th, 05:05 Europe/Zurich. This is the only workflow with contents: write.
+# Cutover variables set: NORDIC_CLIMATE_PUBLISH=1 and NORDIC_CLIMATE_CUTOVER_DONE=1 (first reviewed publish: commit 9539980).
 # The job is skipped unless NORDIC_CLIMATE_PUBLISH is exactly 1 and the
 # workflow ref is refs/heads/main.
 #
@@ -28,11 +28,11 @@ on:
         description: "Commit the five compact files to main. Ignored unless NORDIC_CLIMATE_PUBLISH=1 and this run is on main."
         type: boolean
         default: false
-  # schedule:
-  #   - cron: "5 5 * * 6"
-  #     timezone: Europe/Zurich
-  #   - cron: "5 5 11 * *"
-  #     timezone: Europe/Zurich
+  schedule:
+    - cron: "5 5 * * 6"
+      timezone: Europe/Zurich
+    - cron: "5 5 11 * *"
+      timezone: Europe/Zurich
 
 permissions:
   contents: write
