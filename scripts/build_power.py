@@ -449,19 +449,95 @@ def _xy_series(data):
     return pd.Series([v for _, v in pts], index=pd.to_datetime([t for t, _ in pts], unit="ms", utc=True), dtype="float64")
 
 
+# ENTSO-E replaces the Kontrollrummet feed (svk.se/services/controlroom answers HTTP 403 to automated requests from
+# 26 Nov 2026 for every date except today). Same output keys and units as before: MW, hourly mean, UTC grid from t0.
+SVK_PSR_GROUP = {"B14": "nuclear", "B11": "hydro", "B12": "hydro", "B18": "wind", "B19": "wind",
+                 "B01": "thermal", "B02": "thermal", "B03": "thermal", "B04": "thermal", "B05": "thermal",
+                 "B06": "thermal", "B07": "thermal", "B08": "thermal", "B09": "thermal", "B17": "thermal"}
+
+
+def _svk_from_entsoe(res, hourly, today, call):
+    """Per bidding area SE1-SE4 from the existing ENTSO-E integration:
+      load      = A65/A16 actual total load (15 min)          -> was Kontrollrummet 'situation' result
+      load_plan = A65/A01 day-ahead total load forecast       -> was 'situation' planned
+      solar_plan= A69/A01 day-ahead solar forecast (B16)      -> was 'productionplans' SOLENERGI (BRP plans)
+      solar     = A75 actual solar (B16), additive key
+    and Sweden by type from A75 summed over SE1-SE4 (nuclear, hydro, thermal, wind, unspecified = solar + other),
+    consumption = sum of the zone actual loads, net_export = total - consumption (same identity SvK uses)."""
+    per = _period(today - dt.timedelta(days=6), today + dt.timedelta(days=2))
+    jobs = []
+    for z in SE_ZONES:
+        eic = ENTSOE_EIC[z]
+        jobs += [("load", z, dict(documentType="A65", processType="A16", outBiddingZone_Domain=eic)),
+                 ("load_plan", z, dict(documentType="A65", processType="A01", outBiddingZone_Domain=eic)),
+                 ("solar_plan", z, dict(documentType="A69", processType="A01", in_Domain=eic)),
+                 ("gen", z, dict(documentType="A75", processType="A16", in_Domain=eic))]
+
+    def one(job):
+        kind, z, params = job
+        try:
+            return job, entsoe_get(dict(params, **per)), None
+        except PermissionError:
+            raise
+        except Exception as e:
+            return job, None, e
+    zones, gen = {}, {}
+    for (kind, z, _), items, e in pmap(one, jobs):
+        if e is not None:
+            res["errors"].append(dict(part=f"entsoe {kind} {z}", error=_redact(e)[:160]))
+            log(f"svk entsoe {kind} {z}: {_redact(e)}")
+            continue
+        zr = zones.setdefault(z, {})
+        if kind in ("load", "load_plan"):
+            ser = _combine([it for it in items if not it.get("is_in")] or items)
+            if ser is not None and len(ser):
+                zr[kind] = ser
+        elif kind == "solar_plan":
+            sol = [it["s"] for it in items if it.get("psr") == "B16"]
+            if sol:
+                zr[kind] = _sum(sol)
+        else:
+            by = {}
+            for it in items:
+                if not it.get("is_in"):
+                    continue
+                by.setdefault(it.get("psr"), []).append(it["s"])
+            for psr, lst in by.items():
+                ser = _sum(lst)
+                gen.setdefault(SVK_PSR_GROUP.get(psr, "unspecified"), {}).setdefault(z, []).append(ser)
+                if psr == "B16":
+                    zr["solar"] = ser
+    for z, zr in zones.items():
+        out = {k: hourly(v) for k, v in zr.items() if v is not None and len(v)}
+        if out:
+            res["zones"][z] = out
+    se = {}
+    for grp, per_zone in gen.items():
+        tot = _sum([_sum(v) for v in per_zone.values()])
+        if tot is not None:
+            se[grp] = tot
+    if se:
+        total = _sum(list(se.values()))
+        se["total"] = total
+        loads = [zr["load"] for zr in zones.values() if zr.get("load") is not None]
+        if len(loads) == len(SE_ZONES):   # only when all four areas are present, a partial sum would understate demand
+            cons = _sum(loads)
+            se["consumption"] = cons
+            se["net_export"] = (total.reindex(cons.index) - cons)
+        res["se"] = {k: hourly(v) for k, v in se.items()}
+
+
 def build_svk(today):
-    """Svenska kraftnät open data for the SE4 section (all keyless):
-      * Kontrollrummet 'situation': consumption forecast ('planned') and outcome ('result') per bidding area, hourly.
-      * Kontrollrummet 'productionplans': solar production plans per bidding area (balance-responsible parties).
-      * Kontrollrummet 'production': Sweden-wide production by type (nuclear, hydro, thermal, wind, unspecified),
-        consumption and net export, 15-min. Not split by bidding area at source.
-      * data.svk.se Physical Power Flows (CC BY 4.0): flows into / out of SE4 per border, 15-min.
+    """Swedish system data for the SE4 section.
+      * ENTSO-E Transparency (existing integration, ENTSOE_API_TOKEN): per bidding area SE1-SE4 load outcome, day-ahead
+        load forecast and solar forecast; Sweden production by type, consumption and net export (see _svk_from_entsoe).
+      * data.svk.se Physical Power Flows (CC BY 4.0, keyless): flows into / out of SE4 per border, 15-min.
     Each part is optional; failures are listed in svk.errors and the page shows n/a for that part."""
     t0 = dt.datetime.combine(today - dt.timedelta(days=6), dt.time(), CET).astimezone(UTC)
     t1 = dt.datetime.combine(today + dt.timedelta(days=2), dt.time(), CET).astimezone(UTC)
     idx = pd.date_range(t0, t1, freq="1h", inclusive="left", tz="UTC")
-    days = [today + dt.timedelta(days=i) for i in range(-6, 2)]
-    res = dict(source="Svenska kraftnät", t0=idx[0].isoformat().replace("+00:00", "Z"), n=len(idx), zones={}, errors=[])
+    res = dict(source="ENTSO-E Transparency (load, solar, production by type); Svenska kraftnät data.svk.se (SE4 flows)",
+               t0=idx[0].isoformat().replace("+00:00", "Z"), n=len(idx), zones={}, errors=[])
     hourly = lambda s: [rnd(v, 0) for v in s.resample("1h").mean().reindex(idx)] if s is not None and len(s) else None
 
     def call(what, fn):
@@ -474,43 +550,10 @@ def build_svk(today):
         finally:
             time.sleep(0.3)
 
-    # consumption per bidding area (SE4: 8 days; SE1-SE3: yesterday/today/tomorrow for the zone split)
-    for z in SE_ZONES:
-        plan, act = [], []
-        for d in (days if z == "SE4" else days[-3:]):
-            js = call(f"situation {z} {d}", lambda: _svk_json(f"{SVK_CR}/situation", dict(date=d.isoformat(), biddingArea=z)))
-            for ser in (js or {}).get("Data") or []:
-                s_ = _xy_series(ser.get("data"))
-                if s_ is not None:
-                    (plan if ser.get("id") == "planned" else act if ser.get("id") == "result" else []).append(s_)
-        zr = {}
-        if plan:
-            zr["load_plan"] = hourly(pd.concat(plan).sort_index().groupby(level=0).last())
-        if act:
-            zr["load"] = hourly(pd.concat(act).sort_index().groupby(level=0).last())
-        # solar production plans (today + tomorrow)
-        sol = []
-        for d in days[-2:]:
-            js = call(f"productionplans {z} {d}", lambda: _svk_json(f"{SVK_CR}/productionplans", dict(date=d.isoformat(), biddingArea=z)))
-            rows = [x for x in (js or {}).get("data") or [] if x.get("productionPlanResource") == "SOLENERGI" and x.get("value") is not None]
-            if rows:
-                sol.append(pd.Series([x["value"] for x in rows], index=pd.to_datetime([x["dateTime"] for x in rows], utc=True), dtype="float64"))
-        if sol:
-            zr["solar_plan"] = hourly(pd.concat(sol).sort_index().groupby(level=0).last())
-        if zr:
-            res["zones"][z] = zr
-
-    # Sweden production by type
-    prod = {}
-    for d in days[:-1]:
-        js = call(f"production SE {d}", lambda: _svk_json(f"{SVK_CR}/production", dict(date=d.isoformat(), countryCode="SE")))
-        for ser in (js or {}).get("Data") or []:
-            k = SVK_PROD_IDS.get(str(ser.get("id")))
-            s_ = _xy_series(ser.get("data"))
-            if k and s_ is not None:
-                prod.setdefault(k, []).append(s_)
-    if prod:
-        res["se"] = {k: hourly(pd.concat(v).sort_index().groupby(level=0).last()) for k, v in prod.items()}
+    if _token():
+        _svk_from_entsoe(res, hourly, today, call)
+    else:
+        res["errors"].append(dict(part="entsoe", error="ENTSOE_API_TOKEN missing"))
 
     # SE4 physical flows per border (positive = import into SE4)
     def flows():
