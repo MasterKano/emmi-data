@@ -9,6 +9,8 @@ dataset against its OWN publication cadence and acceptable lag (REGISTRY below),
   * failed workflow        the latest completed run failed
   * partial failure        a green build still carries errors/gaps in the data, or a step failed behind continue-on-error
   * manifest outdated      nordic-v2/manifest.json per-file entries differ from the files themselves
+Covers the whole platform: emmi-data main and live-data, the oil and mining bundle (og-mining-v2), the emmi site repo's own
+data files and workflows, the scrape repo (EEX raw settlements and its daily run) and mr-climate's monthly run.
 Expected delays are not failures: NVE publishes Wednesday 13:00 Oslo, Energiforetagen's weekly PDF trails the week by up
 to 16 days, EEX settlements trail by up to 2 business days (accepted), ERA5 trails by about 5 days, and so on.
 
@@ -36,11 +38,28 @@ def sh(*a, check=True):
     return r.stdout
 
 
+def load_text(repo, branch, path):
+    """File from another repo (or this one) through the contents API; the workflow token reads public repos."""
+    key = ("txt", repo, branch, path)
+    if key not in _cache:
+        try:
+            _cache[key] = sh("gh", "api", f"repos/{repo}/contents/{path}?ref={branch}", "-H", "Accept: application/vnd.github.raw")
+        except Exception as e:  # noqa: BLE001
+            _cache[key] = e
+    return _cache[key]
+
+
 def load(ref, path):
     key = (ref, path)
     if key not in _cache:
         try:
-            if ref == "main":
+            if ref.startswith("gh:"):   # gh:owner/repo@branch
+                repo, branch = ref[3:].split("@")
+                t = load_text(repo, branch, path)
+                if isinstance(t, Exception):
+                    raise t
+                _cache[key] = json.loads(t)
+            elif ref == "main":
                 with open(path, encoding="utf-8") as fh:
                     _cache[key] = json.load(fh)
             else:
@@ -217,6 +236,84 @@ def c_exists(ref, path):
     return f
 
 
+def _year_ok(y, now):
+    return y >= now.astimezone(ZH).year - 2   # annual files: the publication year may trail by one, not two
+
+
+def c_year(ref, path, field):
+    def f(now):
+        d = load(ref, path)
+        if isinstance(d, Exception):
+            return dict(ok=False, latest="unreadable", note=f"{path}: {str(d)[:80]}")
+        vals = [int(str(v)[:4]) for v in jp(d, field)]
+        if not vals:
+            return dict(ok=False, latest="none", note=f"no {field}")
+        return dict(ok=_year_ok(min(vals), now), latest=str(min(vals)), note="annual data; fails when two or more years old")
+    return f
+
+
+def c_month(ref, path, field):
+    def f(now):
+        d = load(ref, path)
+        if isinstance(d, Exception):
+            return dict(ok=False, latest="unreadable", note=f"{path}: {str(d)[:80]}")
+        vals = [str(v)[:7] for v in jp(d, field) if re.fullmatch(r"\d{4}-\d{2}.*", str(v))]
+        if not vals:
+            return dict(ok=False, latest="none", note=f"no {field}")
+        z = now.astimezone(ZH)
+        idx = z.year * 12 + z.month - 1
+        due = idx - 1   # newest historical month is last month
+        have = int(vals[0][:4]) * 12 + int(vals[0][5:7]) - 1
+        return dict(ok=have >= due - 1, latest=vals[0], note=f"monthly outlook, newest historical month; fails when more than one month behind last month")
+    return f
+
+
+def eia_week_due(now):
+    d = now.astimezone(ZH).date()
+    fri = d - dt.timedelta(days=(d.weekday() - 4) % 7)
+    if d < fri + dt.timedelta(days=5):   # the weekly report for that Friday comes out the following Wednesday
+        fri -= dt.timedelta(days=7)
+    return fri
+
+
+def c_eia_week(ref, path, field):
+    def f(now):
+        d = load(ref, path)
+        if isinstance(d, Exception):
+            return dict(ok=False, latest="unreadable", note=f"{path}: {str(d)[:80]}")
+        vals = [parse_ts(v).date() for v in jp(d, field)]
+        if not vals:
+            return dict(ok=False, latest="none", note=f"no {field}")
+        due = eia_week_due(now)
+        gap = (due - min(vals)).days
+        return dict(ok=gap <= 7, latest=str(min(vals)), note=f"week ending {due} is due (released the following Wednesday); {max(gap,0)} days behind, allowed 7")
+    return f
+
+
+def c_csv_trade(repo, branch, path, group_col, date_col, max_biz, ok_col="status"):
+    """Newest settled trade date per market group in a raw CSV; the EEX settlement lag (up to max_biz business days) is accepted."""
+    def f(now):
+        t = load_text(repo, branch, path)
+        if isinstance(t, Exception):
+            return dict(ok=False, latest="unreadable", note=f"{path}: {str(t)[:80]}")
+        import csv, io
+        last = {}
+        for r in csv.DictReader(io.StringIO(t)):
+            if r.get(ok_col) == "ok" and r.get(date_col):
+                g = r[group_col]
+                if r[date_col] > last.get(g, ""):
+                    last[g] = r[date_col]
+        if not last:
+            return dict(ok=False, latest="none", note="no settled rows")
+        today = now.astimezone(ZH).date()
+        lags = {g: biz_lag(parse_ts(v).date(), today) for g, v in last.items()}
+        bad = {g: l for g, l in lags.items() if l > max_biz}
+        newest = max(last.values())
+        return dict(ok=not bad, latest=f"{min(last.values())}..{newest} ({len(last)} groups)",
+                    note=("; ".join(f"{g} {last[g]} is {l} business days old" for g, l in sorted(bad.items())) if bad else f"every group within {max_biz} business days (settlement lag accepted)"))
+    return f
+
+
 # ------------------------------------------------------------------ registry: dataset -> (builder, cron, checks)
 M, L = "main", "live-data"
 UD = ("update-data.yml", "scripts/*.py via Update market data")
@@ -255,7 +352,7 @@ ds("gas.json (GIE AGSI+)", L, "data/gas.json", UD[1], PW, [("built", c_gen(L, "d
 ds("nordic_precip.json", L, "data/nordic_precip.json", UD[1], PW, [("forecast built", c_gen(L, "data/nordic_precip.json", "generated_utc", 26)), ("monthly part", c_gen(L, "data/nordic_precip.json", "monthly/generated_utc", 24 * 40))])
 ds("ttf_weather.json", L, "data/ttf_weather.json", "ttf-weather.yml", "40 8,10,20,22 daily", [("built", c_gen(L, "data/ttf_weather.json", "generated_utc", 26))])
 ds("balancing.json (DE)", L, "data/balancing.json", UD[1], PW, [("built", c_gen(L, "data/balancing.json", "generated_utc", 26)), ("in-file errors", c_errors(L, "data/balancing.json"))])
-ds("hydro_nordic.json", L, "data/hydro_nordic.json", "update-data 'Nordic hydro reservoirs' (weekly, full mode)", "weekly, refreshed Thursday morning", [("NO zones vs NVE release", c_nve("data/hydro_nordic.json", "zones/*/date", 47, ref=L))])
+ds("hydro_nordic.json", L, "data/hydro_nordic.json", "update-data 'Nordic hydro reservoirs' (rebuilds when NVE publishes a newer week)", "Wednesday 12:30 UTC power run, 17:30 UTC as backup", [("NO zones vs NVE release", c_nve("data/hydro_nordic.json", "zones/*/date", 7, ref=L))])
 ds("nordic_monthly.json", L, "data/nordic_monthly.json", "update-data 'Nordic monthly overview' (monthly)", "monthly", [("built", c_gen(L, "data/nordic_monthly.json", "generated_utc", 24 * 40)), ("in-file errors", c_errors(L, "data/nordic_monthly.json"))])
 ds("griddc.json", L, "data/griddc.json", "update-data 'Grid & DC' (full)", FU, [("built", c_gen(L, "data/griddc.json", "generated_utc", 60, True))])
 ds("market.json", L, "data/market.json", "intraday.yml / update-data", "every 15 min weekdays", [("built", c_gen(L, "data/market.json", "generated_utc", 30, True)), ("in-file errors", c_errors(L, "data/market.json", 5))])
@@ -264,6 +361,20 @@ ds("us_valuation.json", L, "data/us_valuation.json", "update-data (monthly)", "m
 ds("metals.json / cot.json", L, "data/metals.json", "metals.yml", "weekly-ish, see workflow", [("metals", c_gen(L, "data/metals.json", "generated_utc", 24 * 8)), ("cot", c_gen(L, "data/cot.json", "generated_utc", 24 * 8))])
 ds("curves/ (EEX Nordic system, TTF)", M, "curves/index.json", "scrape repo + ho-curve.yml archive", "weekdays 20:07 UTC", [("nordic-sys session", c_date(M, "curves/index.json", "curves/nordic-sys/latest", 2, "biz")), ("ttf session", c_date(M, "curves/index.json", "curves/ttf/latest", 2, "biz")), ("brent/ho session", c_date(M, "curves/index.json", "curves/brent/latest", 3, "biz"))])
 ds("futures/ (EUA, TTF, HH, oil, metals, ags)", M, "futures/index.json", "futures.yml", "40 21 weekdays + 20 6 Sat", [("built", c_gen(M, "futures/index.json", "built_utc", 60, True)), ("newest EUA/TTF session", c_date(M, "futures/index.json", "by_sym/CL=F/asof", 3, "biz"))])
+
+# --- whole-platform additions (26 Nov 2026): oil and mining bundle, the private emmi site repo, EEX raw scrape
+OG = "og-mining-v2/"
+BOX = "built on the box (no workflow); rebuilt by hand"
+ds("og-mining-v2 EIA spot (Brent, WTI, Henry Hub)", M, OG + "spot_daily.json", BOX, "daily EIA prices, trail about 5 days", [("EIA spot observation", c_date(M, OG + "spot_daily.json", "*_spot/as_of", 13))])
+ds("og-mining-v2 EIA weekly balances", M, OG + "us_weekly.json", BOX, "weekly, released Wednesday", [("EIA week", c_eia_week(M, OG + "us_weekly.json", "us_commercial_crude_stocks/as_of")), ("EIA gas storage week", c_eia_week(M, OG + "us_weekly.json", "us_gas_storage_l48/as_of"))])
+ds("og-mining-v2 EIA STEO", M, OG + "oil_balance_steo.json", BOX, "monthly (released about the 10th)", [("STEO observation (month)", c_month(M, OG + "oil_balance_steo.json", "meta/last_historical_month"))])
+ds("og-mining-v2 Energy Institute history", M, OG + "oil_gas_history_ei.json", BOX, "annual", [("history year observation", c_year(M, OG + "oil_gas_history_ei.json", "meta/data_to"))])
+ds("og-mining-v2 USGS mine production", M, OG + "mining_production_usgs.json", BOX, "annual", [("production year observation", c_year(M, OG + "manifest.json", "files/mining_production_usgs.json/as_of"))])
+ds("og-mining-v2 bundle manifest", M, OG + "manifest.json", BOX, "rebuilt with the bundle", [("in-file errors", c_errors(M, OG + "manifest.json")), ("manifest readable", c_exists(M, OG + "manifest.json"))])
+EM = "gh:MasterKano/emmi@main"
+ds("emmi data/og-quotes.json", EM, "data/og-quotes.json", "emmi og-quotes.yml (Yahoo)", "every 15 min weekdays 05-21 UTC (GitHub runs it sparsely)", [("built", c_gen(EM, "data/og-quotes.json", "generated_utc", 30, True)), ("in-file errors", c_errors(EM, "data/og-quotes.json", 3))])
+ds("emmi data/pipeline_projects.json", EM, "data/pipeline_projects.json", "emmi pipeline.yml (build_pipeline.py)", "Monday and Thursday 06:20 UTC", [("built", c_gen(EM, "data/pipeline_projects.json", "generated_utc", 120))])
+ds("EEX raw scrape (scrape repo master/eex_master.csv)", "gh:MasterKano/scrape@main", "master/eex_master.csv", "scrape update-market-data.yml (eex_scraper.py)", "daily ~19:00 UTC; EEX settles with a lag", [("settlement date", c_csv_trade("MasterKano/scrape", "main", "master/eex_master.csv", "marketGroup", "tradeDate", 2))])
 
 # workflows: file, max hours between STARTED SCHEDULED runs (weekend hours excluded when weekday_only), first expected start
 WORKFLOWS = [
@@ -275,27 +386,48 @@ WORKFLOWS = [
 ]
 
 
+# other EMMI repos: (repo, file, max hours between started scheduled runs or None for event-driven, weekday_only, max hours since the last successful run or None)
+XWORKFLOWS = [
+    ("MasterKano/scrape", "update-market-data.yml", 36, False, None),   # cron 09:00 UTC, GitHub starts it 16:00-21:00 UTC
+    ("MasterKano/emmi", "og-quotes.yml", 30, True, None),
+    ("MasterKano/emmi", "pipeline.yml", 110, False, None),              # Mon and Thu 06:20 UTC, started up to 12 h late
+    ("MasterKano/mr-climate", "monthly-update.yml", 24 * 32, False, None),  # 10th of the month
+    ("MasterKano/emmi", "deploy.yml", None, False, 30),                 # the live site; redeploys whenever data moves
+    ("MasterKano/emmi", "data-watch.yml", None, False, None),
+    ("MasterKano/emmi", "research.yml", None, False, None),
+    ("MasterKano/mr-climate", "checks.yml", None, False, None),
+]
+
+
 def workflow_findings(now, simulate):
     out = []
-    for wf, max_h, wk, first_due in WORKFLOWS:
+    todo = [(REPO, wf, max_h, wk, first_due, None) for wf, max_h, wk, first_due in WORKFLOWS] + [(r, wf, mh, wk, None, ms) for r, wf, mh, wk, ms in XWORKFLOWS]
+    for repo, wf, max_h, wk, first_due, max_succ in todo:
+        label = wf if repo == REPO else f"{repo.split('/')[1]}/{wf}"
         try:
-            runs = json.loads(sh("gh", "api", f"repos/{REPO}/actions/workflows/{wf}/runs?per_page=40"))["workflow_runs"]
+            runs = json.loads(sh("gh", "api", f"repos/{repo}/actions/workflows/{wf}/runs?per_page=40"))["workflow_runs"]
         except Exception as e:
-            out.append(dict(id=f"workflow {wf}", check="runs", ok=False, latest="unreadable", note=str(e)[:100], kind="missing run"))
+            out.append(dict(id=f"workflow {label}", check="runs", ok=False, latest="unreadable", note=str(e)[:100], kind="missing run"))
             continue
         sched = [r for r in runs if r["event"] == "schedule"]
-        last = parse_ts(sched[0]["created_at"]) if sched else None
-        ref_t = last
-        if ref_t is None and first_due:
-            ref_t = parse_ts(first_due)   # nothing scheduled yet: judged from the first expected start
-        if first_due and parse_ts(first_due) > now and not sched:
-            out.append(dict(id=f"workflow {wf}", check="schedule", ok=True, latest="first run due " + first_due[:16], note="not yet due", kind="missing run"))
-        elif ref_t is None:
-            out.append(dict(id=f"workflow {wf}", check="schedule", ok=False, latest="never", note="no scheduled run in the last 40 runs", kind="missing run"))
-        else:
-            a = age_h(ref_t, now, wk)
-            lim = max_h if last else 26   # first scheduled start still missing a day after it was due
-            out.append(dict(id=f"workflow {wf}", check="scheduled run started", ok=a <= lim, latest=ref_t.strftime("%Y-%m-%d %H:%MZ") if last else "none yet", note=f"{a:.0f} h since last scheduled start, allowed {lim:.0f} h" + (" (weekends excluded)" if wk else ""), kind="missing run"))
+        if max_h is None:   # event-driven: no clock, only failures (and, where set, the age of the last success)
+            if max_succ:
+                ok_runs = [r for r in runs if r["conclusion"] == "success"]
+                a = age_h(parse_ts(ok_runs[0]["created_at"]), now) if ok_runs else 1e9
+                out.append(dict(id=f"workflow {label}", check="last successful run", ok=a <= max_succ, latest=ok_runs[0]["created_at"][:16] + "Z" if ok_runs else "none", note=f"{a:.0f} h since the last successful run, allowed {max_succ} h", kind="missing run"))
+        if max_h is not None:
+            last = parse_ts(sched[0]["created_at"]) if sched else None
+            ref_t = last
+            if ref_t is None and first_due:
+                ref_t = parse_ts(first_due)   # nothing scheduled yet: judged from the first expected start
+            if first_due and parse_ts(first_due) > now and not sched:
+                out.append(dict(id=f"workflow {label}", check="schedule", ok=True, latest="first run due " + first_due[:16], note="not yet due", kind="missing run"))
+            elif ref_t is None:
+                out.append(dict(id=f"workflow {label}", check="schedule", ok=False, latest="never", note="no scheduled run in the last 40 runs", kind="missing run"))
+            else:
+                a = age_h(ref_t, now, wk)
+                lim = max_h if last else 26   # first scheduled start still missing a day after it was due
+                out.append(dict(id=f"workflow {label}", check="scheduled run started", ok=a <= lim, latest=ref_t.strftime("%Y-%m-%d %H:%MZ") if last else "none yet", note=f"{a:.0f} h since last scheduled start, allowed {lim:.0f} h" + (" (weekends excluded)" if wk else ""), kind="missing run"))
         done = [r for r in runs if r["status"] == "completed"]
         if done and not simulate and wf != "data-health.yml":   # the monitor fails on purpose when it raises an alert
             bad = 0
@@ -304,7 +436,7 @@ def workflow_findings(now, simulate):
                     bad += 1
                 else:
                     break
-            out.append(dict(id=f"workflow {wf}", check="latest run", ok=bad == 0, latest=f"{done[0]['conclusion']} {done[0]['created_at'][:16]}Z", note=f"{bad} consecutive failed run(s)" if bad else "last completed run succeeded", kind="failed workflow"))
+            out.append(dict(id=f"workflow {label}", check="latest run", ok=bad == 0, latest=f"{done[0]['conclusion']} {done[0]['created_at'][:16]}Z", note=f"{bad} consecutive failed run(s)" if bad else "last completed run succeeded", kind="failed workflow"))
     # steps that failed behind continue-on-error in the latest completed update-data builds
     try:
         runs = [r for r in json.loads(sh("gh", "api", f"repos/{REPO}/actions/workflows/update-data.yml/runs?per_page=6&status=completed"))["workflow_runs"] if r["conclusion"] == "success"][:3]
@@ -371,13 +503,13 @@ def evaluate(now, simulate):
         if r["checks"][0][1] is c_static:
             kind = "static"
         try:
-            lc = sh("git", "log", "-1", "--format=%cI", "--", r["path"]).strip() if r["ref"] == "main" else "n/a (live-data is one force-pushed commit)"
+            lc = sh("git", "log", "-1", "--format=%cI", "--", r["path"]).strip() if r["ref"] == "main" else "n/a (not a plain file in this repo)"
         except Exception:
             lc = "n/a"
         rows.append(dict(dataset=r["id"], verdict=kind, latest="; ".join(f"{x['check']}: {x['latest']}" for x in res), builder=r["builder"], cron=r["cron"], last_commit=lc,
                          checks=[dict(check=x["check"], ok=x["ok"], latest=x["latest"], note=x["note"]) for x in res]))
         for x in bad:
-            alerts.append(dict(id=f"{r['id']} / {x['check']}", kind="partial failure" if x["check"] == "in-file errors" else "stale observation" if "observation" in x["check"] or x["check"] in ("SE/FI observation", "FI observation", "settlement date", "week", "gas day", "price date", "delivery", "newest ERA5 day") or "session" in x["check"] else "stale build", latest=x["latest"], note=x["note"]))
+            alerts.append(dict(id=f"{r['id']} / {x['check']}", kind="partial failure" if x["check"] == "in-file errors" else "stale observation" if any(k in x["check"] for k in ("observation", "week", "settlement", "session", "gas day", "price date", "delivery", "ERA5")) else "stale build", latest=x["latest"], note=x["note"]))
     wf = workflow_findings(now, simulate)
     for x in wf + manifest_findings():
         if not x["ok"]:
