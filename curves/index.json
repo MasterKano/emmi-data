@@ -1,13 +1,13 @@
 {
-  "generated": "2026-11-26T09:46:16Z",
+  "generated": "2026-11-26T21:44:02Z",
   "curves": {
     "nordic-sys": {
       "title": "Nordic system-price futures",
       "currency": "EUR",
       "unit": "EUR/MWh",
       "earliest": "2026-09-01",
-      "latest": "2026-11-24",
-      "date_count": 61,
+      "latest": "2026-11-25",
+      "date_count": 62,
       "weekday_gaps": [],
       "sources": [
         "eex"
@@ -18,8 +18,8 @@
       "currency": "EUR",
       "unit": "EUR/MWh",
       "earliest": "2026-09-01",
-      "latest": "2026-11-24",
-      "date_count": 61,
+      "latest": "2026-11-25",
+      "date_count": 62,
       "weekday_gaps": [],
       "sources": [
         "eex"
