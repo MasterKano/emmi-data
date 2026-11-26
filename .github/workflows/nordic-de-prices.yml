@@ -1,0 +1,70 @@
+name: Nordic v2 DE-LU day-ahead
+
+# nordic-v2/prices_de.json (Germany–Luxembourg day-ahead, used by the EMMI area table) had no schedule and ended
+# 13 Nov. Reuses nordic-v2/build_de_prices.py unchanged. The SDAC day-ahead result is public about 12:45 CET/CEST,
+# so 12:50 and 14:50 UTC are after publication in both CET and CEST. Fails loudly if the file is not current
+# through today (Europe/Zurich). No continue-on-error.
+on:
+  schedule:
+    - cron: "50 12,14 * * *"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "commit the result to main (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nordic-v2-de-prices
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q pandas numpy requests
+      - name: Build DE-LU prices
+        run: python nordic-v2/build_de_prices.py
+      - name: Check freshness (fail loudly)
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, sys
+          from zoneinfo import ZoneInfo
+          today = dt.datetime.now(ZoneInfo("Europe/Zurich")).date()
+          d = json.load(open("nordic-v2/prices_de.json"))
+          a = dt.date.fromisoformat(d["as_of"])
+          print("prices_de as_of", a, "today", today)
+          if a < today:
+              print(f"FAIL: prices_de as_of {a} is older than today {today}"); sys.exit(1)
+          PY
+      - name: Publish to main (prices_de.json)
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          asof=$(python -c 'import json; print(json.load(open("nordic-v2/prices_de.json"))["as_of"])')
+          git add nordic-v2/prices_de.json
+          git commit -m "DE-LU day-ahead as of ${asof}" || { echo "no change"; exit 0; }
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved underneath us, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1

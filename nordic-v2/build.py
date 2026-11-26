@@ -14,6 +14,9 @@ CACHE=BASE/'cache'
 OUT=BASE/'output'
 HISTORY=BASE/'history'
 CLIMATE=Path(os.environ.get('NORDIC_CLIMATE','/home/box/data/nordic-climate'))
+# Legacy monthly snapshots (nordic_mtd.json, nordic_monthly.json). Box default unchanged; the scheduled
+# workflow points this at copies of the files published on live-data.
+LEGACY=Path(os.environ.get('NORDIC_LEGACY_DATA','/workspace/emmi-pulse-auto/data'))
 
 def _scripts_dir():
     env=os.environ.get('EMMI_SCRIPTS')
@@ -816,7 +819,7 @@ def hydrology():
           'band_period':f'2015-{TODAY.year-1}, actual available years per ISO week',
           'reservoir_balance_twh':{'value':last.v,'normal':normal,'difference':last.v-normal if normal is not None else None},'source':'ENTSO-E A72'}
     # Preserve the existing monthly energy-inflow estimator and its stated limitations.
-    old=json.loads(Path('/workspace/emmi-pulse-auto/data/nordic_monthly.json').read_text())
+    old=json.loads((LEGACY/'nordic_monthly.json').read_text())
     for c,values in old.get('inflow',{}).items():
         s=pd.Series(values,index=pd.PeriodIndex(old['months'],freq='M'),dtype=float)
         b=s[(s.index.year>=old['avg_years'][0])&(s.index.year<=old['avg_years'][1])]
@@ -948,13 +951,25 @@ def monthly():
     # Exact legacy payloads, deliberately not refreshed or reinterpreted.
     names=['nordic_mtd','nordic_monthly']
     result={'as_of':None,'source':'existing EMMI monthly-view snapshots, reused unchanged','stale':True,'snapshots':{}}
+    # Keep hand-written notes already in the published file (note, cross_check, stale_parts, ...) and replace
+    # only the snapshots and the 100m climate block. Without an existing file the behaviour is as before.
+    prev=OUT/'monthly.json'
+    if prev.exists():
+        try:
+            old=json.loads(prev.read_text())
+            result.update({k:v for k,v in old.items() if k not in ('schema_version','built_at','snapshots','climate_100m')})
+        except Exception:pass
+    result['snapshots']={}
     for n in names:
-        j=json.loads(Path('/workspace/emmi-pulse-auto/data/'+n+'.json').read_text());result['snapshots'][n]=j
+        j=json.loads((LEGACY/(n+'.json')).read_text());result['snapshots'][n]=j
+    if isinstance(result.get('stale_parts'),dict):
+        for n in names:result['stale_parts'].pop(n,None)
+        if not result['stale_parts']:result.pop('stale_parts')
     result['climate_100m']=json.loads((CLIMATE/'mtd.json').read_text())
     result['wind_display_rule']='Only use climate_100m.wind100 for wind speed; legacy wx wind fields are not approved 100m and must not be rendered.'
     dates=result['snapshots']['nordic_mtd'].get('days',[])
     result['as_of']=max(dates) if dates else None
-    result['note']='Legacy snapshot is not represented as current. Native fields and units preserved. Display numeric values to 1 decimal place; label dashed average with its numeric value. Monthly climate tiles should use monthly_climate.json (2006-2025, new geography), not climate_100m.'
+    result.setdefault('note','Legacy snapshot is not represented as current. Native fields and units preserved. Display numeric values to 1 decimal place; label dashed average with its numeric value. Monthly climate tiles should use monthly_climate.json (2006-2025, new geography), not climate_100m.')
     write('monthly.json',result)
 
 def monthly_climate():

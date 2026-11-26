@@ -1,0 +1,107 @@
+name: Nordic v2 hydrology and monthly snapshot
+
+# nordic-v2/hydrology.json and monthly.json had no schedule: they were built by hand on the box and went stale
+# (hydrology ended 8 Nov). This job reuses nordic-v2/build.py (--only hydrology,monthly), unchanged logic.
+# NVE publishes Norwegian reservoir statistics on Wednesdays at 13:00 Oslo time (11:00 or 12:00 UTC), so the
+# cron fires at 12:30 and 14:30 UTC on Wednesday (covers CET and CEST) with a Thursday 06:30 UTC catch-up.
+# Fails loudly: any source error recorded by the builder, or a dataset older than its publication cycle, fails the run
+# and nothing is committed. No continue-on-error.
+on:
+  schedule:
+    - cron: "30 12,14 * * 3"
+    - cron: "30 6 * * 4"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "commit the result to main (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nordic-v2-hydrology
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q pandas numpy requests curl_cffi beautifulsoup4 openpyxl
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: nordic-v2/cache
+          key: nordic-v2-hydrology-${{ github.run_id }}
+          restore-keys: |
+            nordic-v2-hydrology-
+      - name: Copy legacy snapshots from live-data
+        run: |
+          set -euo pipefail
+          git fetch -q --depth 1 origin live-data
+          mkdir -p legacy
+          for n in nordic_mtd nordic_monthly; do git show FETCH_HEAD:data/$n.json > legacy/$n.json; done
+      - name: Build hydrology and monthly
+        run: |
+          set -euo pipefail
+          NORDIC_LEGACY_DATA="$PWD/legacy" NORDIC_CLIMATE="$PWD/nordic-climate" \
+            python nordic-v2/build.py --only hydrology,monthly --out nordic-v2
+          cp nordic-v2/manifest.json "$RUNNER_TEMP/manifest.json"
+          git checkout -- nordic-v2/manifest.json
+      - name: Check freshness (fail loudly)
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, os, sys
+          from zoneinfo import ZoneInfo
+          today = dt.datetime.now(ZoneInfo("Europe/Zurich")).date()
+          man = json.load(open(os.environ["RUNNER_TEMP"] + "/manifest.json"))
+          bad = []
+          if man.get("errors"):
+              bad.append("builder recorded source errors: " + json.dumps(man["errors"]))
+          h = json.load(open("nordic-v2/hydrology.json"))
+          limits = {"NO": 11, "NO1": 11, "NO2": 11, "NO3": 11, "NO4": 11, "NO5": 11, "SE": 21, "FI": 21}
+          for k, lim in limits.items():
+              r = h["reservoirs"].get(k)
+              if not r:
+                  bad.append(f"hydrology {k} missing"); continue
+              age = (today - dt.date.fromisoformat(r["as_of"])).days
+              print(f"hydrology {k} as_of {r['as_of']} age {age} d (limit {lim})")
+              if age > lim:
+                  bad.append(f"hydrology {k} as_of {r['as_of']} is {age} days old (limit {lim})")
+          m = json.load(open("nordic-v2/monthly.json"))
+          age = (today - dt.date.fromisoformat(m["as_of"])).days
+          print(f"monthly as_of {m['as_of']} age {age} d")
+          if age > 10:
+              bad.append(f"monthly as_of {m['as_of']} is {age} days old")
+          if bad:
+              print("\n".join("FAIL: " + b for b in bad)); sys.exit(1)
+          PY
+      - name: Publish to main (hydrology.json, monthly.json)
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          asof=$(python -c 'import json; print(json.load(open("nordic-v2/hydrology.json"))["as_of"])')
+          git add nordic-v2/hydrology.json nordic-v2/monthly.json
+          git commit -m "Nordic hydrology as of ${asof}" || { echo "no change"; exit 0; }
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved underneath us, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
