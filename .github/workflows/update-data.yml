@@ -211,10 +211,11 @@ jobs:
             [ "$ok" = 1 ] || { echo "::warning::tracker-history push failed"; rc=1; }
           fi
           exit $rc
-      - name: Nordic hydro reservoirs (NVE + ENTSO-E A72 Sweden), weekly
+      - name: Nordic hydro reservoirs (NVE + ENTSO-E A72 Sweden), rebuilt when NVE publishes
         id: nordic_hydro_reservoirs
-        # morning full run; script skips when data/hydro_nordic.json is < 6.5 days old; ~30 s
-        if: env.MODE == 'full'
+        # full and power runs (the 12:30 and 17:30 UTC power runs are after NVE's Wednesday 13:00 Oslo publication): the script
+        # asks NVE for its newest weekly date (~1 s) and rebuilds (~45 s) only when that is newer than the file's nve_date
+        if: env.MODE == 'full' || env.MODE == 'power'
         run: python scripts/build_hydro_nordic.py
         env:
           ENTSOE_API_TOKEN: ${{ secrets.ENTSOE_API_TOKEN }}
