@@ -365,8 +365,9 @@ ds("futures/ (EUA, TTF, HH, oil, metals, ags)", M, "futures/index.json", "future
 # --- whole-platform additions (26 Nov 2026): oil and mining bundle, the private emmi site repo, EEX raw scrape
 OG = "og-mining-v2/"
 BOX = "built on the box (no workflow); rebuilt by hand"
-ds("og-mining-v2 EIA spot (Brent, WTI, Henry Hub)", M, OG + "spot_daily.json", BOX, "daily EIA prices, trail about 5 days", [("EIA spot observation", c_date(M, OG + "spot_daily.json", "*_spot/as_of", 13))])
-ds("og-mining-v2 EIA weekly balances", M, OG + "us_weekly.json", BOX, "weekly, released Wednesday", [("EIA week", c_eia_week(M, OG + "us_weekly.json", "us_commercial_crude_stocks/as_of")), ("EIA gas storage week", c_eia_week(M, OG + "us_weekly.json", "us_gas_storage_l48/as_of"))])
+EIA = "og-eia-refresh.yml (scripts/build_og_eia.py)"
+ds("og-mining-v2 EIA spot (Brent, WTI, Henry Hub)", M, OG + "spot_daily.json", EIA, "weekdays 09:35 UTC; EIA trails about 2 days", [("EIA spot observation", c_date(M, OG + "spot_daily.json", "*_spot/as_of", 13))])
+ds("og-mining-v2 EIA weekly balances", M, OG + "us_weekly.json", EIA, "Wed and Thu 15:50, 17:50 UTC (WPSR, Thursday in holiday weeks)", [("EIA week", c_eia_week(M, OG + "us_weekly.json", "us_commercial_crude_stocks/as_of")), ("EIA gas storage week", c_eia_week(M, OG + "us_weekly.json", "us_gas_storage_l48/as_of"))])
 ds("og-mining-v2 EIA STEO", M, OG + "oil_balance_steo.json", BOX, "monthly (released about the 10th)", [("STEO observation (month)", c_month(M, OG + "oil_balance_steo.json", "meta/last_historical_month"))])
 ds("og-mining-v2 Energy Institute history", M, OG + "oil_gas_history_ei.json", BOX, "annual", [("history year observation", c_year(M, OG + "oil_gas_history_ei.json", "meta/data_to"))])
 ds("og-mining-v2 USGS mine production", M, OG + "mining_production_usgs.json", BOX, "annual", [("production year observation", c_year(M, OG + "manifest.json", "files/mining_production_usgs.json/as_of"))])
@@ -383,6 +384,7 @@ WORKFLOWS = [
     ("nordic-hydrology.yml", 24 * 8.5, False, "2026-12-02T14:30:00+00:00"), ("futures.yml", 36, True, None),
     ("ho-curve.yml", 36, True, None), ("data-health.yml", 9, False, "2026-11-26T12:00:00+00:00"), ("metals.yml", 24 * 8, False, None), ("ticker.yml", 14, True, None),
     ("intraday.yml", 12, True, None), ("nordic-climate-publish.yml", 24 * 9, False, "2026-11-28T05:05:00+00:00"),
+    ("og-eia-refresh.yml", 30, True, "2026-11-27T10:30:00+00:00"),
 ]
 
 

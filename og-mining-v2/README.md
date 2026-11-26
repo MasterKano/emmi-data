@@ -30,3 +30,8 @@ Observed 2000 → 2025 (for takeaways; recompute from the file before publishing
 - India oil 0.79 → 1.41; TES 12.2 → 26.7 GJ (still low; 2025 oil per capita slightly down year-on-year).
 - US oil 25.42 → 20.41; TES 335.8 → 270.2 GJ (down, still the highest of this set).
 - Germany oil 12.24 → 8.86; TES 174.0 → 119.5 GJ (declining).
+
+
+## Refresh (26 Nov 2026)
+
+`spot_daily.json` and `us_weekly.json` (and their manifest entries) are refreshed by `.github/workflows/og-eia-refresh.yml` running `scripts/build_og_eia.py`: weekdays 09:35 UTC, plus Wednesday and Thursday 15:50 and 17:50 UTC for the EIA weekly reports (Thursday in holiday weeks). The calculations are those of the 12 Nov build, unchanged. Other files in this folder are still built by hand.

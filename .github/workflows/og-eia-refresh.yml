@@ -1,0 +1,78 @@
+name: Oil and mining EIA refresh
+
+# og-mining-v2/spot_daily.json (EIA daily Brent, WTI, Henry Hub) and og-mining-v2/us_weekly.json (EIA weekly petroleum and gas
+# storage) were built by hand on 12 Nov 2026 and had no schedule. scripts/build_og_eia.py reuses the 12 Nov calculations unchanged
+# and refreshes only those two files and their manifest entries; it is idempotent (no EIA change = no commit).
+# Cadence: spot prices update on EIA's business days, so every weekday 09:35 UTC; the Weekly Petroleum Status Report and gas
+# storage report come out Wednesday 10:30 ET (15:30 UTC in winter), Thursday in holiday weeks: Wednesday and Thursday 15:50 and
+# 17:50 UTC. Every run refreshes both files, so the extra runs are harmless. Fails loudly if EIA data are too old.
+# The site redeploys through data-watch (it polls the emmi-data main head); data-health.yml watches the files and this workflow.
+on:
+  schedule:
+    - cron: "35 9 * * 1-5"
+    - cron: "50 15,17 * * 3,4"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "commit the result to main (untick for a dry test run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: og-eia-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -q "pandas>=2.1" "xlrd>=2.0.1" requests
+      - name: Refresh EIA spot and weekly files
+        run: python scripts/build_og_eia.py
+      - name: Check freshness (fail loudly)
+        run: |
+          python - <<'PY'
+          import datetime as dt, json, sys
+          from zoneinfo import ZoneInfo
+          today = dt.datetime.now(ZoneInfo("Europe/Zurich")).date()
+          def newest(p):
+              d = json.load(open(p))
+              return min(dt.date.fromisoformat(v["as_of"]) for k, v in d.items() if isinstance(v, dict) and "as_of" in v)
+          spot, wk = newest("og-mining-v2/spot_daily.json"), newest("og-mining-v2/us_weekly.json")
+          print("spot as_of", spot, "weekly as_of", wk, "today", today)
+          bad = []
+          if (today - spot).days > 8: bad.append(f"EIA spot {spot} is {(today - spot).days} days old")
+          if (today - wk).days > 12: bad.append(f"EIA weekly {wk} is {(today - wk).days} days old")
+          if bad:
+              print("FAIL: " + "; ".join(bad)); sys.exit(1)
+          PY
+      - name: Publish to main (og-mining-v2 EIA files)
+        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
+          sp=$(python -c 'import json; print(json.load(open("og-mining-v2/spot_daily.json"))["brent_spot"]["as_of"])')
+          wk=$(python -c 'import json; print(json.load(open("og-mining-v2/us_weekly.json"))["us_commercial_crude_stocks"]["as_of"])')
+          git add og-mining-v2/spot_daily.json og-mining-v2/us_weekly.json og-mining-v2/manifest.json
+          git commit -m "EIA spot to ${sp}, weekly balances to ${wk}" || { echo "no change"; exit 0; }
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for i in 1 2 3 4 5 6; do
+            if git push -q "$url" HEAD:main; then echo "published on try $i"; exit 0; fi
+            echo "main moved underneath us, retrying ($i)"
+            git fetch -q origin main
+            git rebase origin/main
+            sleep $((i * 5))
+          done
+          echo "publish failed"; exit 1
