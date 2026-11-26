@@ -1,0 +1,43 @@
+name: EMMI data health
+
+# Central freshness / missing-run / partial-failure monitor for every EMMI dataset in this repo.
+# Read-only on the data; writes only: one GitHub issue "EMMI data health" (assigned to the owner), the orphan
+# branch `data-health` (status.json), and nordic-v2/manifest.json per-file entries (additive sync).
+# The job fails (GitHub's failed-workflow email) only when the alert set changes, and once a day while unresolved.
+on:
+  schedule:
+    - cron: "17 3,6,9,12,15,18,21 * * *"
+  workflow_dispatch:
+    inputs:
+      simulate_days:
+        description: "TEST: pretend it is N days later (deliberate staleness/missing-run case; issue prefixed [TEST])"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: data-health
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Fetch live-data
+        run: git fetch -q origin live-data
+      - name: Check every dataset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SIM: ${{ inputs.simulate_days }}
+        run: python scripts/data_health.py --simulate-days "${SIM:-0}"
