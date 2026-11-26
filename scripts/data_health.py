@@ -297,7 +297,7 @@ def workflow_findings(now, simulate):
             lim = max_h if last else max_h
             out.append(dict(id=f"workflow {wf}", check="scheduled run started", ok=a <= lim, latest=ref_t.strftime("%Y-%m-%d %H:%MZ") if last else "none yet", note=f"{a:.0f} h since last scheduled start, allowed {lim:.0f} h" + (" (weekends excluded)" if wk else ""), kind="missing run"))
         done = [r for r in runs if r["status"] == "completed"]
-        if done and not simulate:
+        if done and not simulate and wf != "data-health.yml":   # the monitor fails on purpose when it raises an alert
             bad = 0
             for r in done:
                 if r["conclusion"] == "failure":
