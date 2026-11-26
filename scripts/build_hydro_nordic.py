@@ -2,12 +2,17 @@
 min / median / max of the same ISO week over the previous 10 years, plus Norwegian price-area filling for the map.
 Sources: NVE magasinstatistikk (biapi.nve.no, keyless) for Norway; ENTSO-E Transparency A72 (aggregated filling
 of water reservoirs, country Sweden) for Sweden (needs ENTSOE_API_TOKEN; Norway-only if missing).
-Writes data/hydro_nordic.json (a few KB). Weekly: skips if the file is < 6.5 days old (both sources publish weekly)."""
+Writes data/hydro_nordic.json (a few KB).
+Refresh rule (26 Nov 2026): NVE publishes the weekly figures on Wednesday 13:00 Oslo. A build runs when NVE's newest weekly date
+(`dato_Id`, one small request) is newer than the `nve_date` stored in the file, so the first run after publication refreshes the
+file the same day and every later run that week skips. A build before publication finds nothing newer and skips, instead of
+stamping a stale week as fresh. Safety net: a file older than MAX_AGE_DAYS is rebuilt anyway (Sweden A72 catch-up, a missing
+stamp). If the NVE check fails the previous file is kept. `--force` always rebuilds."""
 import datetime as dt, json, os, statistics, sys, time
 import pandas as pd
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from common import is_fresh, write_json  # noqa: E402
+from common import age_days, write_json  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_power as bp  # reuse HTTP + ENTSO-E helpers (token is never printed)
 
@@ -15,6 +20,7 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 NVE = "https://biapi.nve.no/magasinstatistikk/api/Magasinstatistikk/"
 SE_EIC = "10YSE-1--------K"
 NY = 10
+MAX_AGE_DAYS = 8.0
 
 
 def r1(v):
@@ -65,9 +71,46 @@ def block(wk, y):
     return out
 
 
+def nve_latest():
+    """Newest weekly date NVE has published (YYYY-MM-DD), from the small 'latest week' endpoint."""
+    d = [x["dato_Id"] for x in bp.get(NVE + "HentOffentligDataSisteUke").json() if x.get("omrType") == "EL"]
+    return max(d)[:10] if d else None
+
+
+def stored_date(path):
+    try:
+        f = json.load(open(path))
+    except Exception:  # noqa: BLE001
+        return None
+    d = f.get("nve_date") or max((z.get("date") or "" for z in (f.get("zones") or {}).values()), default="")
+    return d[:10] if d else None
+
+
+def decide(stored, latest, age, force=False):
+    """(build?, reason). Pure function so the rule can be tested without the network."""
+    if force:
+        return True, "forced"
+    if latest is None:
+        return False, "NVE latest date unavailable; keeping previous file"
+    if stored is None:
+        return True, "no stored NVE date"
+    if latest > stored:
+        return True, f"NVE published {latest}, file has {stored}"
+    if age is None or age >= MAX_AGE_DAYS:
+        return True, f"file older than {MAX_AGE_DAYS} days (safety net)"
+    return False, f"no newer NVE week than {stored}; skipped"
+
+
 def main():
-    if is_fresh(OUT, 6.5):
-        print("hydro_nordic.json fresh; weekly refresh skipped"); return
+    force = "--force" in sys.argv
+    try:
+        latest = None if force else nve_latest()
+    except Exception as e:  # noqa: BLE001
+        latest = None; print("NVE latest-week check failed:", str(e)[:120])
+    go, why = decide(stored_date(OUT), latest, age_days(OUT), force)
+    print("hydro_nordic.json:", why)
+    if not go:
+        return
     t0 = time.time(); today = dt.date.today(); y = today.isocalendar()[0]
     try:
         no, cap, zones = series_no()
@@ -81,7 +124,8 @@ def main():
     out = dict(generated_utc=dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), year=y, hist=f"{y - NY}-{y - 1}",
                src=dict(no="NVE magasinstatistikk", no_url="https://www.nve.no/energi/analyser-og-statistikk/magasinstatistikk/",
                         se="ENTSO-E Transparency, aggregated filling rate of water reservoirs (A72)", se_url="https://transparency.entsoe.eu/"),
-               no_cap_twh=r1(cap), no=block(no, y), zones=zones)
+               no_cap_twh=r1(cap), no=block(no, y), zones=zones,
+               nve_date=max((z["date"] for z in zones.values()), default=None))
     if se:
         out["se"] = block(se, y)
         both = {k: v + se[k] for k, v in no.items() if k in se}
