@@ -1,8 +1,8 @@
 {
- "built_utc": "2026-11-26T03:44:12Z",
+ "built_utc": "2026-11-27T03:45:00Z",
  "by_sym": {
   "ALI=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ALIZ26",
    "history": "yahoo",
    "id": "aluminium",
@@ -11,7 +11,7 @@
    "title": "Aluminium"
   },
   "BZ=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "BRNF27",
    "history": "yahoo",
    "id": "brent",
@@ -29,7 +29,7 @@
    "title": "Cocoa NY"
   },
   "CL=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "CLF27",
    "history": "yahoo",
    "id": "wti",
@@ -38,7 +38,7 @@
    "title": "WTI crude"
   },
   "CO2.L": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-26",
    "front": "ECFX26",
    "history": "tradingview",
    "id": "eua",
@@ -56,7 +56,7 @@
    "title": "Cotton"
   },
   "GC=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "GCZ26",
    "history": "yahoo",
    "id": "gold",
@@ -83,7 +83,7 @@
    "title": "Lean hogs"
   },
   "HG=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "HGZ26",
    "history": "yahoo",
    "id": "copper",
@@ -92,7 +92,7 @@
    "title": "Copper"
   },
   "HO=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "HOZ26",
    "history": "yahoo",
    "id": "ulsd",
@@ -128,7 +128,7 @@
    "title": "Live cattle"
   },
   "NG=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "NGF27",
    "history": "yahoo",
    "id": "hh",
@@ -146,7 +146,7 @@
    "title": "Orange juice"
   },
   "PA=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "PAZ26",
    "history": "yahoo",
    "id": "palladium",
@@ -155,7 +155,7 @@
    "title": "Palladium"
   },
   "PL=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "PLF27",
    "history": "yahoo",
    "id": "platinum",
@@ -164,7 +164,7 @@
    "title": "Platinum"
   },
   "RB=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "RBZ26",
    "history": "yahoo",
    "id": "rbob",
@@ -182,7 +182,7 @@
    "title": "Sugar No.11"
   },
   "SI=F": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "SIZ26",
    "history": "yahoo",
    "id": "silver",
@@ -191,7 +191,7 @@
    "title": "Silver"
   },
   "TTF=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "TFMZ26",
    "history": "yahoo",
    "id": "ttf",
