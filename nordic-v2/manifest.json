@@ -1,1 +1,75 @@
-{"schema_version":1,"as_of":"2026-11-26","built_at":"2026-11-26T21:46:18+01:00","baseline":[2006,2025],"files":{"monthly.json":{"bytes":48856,"sha256":"dab1ebeb5cce237658e1d91788af36c7239536a130df0bd456bc252bceb0967f","as_of":"2026-11-25"},"prices_de.json":{"bytes":2030,"sha256":"d93c767ae8a8fb06ffc4314d8b6d61217174e7755cf7254c6a91cfda41f3454a","as_of":"2026-11-26"},"prices.json":{"bytes":377254,"sha256":"ff9d66cfefe0d52a950ca02b7204d5477b082db7130ed9dd9a5f20dc75b3df83","as_of":"2026-11-26"},"tomorrow.json":{"bytes":25899,"sha256":"438a24e8ae23a3149bad55985619c37e8744de39da87ca234694ddb666302b6d","as_of":"2026-11-26"},"weather.json":{"bytes":477293,"sha256":"d378567d8b625db5bc0e1c2b29cc058fd2e4d0cb5fe40138b1cbb2db84c58fed","as_of":"2026-11-25"},"prices_normals.json":{"bytes":68570,"sha256":"be7ef8c989d6f44ac5d39d4853cf1200001e411b9b9d69505ec499f8f559a6f9","as_of":"2025-12-31"},"weather_normals.json":{"bytes":52243,"sha256":"1447632bb299f2f5a3332e65bea3c02ddd92956abfcb7342a212227dac2304f3","as_of":"2025-12-31"},"weather_grid.json":{"bytes":3290,"sha256":"48708104a8f59de56f3730c8033adde9e1e63fdfdcad02edc6fd95ac648c84d3","as_of":null},"generation.json":{"bytes":588605,"sha256":"0ab9c4cf86bffd6128ac87389ff6982a868e5c3c5adf2c31810ebb956c8e68c0","as_of":"2026-11-25"},"monthly_climate.json":{"bytes":66809,"sha256":"669903b1cc108f6ffafba3d083d3ebaed226d7459e39afe25274704054b24779","as_of":"2026-11-25"},"hydrology.json":{"bytes":32983,"sha256":"4e3966b54a10997b5f0ca8deb8b99be7cb9fa5daf43364de18e9a953533e0e9e","as_of":"2026-11-22"},"weather_weights.json":{"bytes":3276,"sha256":"7a612419b1d9303ddad6fdb1ea67d1368fd4ca24acf8afaf392beb8b5316b393","as_of":null}},"errors":[],"status":"built","policy":"null means unavailable; no invented, silently carried-forward or paid inputs"}
+{
+ "schema_version": 1,
+ "as_of": "2026-11-26",
+ "built_at": "2026-11-26T21:46:18+01:00",
+ "baseline": [
+  2006,
+  2025
+ ],
+ "files": {
+  "monthly.json": {
+   "bytes": 48856,
+   "sha256": "dab1ebeb5cce237658e1d91788af36c7239536a130df0bd456bc252bceb0967f",
+   "as_of": "2026-11-25"
+  },
+  "prices_de.json": {
+   "bytes": 2053,
+   "sha256": "52bf7d0e52d17d153afca47323ae54a5aec6fae86bad1597c7548e696a5d80d6",
+   "as_of": "2026-11-27"
+  },
+  "prices.json": {
+   "bytes": 377254,
+   "sha256": "ff9d66cfefe0d52a950ca02b7204d5477b082db7130ed9dd9a5f20dc75b3df83",
+   "as_of": "2026-11-26"
+  },
+  "tomorrow.json": {
+   "bytes": 25899,
+   "sha256": "438a24e8ae23a3149bad55985619c37e8744de39da87ca234694ddb666302b6d",
+   "as_of": "2026-11-26"
+  },
+  "weather.json": {
+   "bytes": 477293,
+   "sha256": "d378567d8b625db5bc0e1c2b29cc058fd2e4d0cb5fe40138b1cbb2db84c58fed",
+   "as_of": "2026-11-25"
+  },
+  "prices_normals.json": {
+   "bytes": 68570,
+   "sha256": "be7ef8c989d6f44ac5d39d4853cf1200001e411b9b9d69505ec499f8f559a6f9",
+   "as_of": "2025-12-31"
+  },
+  "weather_normals.json": {
+   "bytes": 52243,
+   "sha256": "1447632bb299f2f5a3332e65bea3c02ddd92956abfcb7342a212227dac2304f3",
+   "as_of": "2025-12-31"
+  },
+  "weather_grid.json": {
+   "bytes": 3290,
+   "sha256": "48708104a8f59de56f3730c8033adde9e1e63fdfdcad02edc6fd95ac648c84d3",
+   "as_of": null
+  },
+  "generation.json": {
+   "bytes": 588605,
+   "sha256": "0ab9c4cf86bffd6128ac87389ff6982a868e5c3c5adf2c31810ebb956c8e68c0",
+   "as_of": "2026-11-25"
+  },
+  "monthly_climate.json": {
+   "bytes": 66809,
+   "sha256": "669903b1cc108f6ffafba3d083d3ebaed226d7459e39afe25274704054b24779",
+   "as_of": "2026-11-25"
+  },
+  "hydrology.json": {
+   "bytes": 32983,
+   "sha256": "4e3966b54a10997b5f0ca8deb8b99be7cb9fa5daf43364de18e9a953533e0e9e",
+   "as_of": "2026-11-22"
+  },
+  "weather_weights.json": {
+   "bytes": 3276,
+   "sha256": "7a612419b1d9303ddad6fdb1ea67d1368fd4ca24acf8afaf392beb8b5316b393",
+   "as_of": null
+  }
+ },
+ "errors": [],
+ "status": "built",
+ "policy": "null means unavailable; no invented, silently carried-forward or paid inputs",
+ "files_synced_at": "2026-11-27T03:38:57+00:00"
+}
