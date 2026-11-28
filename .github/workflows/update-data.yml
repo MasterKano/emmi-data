@@ -11,7 +11,7 @@ on:
     # wind/solar forecast (A69, D-1 18:00 Brussels time = 16:00 UTC summer / 17:00 UTC winter), so SE4 'tomorrow
     # expected' capture is filled.
     # Note: GitHub runs scheduled workflows only from the default branch.
-    - cron: "30 5 * * 1-5"
+    - cron: "0 5 * * 1-5"
     - cron: "30 12 * * 1-5"
     - cron: "0 21 * * 1-5"
     - cron: "30 12 * * 0,6"
