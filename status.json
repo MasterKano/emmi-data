@@ -1,0 +1,1525 @@
+{
+ "generated_utc": "2026-11-28T20:00:12+00:00",
+ "simulated_days": 0.0,
+ "alert_count": 1,
+ "alerts": [
+  {
+   "id": "nordic-v2/monthly.json / MTD snapshot",
+   "kind": "stale build",
+   "latest": "2026-11-26 07:31Z",
+   "note": "built 60 h ago, allowed 60 h"
+  }
+ ],
+ "datasets": [
+  {
+   "dataset": "nordic-v2/prices.json",
+   "verdict": "fresh",
+   "latest": "observation: 2026-11-28; errors: 0 in-file errors",
+   "builder": "nordic-prices.yml (build.py --only prices)",
+   "cron": "0 3,4 + 30 11,12,13 daily",
+   "last_commit": "2026-11-28T19:24:40Z",
+   "checks": [
+    {
+     "check": "observation",
+     "ok": true,
+     "latest": "2026-11-28",
+     "note": "0 days old, allowed 2"
+    },
+    {
+     "check": "errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/tomorrow.json",
+   "verdict": "fresh",
+   "latest": "delivery: delivery 2026-11-29",
+   "builder": "nordic-prices.yml",
+   "cron": "same",
+   "last_commit": "2026-11-28T19:24:40Z",
+   "checks": [
+    {
+     "check": "delivery",
+     "ok": true,
+     "latest": "delivery 2026-11-29",
+     "note": "auction ~12:42 CET; delivery day 2026-11-29 required at this hour"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/generation.json",
+   "verdict": "fresh",
+   "latest": "observation: 2026-11-27",
+   "builder": "nordic-prices.yml",
+   "cron": "same",
+   "last_commit": "2026-11-28T19:24:40Z",
+   "checks": [
+    {
+     "check": "observation",
+     "ok": true,
+     "latest": "2026-11-27",
+     "note": "1 days old, allowed 2"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/prices_normals.json",
+   "verdict": "static",
+   "latest": "static: baseline/static",
+   "builder": "nordic-prices.yml",
+   "cron": "same",
+   "last_commit": "2026-11-28T19:24:40Z",
+   "checks": [
+    {
+     "check": "static",
+     "ok": true,
+     "latest": "baseline/static",
+     "note": "not a feed; checked for readability only"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/weather.json",
+   "verdict": "fresh",
+   "latest": "observation: 2026-11-27",
+   "builder": "nordic-weather.yml",
+   "cron": "15 6, 15 18 daily",
+   "last_commit": "2026-11-28T15:37:43Z",
+   "checks": [
+    {
+     "check": "observation",
+     "ok": true,
+     "latest": "2026-11-27",
+     "note": "1 days old, allowed 8"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/monthly_climate.json",
+   "verdict": "fresh",
+   "latest": "observation: 2026-11-27",
+   "builder": "nordic-weather.yml",
+   "cron": "same",
+   "last_commit": "2026-11-28T15:37:43Z",
+   "checks": [
+    {
+     "check": "observation",
+     "ok": true,
+     "latest": "2026-11-27",
+     "note": "1 days old, allowed 8"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/weather_normals.json",
+   "verdict": "static",
+   "latest": "static: baseline/static",
+   "builder": "nordic-weather.yml",
+   "cron": "same",
+   "last_commit": "2026-11-11T15:10:35+01:00",
+   "checks": [
+    {
+     "check": "static",
+     "ok": true,
+     "latest": "baseline/static",
+     "note": "not a feed; checked for readability only"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/weather_grid.json",
+   "verdict": "static",
+   "latest": "static: baseline/static",
+   "builder": "nordic-weather.yml",
+   "cron": "same",
+   "last_commit": "2026-11-12T23:05:08+01:00",
+   "checks": [
+    {
+     "check": "static",
+     "ok": true,
+     "latest": "baseline/static",
+     "note": "not a feed; checked for readability only"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/prices_de.json",
+   "verdict": "fresh",
+   "latest": "observation: 2026-11-29",
+   "builder": "nordic-de-prices.yml (build_de_prices.py)",
+   "cron": "50 12,14 daily",
+   "last_commit": "2026-11-27T21:41:14Z",
+   "checks": [
+    {
+     "check": "observation",
+     "ok": true,
+     "latest": "2026-11-29",
+     "note": "-1 days old, allowed 1"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/hydrology.json (NO)",
+   "verdict": "fresh",
+   "latest": "NO observation vs NVE release: 2026-11-22",
+   "builder": "nordic-hydrology.yml (build.py --only hydrology,monthly)",
+   "cron": "30 12,14 Wed + 30 6 Thu",
+   "last_commit": "2026-11-26T17:14:18Z",
+   "checks": [
+    {
+     "check": "NO observation vs NVE release",
+     "ok": true,
+     "latest": "2026-11-22",
+     "note": "NVE Sunday required: 2026-11-22 (published Wed 13:00 Oslo + 23 h)"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/hydrology.json (SE, FI)",
+   "verdict": "fresh",
+   "latest": "SE/FI observation: 2026-11-16; FI observation: 2026-11-16",
+   "builder": "same (ENTSO-E A72, trails about 10 days)",
+   "cron": "same",
+   "last_commit": "2026-11-26T17:14:18Z",
+   "checks": [
+    {
+     "check": "SE/FI observation",
+     "ok": true,
+     "latest": "2026-11-16",
+     "note": "12 days old, allowed 21"
+    },
+    {
+     "check": "FI observation",
+     "ok": true,
+     "latest": "2026-11-16",
+     "note": "12 days old, allowed 21"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/monthly.json",
+   "verdict": "stale",
+   "latest": "as_of: 2026-11-25; MTD snapshot: 2026-11-26 07:31Z",
+   "builder": "nordic-hydrology.yml",
+   "cron": "same",
+   "last_commit": "2026-11-26T17:14:18Z",
+   "checks": [
+    {
+     "check": "as_of",
+     "ok": true,
+     "latest": "2026-11-25",
+     "note": "3 days old, allowed 10"
+    },
+    {
+     "check": "MTD snapshot",
+     "ok": false,
+     "latest": "2026-11-26 07:31Z",
+     "note": "built 60 h ago, allowed 60 h"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-climate/ (daily_grid_mean, mtd)",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-26 00:00Z; newest ERA5 day: 2026-11-20",
+   "builder": "nordic-climate-publish.yml (run_pipeline.py)",
+   "cron": "05:05 Europe/Zurich Sat + 11th",
+   "last_commit": "2026-11-26T06:35:21Z",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-26 00:00Z",
+     "note": "built 68 h ago, allowed 216 h"
+    },
+    {
+     "check": "newest ERA5 day",
+     "ok": true,
+     "latest": "2026-11-20",
+     "note": "8 days old, allowed 13"
+    }
+   ]
+  },
+  {
+   "dataset": "power.json (spot, UMM, SvK, hydro)",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:39Z; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:39Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "power.json EEX settlements",
+   "verdict": "fresh",
+   "latest": "settlement date: 2026-11-26",
+   "builder": "scrape repo (EEX csv) -> build_power.py",
+   "cron": "scrape ~19:00 UTC daily",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "settlement date",
+     "ok": true,
+     "latest": "2026-11-26",
+     "note": "1 business days old, allowed 2"
+    }
+   ]
+  },
+  {
+   "dataset": "power.json Energiforetagen SE reservoirs",
+   "verdict": "fresh",
+   "latest": "week: week 46 to 2026-11-15",
+   "builder": "build_power.py (weekly PDF)",
+   "cron": "weekly PDF",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "week",
+     "ok": true,
+     "latest": "week 46 to 2026-11-15",
+     "note": "13 days after week end, allowed 16 (weekly PDF trails the week)"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic_dash.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:43Z; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:43Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic_mtd.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:45Z; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:45Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic_drivers.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:45Z; price date: 2026-11-28; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:45Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "price date",
+     "ok": true,
+     "latest": "2026-11-28",
+     "note": "0 days old, allowed 2"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "mr.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:45Z; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:45Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "fi_wind.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:42Z",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:42Z",
+     "note": "built 19 h ago, allowed 26 h"
+    }
+   ]
+  },
+  {
+   "dataset": "gas.json (GIE AGSI+)",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:44Z; gas day: 2026-11-26; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:44Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "gas day",
+     "ok": true,
+     "latest": "2026-11-26",
+     "note": "2 days old, allowed 4"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic_precip.json",
+   "verdict": "fresh",
+   "latest": "forecast built: 2026-11-28 00:43Z; monthly part: 2026-11-27 18:22Z",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "forecast built",
+     "ok": true,
+     "latest": "2026-11-28 00:43Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "monthly part",
+     "ok": true,
+     "latest": "2026-11-27 18:22Z",
+     "note": "built 26 h ago, allowed 960 h"
+    }
+   ]
+  },
+  {
+   "dataset": "ttf_weather.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 17:10Z",
+   "builder": "ttf-weather.yml",
+   "cron": "40 8,10,20,22 daily",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 17:10Z",
+     "note": "built 3 h ago, allowed 26 h"
+    }
+   ]
+  },
+  {
+   "dataset": "balancing.json (DE)",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 00:42Z; in-file errors: 0 in-file errors",
+   "builder": "scripts/*.py via Update market data",
+   "cron": "power/full runs 12:30 and 17:30 UTC daily + full builds",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 00:42Z",
+     "note": "built 19 h ago, allowed 26 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "hydro_nordic.json",
+   "verdict": "fresh",
+   "latest": "NO zones vs NVE release: 2026-11-22",
+   "builder": "update-data 'Nordic hydro reservoirs' (rebuilds when NVE publishes a newer week)",
+   "cron": "Wednesday 12:30 UTC power run, 17:30 UTC as backup",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "NO zones vs NVE release",
+     "ok": true,
+     "latest": "2026-11-22",
+     "note": "NVE Sunday required: 2026-11-22 (published Wed 13:00 Oslo + 7 h)"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic_monthly.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-23 06:29Z; in-file errors: 0 in-file errors",
+   "builder": "update-data 'Nordic monthly overview' (monthly)",
+   "cron": "monthly",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-23 06:29Z",
+     "note": "built 134 h ago, allowed 960 h"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "griddc.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-27 06:11Z",
+   "builder": "update-data 'Grid & DC' (full)",
+   "cron": "full builds (weekday morning catch-up + ~3 a day)",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-27 06:11Z",
+     "note": "built 17 h ago, allowed 60 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "market.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 03:03Z; in-file errors: 0 in-file errors",
+   "builder": "intraday.yml / update-data",
+   "cron": "every 15 min weekdays",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 03:03Z",
+     "note": "built 0 h ago, allowed 30 h (weekends excluded)"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "news.json / dealflow.json / companies.json",
+   "verdict": "fresh",
+   "latest": "news: 2026-11-28 03:08Z; dealflow: 2026-11-28 00:41Z; companies: 2026-11-28 03:08Z",
+   "builder": "update-data (full)",
+   "cron": "full builds (weekday morning catch-up + ~3 a day)",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "news",
+     "ok": true,
+     "latest": "2026-11-28 03:08Z",
+     "note": "built 0 h ago, allowed 36 h (weekends excluded)"
+    },
+    {
+     "check": "dealflow",
+     "ok": true,
+     "latest": "2026-11-28 00:41Z",
+     "note": "built 0 h ago, allowed 36 h (weekends excluded)"
+    },
+    {
+     "check": "companies",
+     "ok": true,
+     "latest": "2026-11-28 03:08Z",
+     "note": "built 0 h ago, allowed 36 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "us_valuation.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-10 06:13Z",
+   "builder": "update-data (monthly)",
+   "cron": "monthly",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-10 06:13Z",
+     "note": "built 446 h ago, allowed 1080 h"
+    }
+   ]
+  },
+  {
+   "dataset": "metals.json / cot.json",
+   "verdict": "fresh",
+   "latest": "metals: 2026-11-28 19:58Z; cot: 2026-11-28 19:58Z",
+   "builder": "metals.yml",
+   "cron": "weekly-ish, see workflow",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "metals",
+     "ok": true,
+     "latest": "2026-11-28 19:58Z",
+     "note": "built 0 h ago, allowed 192 h"
+    },
+    {
+     "check": "cot",
+     "ok": true,
+     "latest": "2026-11-28 19:58Z",
+     "note": "built 0 h ago, allowed 192 h"
+    }
+   ]
+  },
+  {
+   "dataset": "curves/ (EEX Nordic system, TTF)",
+   "verdict": "fresh",
+   "latest": "nordic-sys session: 2026-11-26; ttf session: 2026-11-26; brent/ho session: 2026-11-27",
+   "builder": "scrape repo + ho-curve.yml archive",
+   "cron": "weekdays 20:07 UTC",
+   "last_commit": "2026-11-27T22:48:07+01:00",
+   "checks": [
+    {
+     "check": "nordic-sys session",
+     "ok": true,
+     "latest": "2026-11-26",
+     "note": "1 business days old, allowed 2"
+    },
+    {
+     "check": "ttf session",
+     "ok": true,
+     "latest": "2026-11-26",
+     "note": "1 business days old, allowed 2"
+    },
+    {
+     "check": "brent/ho session",
+     "ok": true,
+     "latest": "2026-11-27",
+     "note": "0 business days old, allowed 3"
+    }
+   ]
+  },
+  {
+   "dataset": "futures/ (EUA, TTF, HH, oil, metals, ags)",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-28 15:35Z; newest EUA/TTF session: 2026-11-27",
+   "builder": "futures.yml",
+   "cron": "40 21 weekdays + 20 6 Sat",
+   "last_commit": "2026-11-28T15:37:35Z",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-28 15:35Z",
+     "note": "built 0 h ago, allowed 60 h (weekends excluded)"
+    },
+    {
+     "check": "newest EUA/TTF session",
+     "ok": true,
+     "latest": "2026-11-27",
+     "note": "0 business days old, allowed 3"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 EIA spot (Brent, WTI, Henry Hub)",
+   "verdict": "fresh",
+   "latest": "EIA spot observation: 2026-11-24",
+   "builder": "og-eia-refresh.yml (scripts/build_og_eia.py)",
+   "cron": "weekdays 09:35 UTC; EIA trails about 2 days",
+   "last_commit": "2026-11-26T07:38:48Z",
+   "checks": [
+    {
+     "check": "EIA spot observation",
+     "ok": true,
+     "latest": "2026-11-24",
+     "note": "4 days old, allowed 13"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 EIA weekly balances",
+   "verdict": "fresh",
+   "latest": "EIA week: 2026-11-20; EIA gas storage week: 2026-11-20",
+   "builder": "og-eia-refresh.yml (scripts/build_og_eia.py)",
+   "cron": "Wed and Thu 15:50, 17:50 UTC (WPSR, Thursday in holiday weeks)",
+   "last_commit": "2026-11-26T07:38:48Z",
+   "checks": [
+    {
+     "check": "EIA week",
+     "ok": true,
+     "latest": "2026-11-20",
+     "note": "week ending 2026-11-20 is due (released the following Wednesday); 0 days behind, allowed 7"
+    },
+    {
+     "check": "EIA gas storage week",
+     "ok": true,
+     "latest": "2026-11-20",
+     "note": "week ending 2026-11-20 is due (released the following Wednesday); 0 days behind, allowed 7"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 EIA STEO",
+   "verdict": "fresh",
+   "latest": "STEO observation (month): 2026-10",
+   "builder": "built on the box (no workflow); rebuilt by hand",
+   "cron": "monthly (released about the 10th)",
+   "last_commit": "2026-11-12T02:12:16+01:00",
+   "checks": [
+    {
+     "check": "STEO observation (month)",
+     "ok": true,
+     "latest": "2026-10",
+     "note": "monthly outlook, newest historical month; fails when more than one month behind last month"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 Energy Institute history",
+   "verdict": "fresh",
+   "latest": "history year observation: 2025",
+   "builder": "built on the box (no workflow); rebuilt by hand",
+   "cron": "annual",
+   "last_commit": "2026-11-12T02:12:16+01:00",
+   "checks": [
+    {
+     "check": "history year observation",
+     "ok": true,
+     "latest": "2025",
+     "note": "annual data; fails when two or more years old"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 USGS mine production",
+   "verdict": "fresh",
+   "latest": "production year observation: 2025",
+   "builder": "built on the box (no workflow); rebuilt by hand",
+   "cron": "annual",
+   "last_commit": "2026-11-12T02:12:16+01:00",
+   "checks": [
+    {
+     "check": "production year observation",
+     "ok": true,
+     "latest": "2025",
+     "note": "annual data; fails when two or more years old"
+    }
+   ]
+  },
+  {
+   "dataset": "og-mining-v2 bundle manifest",
+   "verdict": "fresh",
+   "latest": "in-file errors: 0 in-file errors; manifest readable: readable",
+   "builder": "built on the box (no workflow); rebuilt by hand",
+   "cron": "rebuilt with the bundle",
+   "last_commit": "2026-11-26T07:38:48Z",
+   "checks": [
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    },
+    {
+     "check": "manifest readable",
+     "ok": true,
+     "latest": "readable",
+     "note": ""
+    }
+   ]
+  },
+  {
+   "dataset": "emmi data/og-quotes.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-27 23:21Z; in-file errors: 0 in-file errors",
+   "builder": "emmi og-quotes.yml (Yahoo)",
+   "cron": "every 15 min weekdays 05-21 UTC (GitHub runs it sparsely)",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-27 23:21Z",
+     "note": "built 0 h ago, allowed 30 h (weekends excluded)"
+    },
+    {
+     "check": "in-file errors",
+     "ok": true,
+     "latest": "0 in-file errors",
+     "note": "no errors in file"
+    }
+   ]
+  },
+  {
+   "dataset": "emmi data/pipeline_projects.json",
+   "verdict": "fresh",
+   "latest": "built: 2026-11-26 17:04Z",
+   "builder": "emmi pipeline.yml (build_pipeline.py)",
+   "cron": "Monday and Thursday 06:20 UTC",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "built",
+     "ok": true,
+     "latest": "2026-11-26 17:04Z",
+     "note": "built 51 h ago, allowed 120 h"
+    }
+   ]
+  },
+  {
+   "dataset": "EEX raw scrape (scrape repo master/eex_master.csv)",
+   "verdict": "fresh",
+   "latest": "settlement date: 2026-11-27..2026-11-27 (6 groups)",
+   "builder": "scrape update-market-data.yml (eex_scraper.py)",
+   "cron": "daily ~19:00 UTC; EEX settles with a lag",
+   "last_commit": "n/a (not a plain file in this repo)",
+   "checks": [
+    {
+     "check": "settlement date",
+     "ok": true,
+     "latest": "2026-11-27..2026-11-27 (6 groups)",
+     "note": "every group within 2 business days (settlement lag accepted)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow update-data.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 03:03Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 03:03Z",
+     "note": "17 h since last scheduled start, allowed 26 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow update-data.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T03:03Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T03:03Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-prices.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 19:04Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 19:04Z",
+     "note": "1 h since last scheduled start, allowed 30 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-prices.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T19:04Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T19:04Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-weather.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 15:37Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 15:37Z",
+     "note": "4 h since last scheduled start, allowed 30 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-weather.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T15:37Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T15:37Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ttf-weather.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 18:26Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 18:26Z",
+     "note": "2 h since last scheduled start, allowed 30 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ttf-weather.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T18:26Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T18:26Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-de-prices.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-27 21:40Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-27 21:40Z",
+     "note": "22 h since last scheduled start, allowed 30 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-de-prices.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-27T21:40Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-27T21:40Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-hydrology.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-26 17:13Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-26 17:13Z",
+     "note": "51 h since last scheduled start, allowed 204 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-hydrology.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-26T17:13Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-26T17:13Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow futures.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 15:35Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 15:35Z",
+     "note": "0 h since last scheduled start, allowed 36 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow futures.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T15:35Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T15:35Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ho-curve.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 02:35Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 02:35Z",
+     "note": "0 h since last scheduled start, allowed 36 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ho-curve.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T02:35Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T02:35Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow data-health.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 20:00Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 20:00Z",
+     "note": "0 h since last scheduled start, allowed 9 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow metals.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 19:57Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 19:57Z",
+     "note": "0 h since last scheduled start, allowed 192 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow metals.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T19:57Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T19:57Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ticker.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 13:04Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 13:04Z",
+     "note": "0 h since last scheduled start, allowed 14 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow ticker.yml",
+   "verdict": "ok",
+   "latest": "latest run: cancelled 2026-11-28T11:32Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "cancelled 2026-11-28T11:32Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow intraday.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-27 23:22Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-27 23:22Z",
+     "note": "0 h since last scheduled start, allowed 12 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow intraday.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-27T23:22Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-27T23:22Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-climate-publish.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 12:52Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 12:52Z",
+     "note": "7 h since last scheduled start, allowed 216 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow nordic-climate-publish.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T12:52Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T12:52Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow og-eia-refresh.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-27 19:09Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-27 19:09Z",
+     "note": "4 h since last scheduled start, allowed 30 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow og-eia-refresh.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-27T19:09Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-27T19:09Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow scrape/update-market-data.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-28 17:24Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-28 17:24Z",
+     "note": "3 h since last scheduled start, allowed 36 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow scrape/update-market-data.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T17:24Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T17:24Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/og-quotes.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-27 23:21Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-27 23:21Z",
+     "note": "0 h since last scheduled start, allowed 30 h (weekends excluded)"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/og-quotes.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-27T23:21Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-27T23:21Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/pipeline.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-26 17:04Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-26 17:04Z",
+     "note": "51 h since last scheduled start, allowed 110 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/pipeline.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-26T17:04Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-26T17:04Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow mr-climate/monthly-update.yml",
+   "verdict": "ok",
+   "latest": "scheduled run started: 2026-11-10 13:57Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "scheduled run started",
+     "ok": true,
+     "latest": "2026-11-10 13:57Z",
+     "note": "438 h since last scheduled start, allowed 768 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow mr-climate/monthly-update.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-10T13:57Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-10T13:57Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/deploy.yml",
+   "verdict": "ok",
+   "latest": "last successful run: 2026-11-28T19:58Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "last successful run",
+     "ok": true,
+     "latest": "2026-11-28T19:58Z",
+     "note": "0 h since the last successful run, allowed 30 h"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/deploy.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-28T19:58Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-28T19:58Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/data-watch.yml",
+   "verdict": "ok",
+   "latest": "latest run: cancelled 2026-11-28T13:43Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "cancelled 2026-11-28T13:43Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow emmi/research.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-11-19T15:05Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-11-19T15:05Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "workflow mr-climate/checks.yml",
+   "verdict": "ok",
+   "latest": "latest run: success 2026-08-20T08:56Z",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "latest run",
+     "ok": true,
+     "latest": "success 2026-08-20T08:56Z",
+     "note": "last completed run succeeded"
+    }
+   ]
+  },
+  {
+   "dataset": "update-data hidden step failures",
+   "verdict": "ok",
+   "latest": "continue-on-error steps: 0 failed steps in last 3 green builds",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "continue-on-error steps",
+     "ok": true,
+     "latest": "0 failed steps in last 3 green builds",
+     "note": "none"
+    }
+   ]
+  },
+  {
+   "dataset": "nordic-v2/manifest.json",
+   "verdict": "ok",
+   "latest": "per-file entries: 0 entries out of date",
+   "builder": "",
+   "cron": "",
+   "last_commit": "",
+   "checks": [
+    {
+     "check": "per-file entries",
+     "ok": true,
+     "latest": "0 entries out of date",
+     "note": "all entries match the files"
+    }
+   ]
+  }
+ ]
+}
