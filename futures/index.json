@@ -1,5 +1,5 @@
 {
- "built_utc": "2026-11-27T03:45:00Z",
+ "built_utc": "2026-11-28T03:29:20Z",
  "by_sym": {
   "ALI=F": {
    "asof": "2026-11-27",
@@ -20,7 +20,7 @@
    "title": "Brent crude"
   },
   "CC=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "CCZ26",
    "history": "yahoo",
    "id": "cocoa",
@@ -38,7 +38,7 @@
    "title": "WTI crude"
   },
   "CO2.L": {
-   "asof": "2026-11-26",
+   "asof": "2026-11-27",
    "front": "ECFX26",
    "history": "tradingview",
    "id": "eua",
@@ -47,7 +47,7 @@
    "title": "EU carbon (EUA)"
   },
   "CT=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "CTZ26",
    "history": "yahoo",
    "id": "cotton",
@@ -65,7 +65,7 @@
    "title": "Gold"
   },
   "GF=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "GFF27",
    "history": "yahoo",
    "id": "feeders",
@@ -74,7 +74,7 @@
    "title": "Feeder cattle"
   },
   "HE=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "HEZ26",
    "history": "yahoo",
    "id": "hogs",
@@ -101,7 +101,7 @@
    "title": "NY Harbor diesel (ULSD)"
   },
   "KC=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "KCZ26",
    "history": "yahoo",
    "id": "coffee",
@@ -110,7 +110,7 @@
    "title": "Coffee (Arabica)"
   },
   "LBR=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "LBRF27",
    "history": "tradingview",
    "id": "lumber",
@@ -119,7 +119,7 @@
    "title": "Lumber"
   },
   "LE=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "LEZ26",
    "history": "yahoo",
    "id": "cattle",
@@ -137,7 +137,7 @@
    "title": "Henry Hub gas"
   },
   "OJ=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "OJF27",
    "history": "yahoo",
    "id": "oj",
@@ -173,7 +173,7 @@
    "title": "RBOB gasoline"
   },
   "SB=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "SBH27",
    "history": "yahoo",
    "id": "sugar",
@@ -192,7 +192,7 @@
   },
   "TTF=F": {
    "asof": "2026-11-27",
-   "front": "TFMZ26",
+   "front": "TFMF27",
    "history": "yahoo",
    "id": "ttf",
    "n": 18,
@@ -200,7 +200,7 @@
    "title": "Dutch TTF gas"
   },
   "ZC=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZCZ26",
    "history": "yahoo",
    "id": "corn",
@@ -209,7 +209,7 @@
    "title": "Corn"
   },
   "ZL=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZLZ26",
    "history": "yahoo",
    "id": "soyoil",
@@ -218,7 +218,7 @@
    "title": "Soybean oil"
   },
   "ZM=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZMZ26",
    "history": "yahoo",
    "id": "soymeal",
@@ -227,7 +227,7 @@
    "title": "Soybean meal"
   },
   "ZO=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZOZ26",
    "history": "yahoo",
    "id": "oats",
@@ -236,7 +236,7 @@
    "title": "Oats"
   },
   "ZR=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZRF27",
    "history": "yahoo",
    "id": "rice",
@@ -245,7 +245,7 @@
    "title": "Rough rice"
   },
   "ZS=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZSF27",
    "history": "yahoo",
    "id": "soybeans",
@@ -254,7 +254,7 @@
    "title": "Soybeans"
   },
   "ZW=F": {
-   "asof": "2026-11-25",
+   "asof": "2026-11-27",
    "front": "ZWZ26",
    "history": "yahoo",
    "id": "wheat",
